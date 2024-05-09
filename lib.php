@@ -164,11 +164,9 @@ function get_feedback_tracker_data($courseid, $userid) {
 
     if ($courseid) { // Show only grade items for the given course.
         $course = get_course($courseid);
-        $data->singlecourse = $course->shortname; // Template header for single course report.
         get_course_gradings($course, $userid, $data);
     } else { // Show all grade items of all enrolled courses of a user.
         $enrolledcourses = enrol_get_users_courses($userid);
-
         foreach ($enrolledcourses as $course) {
             get_course_gradings($course, $userid, $data);
         }
@@ -200,10 +198,11 @@ function get_course_gradings($course, $userid, &$data) {
     $sql = "
     select
     #gi.*,
-    gg.id,
+    ROW_NUMBER() OVER (ORDER BY gi.id) AS unique_id,
     gi.courseid,
     gi.id as itemid,
     gi.itemname,
+    gi.itemtype,
     gi.itemmodule,
     gi.iteminstance,
     u.id as studentid,
@@ -217,14 +216,13 @@ function get_course_gradings($course, $userid, &$data) {
     um.username as grader,
     gg.timemodified
     from {grade_items} gi 
-    JOIN {course_modules} cm ON cm.instance = gi.iteminstance AND cm.course = gi.courseid AND cm.instance = gi.iteminstance
-    JOIN {modules} m on m.name = gi.itemmodule AND m.id = cm.module
-    left join {grade_grades} gg on gi.id = gg.itemid
+    left JOIN {modules} m on m.name = gi.itemmodule
+    left JOIN {course_modules} cm ON cm.instance = gi.iteminstance AND cm.course = gi.courseid AND m.id = cm.module
+    left join {grade_grades} gg on gi.id = gg.itemid ".($userid ? 'and gg.userid = '. $userid : '' )."
     left join {user} u on u.id = gg.userid
     left join {user} um on um.id = gg.usermodified
     where 1
     and gi.courseid = $course->id
-    and gi.itemtype = 'mod'
 ";
 
     $gradeitems = $DB->get_records_sql($sql);
@@ -238,19 +236,21 @@ function get_course_gradings($course, $userid, &$data) {
 
         // If a user is given check if the user is allowed to access the grade item.
         if ($userid) {
-            $capability = 'mod/' . $gradeitem->itemmodule . ':view';
-            if (!has_capability($capability, context_module::instance($gradeitem->iteminstance))) {
-                continue;
-            }
-            // Only show the users grade items.
-            if($gradeitem->studentid && $gradeitem->studentid != $userid) {
-                continue;
+            if ($gradeitem->itemmodule) {
+                $capability = 'mod/' . $gradeitem->itemmodule . ':view';
+                if (!has_capability($capability, context_module::instance($gradeitem->iteminstance))) {
+                    continue;
+                }
             }
         }
 
-        // Get a submission due date if there is one.
-        $module = get_module($gradeitem);
+        // If the grade item is related to a module check and get it.
+        if ($gradeitem->itemmodule) {
+            // Get a submission due date if there is one.
+            $module = get_module($gradeitem);
+        }
         $duedate = isset($module->duedate) ? $module->duedate : 0;
+
         // Calculate the feedback due date from the submission due date if there is one.
         $feedbackduedate = $duedate ? $duedate + $feedbackperiod : 0;
         // Get the submission date if any.
@@ -261,27 +261,53 @@ function get_course_gradings($course, $userid, &$data) {
         }
 
         // If there is feedback in the gradebook show a link to it.
-        $link = '';
-        if (isset($gradeitem->finalgrade) || isset($gradeitem->feedback)) {
-            $link = html_writer::link("/mod/$gradeitem->itemmodule/view.php?id=$gradeitem->assignmentid", "view feedback");
+        $feedbacklink = '';
+        if ((isset($gradeitem->finalgrade) || isset($gradeitem->feedback)) && isset($gradeitem->assignmentid)) {
+            $feedbacklink = html_writer::link("/mod/$gradeitem->itemmodule/view.php?id=$gradeitem->assignmentid", "view feedback");
         }
 
         $record = new stdClass();
         $record->submissiondate = $submissiondate == 0 ? '--' : date("Y-m-d", $submissiondate);
         $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
-        $record->course = $course->shortname;
-        $record->assessment = $gradeitem->itemname;
+        $record->course = get_course_link($course);
+        $record->assessment = get_item_link($gradeitem);
         $record->type = $gradeitem->itemmodule;
         $record->duedate = $duedate == 0 ? '--' : date("Y-m-d", $duedate);
         $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("Y-m-d", $feedbackduedate);
-        $record->feedbackstatus = $feedbackduedate == 0 ? '' : get_feedback_status($feedbackduedate, $feedbackperiod, $feedbackextendperiod, $gradeitem->feedbackdate, $gradeitem->finalgrade);
+        $record->feedbackstatus = $feedbackduedate == 0 ? '' : get_feedback_status($feedbackduedate, $feedbackextendperiod, $gradeitem->feedbackdate, $gradeitem->finalgrade);
         $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
         $record->student = $gradeitem->student;
         $record->grader = $gradeitem->grader;
-        $record->feedback = $link;
+#        $record->feedback = $feedbacklink;
+        $record->feedback = $feedbackduedate == 0 ? '' : get_feedback_badge($feedbackduedate, $feedbackextendperiod, $gradeitem->feedbackdate, $gradeitem->finalgrade);
 
         $data->records[] = $record;
     }
+}
+
+/**
+ * Return a link to the course.
+ *
+ * @param stdClass $course
+ * @return string
+ */
+function get_course_link($course) {
+    global $CFG;
+
+    return html_writer::link("$CFG->wwwroot/course/view.php?id=$course->id", $course->shortname);
+}
+
+/**
+ * Return a link to the module item where applicable.
+ *
+ * @param stdClass $gradeitem
+ * @return mixed|string
+ */
+function get_item_link($gradeitem) {
+    if (!isset($gradeitem->assignmentid)) {
+        return $gradeitem->itemname;
+    }
+    return html_writer::link("/mod/$gradeitem->itemmodule/view.php?id=$gradeitem->assignmentid", $gradeitem->itemname);
 }
 
 /**
@@ -296,17 +322,17 @@ function get_submission_status($submissiondate, $duedate, $warningperiod) {
 
     // Submission was in time.
     if ($submissiondate && $submissiondate <= $duedate) {
-        return ' <i class="fa fa-check-square text-success"></i>';
+        return ' <i class="fa fa-check-square text-success fa-2x"></i>';
     }
 
     // NO submission but approaching due date within warning period.
     if (!$submissiondate && time() <= $duedate && time() >= $duedate - $warningperiod) {
-        return ' <i class="fa fa-exclamation-triangle text-warning"></i>';
+        return ' <i class="fa fa-exclamation-triangle text-warning fa-2x"></i>';
     }
 
     // NO submission and the due date has passed.
     if ($duedate && !$submissiondate && time() > $duedate ) {
-        return ' <i class="fa fa-exclamation-circle text-danger"></i>';
+        return ' <i class="fa fa-exclamation-circle text-danger fa-2x"></i>';
     }
 
     // The submission is not due yet - so return nothing.
@@ -356,12 +382,65 @@ function get_feedback_status($feedbackduedate, $feedbackextendperiod, $feedbackd
 }
 
 /**
+ * Get a feedback status icon.
+ *
+ * @param int $feedbackduedate
+ * @param int $feedbackextendperiod
+ * @param int $feedbackdate
+ * @param float $finalgrade
+ * @return string
+ */
+function get_feedback_badge($feedbackduedate, $feedbackextendperiod, $feedbackdate, $finalgrade) {
+
+    // Feedback was given in time.
+    if (isset($finalgrade) && $feedbackdate <= $feedbackduedate) {
+        return '<span class="badge badge-pill badge-success">Feedback in time</span>';
+    }
+
+    $warningduedate = $feedbackduedate + $feedbackextendperiod;
+
+    // Feedback was given within the extend period.
+    if (isset($finalgrade) && $feedbackdate <= $warningduedate) {
+        return '<span class="badge badge-pill badge-warning">Warning!</span>';
+    }
+
+    // Feedback was given outside the extend period.
+    if (isset($finalgrade) && $feedbackdate > $warningduedate) {
+        return '<span class="badge badge-pill badge-danger">Late feedback</span>';
+    }
+
+    // NO feedback was given but it's still within the extend period.
+    if (!isset($finalgrade) && $feedbackduedate < time() && $warningduedate >= time() ) {
+        return '<span class="badge badge-pill badge-warning">Feedback due</span>';
+    }
+
+    // NO feedback was given, and it is beyond the extend period.
+    if (!isset($finalgrade) && $warningduedate < time()) {
+        return '<span class="badge badge-pill badge-danger">Feedback overdue</span>';
+        return ' <i class="fa fa-exclamation-circle text-danger"></i>';
+    }
+
+    // The feedback is due within the due time - so do nothing.
+    return '';
+}
+
+/**
  * Check if a module is supported.
  *
  * @param stdClass $gradeitem
  * @return bool
  */
 function module_is_supported($gradeitem) {
+    // Course type is not supported.
+    if ($gradeitem->itemtype == 'course') {
+        return false;
+    }
+
+    // Manual feedback is supported.
+    if ($gradeitem->itemtype == 'manual' && !$gradeitem->itemmodule) {
+        return true;
+    }
+
     // Todo: make an admin option.
     $supportedmodules = [
         'assign',
@@ -389,6 +468,7 @@ function get_submissiondate($userid, $gradeitem) {
     global $DB;
 
     $submissiondate = 0;
+    $validstatus = '';
 
     if($gradeitem) {
         switch ($gradeitem->itemmodule) {
@@ -400,6 +480,7 @@ function get_submissiondate($userid, $gradeitem) {
                     'date' => 'timemodified',
                     'status' => 'status',
                     ];
+                $validstatus = 'submitted'; // Only get dates from submissions with a valid status.
                 break;
             case 'lesson':
                 $details = [
@@ -446,9 +527,24 @@ function get_submissiondate($userid, $gradeitem) {
 
     // Compute details.
     if (isset($details)) {
-        if ($submissionrecord = $DB->get_record($details['table'],
-            [$details['user'] => $userid, $details['index'] => $gradeitem->iteminstance]
-        )) {
+        if ($details['status'] != '' && $validstatus != '') {
+            $submissionrecord = $DB->get_record($details['table'],
+                [
+                    $details['user'] => $userid,
+                    $details['index'] => $gradeitem->iteminstance,
+                    $details['status'] => $validstatus,
+                ]
+            );
+        } else {
+            $submissionrecord = $DB->get_record($details['table'],
+                [
+                    $details['user'] => $userid,
+                    $details['index'] => $gradeitem->iteminstance,
+                ]
+            );
+        }
+
+        if ($submissionrecord) {
             $datefield = $details['date'];
             $submissiondate = $submissionrecord->$datefield;
         }

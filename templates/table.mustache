@@ -46,7 +46,6 @@
     }
 
 }}
-{{#singlecourse}}<h4>&nbsp;&nbsp;{{#str}} course, report_feedback_tracker {{/str}}: {{singlecourse}}</h4>{{/singlecourse}}
 <table class="table">
     <thead>
         <tr>
@@ -60,7 +59,6 @@
             <th scope="col"></th>
             <th scope="col">{{#str}} feedbackduedate, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} feedback, report_feedback_tracker {{/str}}</th>
-            <th scope="col"></th>
             {{#iseditor}}<th scope="col">{{#str}} grade, report_feedback_tracker {{/str}}</th>{{/iseditor}}
             {{#iseditor}}<th scope="col">{{#str}} grader, report_feedback_tracker {{/str}}</th>{{/iseditor}}
         </tr>
@@ -68,8 +66,8 @@
     <tbody>
         {{#records}}
             <tr>
-                {{^iseditor}}<td>{{course}}</td>{{/iseditor}}
-                <td>{{assessment}}</td>
+                {{^iseditor}}<td>{{{course}}}</td>{{/iseditor}}
+                <td>{{{assessment}}}</td>
                 <td>{{type}}</td>
                 {{#iseditor}}<td>{{student}}</td>{{/iseditor}}
                 <td>{{summative}}</td>
@@ -78,7 +76,6 @@
                 <td>{{{submissionstatus}}}</td>
                 <td>{{{feedbackduedate}}}</td>
                 <td>{{{feedback}}}</td>
-                <td>{{{feedbackstatus}}}</td>
                 {{#iseditor}}<td>{{grade}}</td>{{/iseditor}}
                 {{#iseditor}}<td>{{{grader}}}</td>{{/iseditor}}
             </tr>
