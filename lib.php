@@ -241,14 +241,14 @@ function get_admin_course_gradings($course, &$data) {
 /**
  * Get the gradings for a single course user and amend the data with the findings.
  *
- * @param $course
- * @param $userid
- * @param $data
+ * @param stdClass $course
+ * @param int $userid
+ * @param stdClass $data
  * @return void
  * @throws coding_exception
  * @throws dml_exception
  */
-function get_user_course_gradings($course, $userid, &$data) {
+function get_user_course_gradings($course, $userid, stdClass &$data) {
     global $DB;
 
     $sql = "
@@ -681,7 +681,7 @@ function get_submissiondate($userid, $gradeitem) {
 /**
  * Return the ability of a user to edit a course.
  *
- * @param stdClass $course
+ * @param int $courseid
  * @param int $userid
  * @return bool
  * @throws coding_exception

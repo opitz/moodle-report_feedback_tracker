@@ -35,6 +35,7 @@ class renderer extends plugin_renderer_base {
     /**
      * Render the table.
      *
+     * @param int $userid
      * @return string
      * @throws \moodle_exception
      */
@@ -48,6 +49,7 @@ class renderer extends plugin_renderer_base {
     /**
      * Render the table for an admin etc.
      *
+     * @param int $courseid
      * @return string
      * @throws \moodle_exception
      */

@@ -25,9 +25,8 @@
 $string['assessment'] = 'Assessment';
 $string['course'] = 'Course';
 $string['duedate'] = 'Due date';
-$string['feedbackduedate'] = 'Feedback due date';
 $string['feedback'] = 'Feedback';
-$string['fullfeedback'] = 'Full feedback';
+$string['feedbackduedate'] = 'Feedback due date';
 $string['grade'] = 'Grade';
 $string['grader'] = 'Grader';
 $string['navigationlink'] = 'Feedback tracker';
