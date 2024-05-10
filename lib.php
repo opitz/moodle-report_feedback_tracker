@@ -465,10 +465,14 @@ function get_course_link($course) {
  * @return mixed|string
  */
 function get_item_link($gradeitem) {
+    global $CFG, $USER;
+
     if (!isset($gradeitem->assignmentid)) {
-        return $gradeitem->itemname;
+        $url = "$CFG->wwwroot/grade/report/user/index.php?id=$gradeitem->courseid&userid=$USER->id";
+    } else {
+        $url = "$CFG->wwwroot/mod/$gradeitem->itemmodule/view.php?id=$gradeitem->assignmentid";
     }
-    return html_writer::link("/mod/$gradeitem->itemmodule/view.php?id=$gradeitem->assignmentid", $gradeitem->itemname);
+    return html_writer::link($url, $gradeitem->itemname);
 }
 
 /**
