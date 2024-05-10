@@ -27,11 +27,16 @@ use core\report_helper;
 require('../../config.php');
 require_once($CFG->dirroot.'/report/feedback_tracker/locallib.php');
 
-// If there is no course ID redirect to the user report.
+// If there is no course ID given redirect to the user report.
 if (!$courseid = optional_param('id', null, PARAM_INT)) {
-    redirect(new moodle_url("$CFG->wwwroot/report/feedback_tracker/user.php"));
+    redirect(new moodle_url("$CFG->wwwroot/report/feedback_tracker/user.php?userid=".$USER->id));
 }
-$userid = optional_param('userid', null, PARAM_INT); // The optional user ID.
+
+// Check if the user is able to see the report and redirect to home if not.
+if (!is_course_editor($courseid, $USER->id)) {
+    redirect(new moodle_url("/?redirect=0"));
+}
+
 $course = isset($courseid) ? get_course($courseid) : $COURSE;
 
 $pageparams = ['id' => $course->id];
