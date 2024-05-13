@@ -7,13 +7,9 @@
     <TABLE NAME="report_feedback_tracker" COMMENT="Storing additional information about course modules">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="the userid"/>
-        <FIELD NAME="gradeitemid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="the gradeitemid"/>
-        <FIELD NAME="modifierid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The user that added the record"/>
-        <FIELD NAME="iteminstance" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The instance of the turnitin item e.g. parts are same gradeitem but different instances"/>
-        <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="the notes"/>
-        <FIELD NAME="feedback" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="the feedback"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="the modified time"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="the course module id"/>
+        <FIELD NAME="hidden" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="hidden or not"/>
+        <FIELD NAME="feedbackduedate" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

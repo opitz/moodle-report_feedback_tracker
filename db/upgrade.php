@@ -17,63 +17,43 @@
 /**
  * Upgrading the database.
  *
- * @package   report_myfeedback
- * @copyright 2022 UCL
- * @author    Jessica Gramp <j.gramp@ucl.ac.uk> or <jgramp@gmail.com>
+ * @package    report_feedback_tracker
+ * @copyright  2024 UCL <m.opitz@ucl.ac.uk>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * Upgrade this My feedback instance
+ * Upgrade this feedback tracker instance
  *
- * @param int $oldversion The old version of the My feedback report
+ * @param int $oldversion The old version of the feedback tracker report.
  * @return bool
  */
-function xmldb_report_myfeedback_upgrade($oldversion) {
+function xmldb_report_feedback_tracker_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();
 
-    if ($oldversion < 2016031700) {
+    if ($oldversion < 2024051300) {
 
-        // Define table report_myfeedback to be created.
-        $table = new xmldb_table('report_myfeedback');
+        // Define table report_feedback_tracker to be created.
+        $table = new xmldb_table('report_feedback_tracker');
 
-        // Adding fields to table report_myfeedback.
+        // Adding fields to table report_feedback_tracker.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('gradeitemid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('modifierid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('iteminstance', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        $table->add_field('notes', XMLDB_TYPE_TEXT, null, null, null, null, null);
-        $table->add_field('feedback', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('cmid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('hidden', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('feedbackduedate', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
 
-        // Adding keys to table report_myfeedback.
+        // Adding keys to table report_feedback_tracker.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
 
-        // Conditionally launch create table for report_myfeedback.
+        // Conditionally launch create table for report_feedback_tracker.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }
 
-        if ($oldversion == 2016012100) {
-            $field = new xmldb_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-            $dbman->add_field($table, $field);
-        }
-
-        // Myfeedback savepoint reached.
-        upgrade_plugin_savepoint(true, 2016031700, 'report', 'myfeedback');
-    }
-    // Optimise the log table.
-    if ($oldversion < 2018031100) {
-        $table = new xmldb_table('logstore_standard_log');
-        $index = new xmldb_index('logsstanlog_usecou_ix', XMLDB_INDEX_NOTUNIQUE, ['userid', 'courseid']);
-        if (!$dbman->index_exists($table, $index)) {
-            $dbman->add_index($table, $index);
-        }
-
-        // Myfeedback savepoint reached.
-        upgrade_plugin_savepoint(true, 2018031100, 'report', 'myfeedback');
+        // Savepoint reached.
+        upgrade_plugin_savepoint(true, 2024051300, 'report', 'feedback_tracker');
     }
 
     return true;

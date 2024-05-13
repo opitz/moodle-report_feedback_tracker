@@ -212,11 +212,14 @@ function get_admin_course_gradings($course, &$data) {
     gi.iteminstance,
     gi.gradepass,
     gi.grademax,
-    (select count(distinct gg.userid) from mdl_grade_grades gg where gg.itemid = gi.id and gg.finalgrade != '') as feedbacks
+    (select count(distinct gg.userid) from mdl_grade_grades gg where gg.itemid = gi.id and gg.finalgrade != '') as feedbacks,
+    rft.hidden,
+    rft.feedbackduedate
 
     from {grade_items} gi
     left JOIN {modules} m on m.name = gi.itemmodule
     left JOIN {course_modules} cm ON cm.instance = gi.iteminstance AND cm.course = gi.courseid AND m.id = cm.module
+    left JOIN {report_feedback_tracker} rft on rft.cmid = cm.id
     where 1
     and gi.courseid = $course->id
 ";
@@ -313,10 +316,13 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
     gg.timemodified as feedbackdate,
     cm.id as assignmentid,
     um.username as grader,
-    gg.timemodified
+    gg.timemodified,
+    rft.hidden,
+    rft.feedbackduedate
     from {grade_items} gi
     left JOIN {modules} m on m.name = gi.itemmodule
     left JOIN {course_modules} cm ON cm.instance = gi.iteminstance AND cm.course = gi.courseid AND m.id = cm.module
+    left JOIN {report_feedback_tracker} rft on rft.cmid = cm.id
     left join {grade_grades} gg on gi.id = gg.itemid and gg.userid = $userid
     left join {user} u on u.id = gg.userid
     left join {user} um on um.id = gg.usermodified
@@ -332,6 +338,10 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
             continue;
         }
 
+        // Check if the gradeitem is hidden in the user report.
+        if ($gradeitem->hidden) {
+            continue;
+        }
         // Check if a user is allowed to access the grade item.
         if ($userid) {
             if ($gradeitem->itemmodule) {
@@ -412,8 +422,9 @@ function get_user_feedback_record ($course, $userid, $gradeitem) {
     }
     $duedate = isset($module->duedate) ? $module->duedate : 0;
 
-    // Calculate the feedback due date from the submission due date if there is one.
-    $feedbackduedate = $duedate ? $duedate + $feedbackperiod : 0;
+    // If there is a manual feedback date use it, otherwise calculate from submission due date.
+    $feedbackduedate = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
+        ($duedate ? $duedate + $feedbackperiod : 0);
     // Get the submission date if any.
     $submissiondate = get_submissiondate($userid, $gradeitem);
 
