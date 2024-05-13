@@ -523,6 +523,12 @@ function get_submission_status($submissiondate, $duedate, $warningperiod) {
         return " <i class='fa fa-check-square text-success fa-2x' title='$title'></i>";
     }
 
+    // Submission was late.
+    if ($duedate && $submissiondate && $submissiondate > $duedate) {
+        $title = get_string('submission:late', 'report_feedback_tracker');
+        return " <i class='fa fa-check-square text-danger fa-2x' title='$title'></i>";
+    }
+
     // NO submission but approaching due date within warning period.
     if (!$submissiondate && time() <= $duedate && time() >= $duedate - $warningperiod) {
         $title = get_string('submission:warning', 'report_feedback_tracker');
@@ -550,7 +556,7 @@ function get_submission_status($submissiondate, $duedate, $warningperiod) {
  */
 function get_feedback_badge($feedbackduedate, $feedbackextendperiod, $feedbackdate, $finalgrade) {
 
-    // Feedback is available even if there is no due date.
+    // Final gradex is available even if there is no due date.
     if(!$feedbackduedate && isset($finalgrade)) {
         return '<span class="badge badge-pill badge-success">' .
             get_string('finalgrade_available', 'report_feedback_tracker') . '</span>';

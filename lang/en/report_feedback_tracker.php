@@ -41,6 +41,7 @@ $string['pluginname'] = 'Feedback tracker report';
 $string['privacy:metadata'] = 'The Feedback tracker report plugin does not store any personal data.';
 $string['hidden_item'] = 'Hidden';
 $string['student'] = 'Student';
+$string['submission:late'] = 'Submission was late!';
 $string['submission:overdue'] = 'Submission is overdue!';
 $string['submission:success'] = 'Submission in time';
 $string['submission:warning'] = 'Submission due date approaching!';
