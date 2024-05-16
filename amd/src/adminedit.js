@@ -1,3 +1,4 @@
+import {updateSummativeState} from './repository';
 import {updateHidingState} from './repository';
 import {updateFeedbackDuedate} from './repository';
 import {deleteFeedbackDuedate} from './repository';
@@ -5,6 +6,7 @@ import {getString} from 'core/str';
 
 const Selectors = {
     actions: {
+        toggleSummativeState: '[data-action="report_feedback_tracker/summative_checkbox"]',
         toggleHideState: '[data-action="report_feedback_tracker/hiding_checkbox"]',
         datePicker: '[data-action="report_feedback_tracker/datepicker"]',
         customHint: '[data-action="report_feedback_tracker/customhint"]',
@@ -13,6 +15,21 @@ const Selectors = {
 
 export const init = () => {
     window.console.log('adminedit.js initialised');
+
+    document.addEventListener('click', async e => {
+        if (e.target.closest(Selectors.actions.toggleSummativeState)) {
+            const target = e.target;
+            const itemid = target.getAttribute('cmid');
+            var summativestate = '1';
+            if (target.checked === true) {
+                summativestate = '1';
+            } else {
+                summativestate = '0';
+            }
+            const response = await updateSummativeState(itemid, summativestate);
+            window.console.log(response);
+        }
+    });
 
     document.addEventListener('click', async e => {
         if (e.target.closest(Selectors.actions.toggleHideState)) {

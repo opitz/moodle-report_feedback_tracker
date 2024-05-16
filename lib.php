@@ -210,6 +210,7 @@ function get_admin_course_gradings($course, &$data) {
     gi.gradepass,
     gi.grademax,
     (select count(distinct gg.userid) from mdl_grade_grades gg where gg.itemid = gi.id and gg.finalgrade != '') as feedbacks,
+    rft.summative,
     rft.hidden,
     rft.feedbackduedate
 
@@ -268,6 +269,7 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
     cm.id as assignmentid,
     um.username as grader,
     gg.timemodified,
+    rft.summative,
     rft.hidden,
     rft.feedbackduedate
     from {grade_items} gi
@@ -339,9 +341,10 @@ function get_admin_feedback_record ($course, $gradeitem) {
     $record->course = get_course_link($course);
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
-    $record->duedate = $duedate == 0 ? '--' : date("m/d/Y", $duedate);
+    $record->duedate = $duedate == 0 ? '--' : date("d/m/Y", $duedate);
     $record->feedbackduedate = render_date_picker($gradeitem, $feedbackduedate);
     $record->feedbacks = $gradeitem->feedbacks;
+    $record->summative = get_summative_state($gradeitem);
     $record->hidden = get_hidden_state($gradeitem);
 
     return $record;
@@ -359,7 +362,9 @@ function render_date_picker($gradeitem, $date = 0) {
 
     $o = '';
     if ($PAGE->user_is_editing()) {
-        $date = $date ? $date : time(); // Default to current date if not specified.
+        // Default to current date if not specified.
+        $date = $date ? $date : time();
+
         // Generate a unique ID for the date picker input field.
         $pickerid = html_writer::random_id('date_picker');
 
@@ -390,6 +395,41 @@ function render_date_picker($gradeitem, $date = 0) {
 }
 
 /**
+ * Show / edit the summative state of a grading item.
+ *
+ * @param stdClass $gradeitem
+ * @return string
+ */
+function get_summative_state($gradeitem) {
+    global $PAGE;
+
+    if ($PAGE->user_is_editing()) {
+        if ($gradeitem->summative) {
+            return "<input
+                data-action='report_feedback_tracker/summative_checkbox'
+                type='checkbox'
+                class='form-check-input'
+                cmid='$gradeitem->itemid'
+                checked='checked'
+            >";
+        } else {
+            return "<input
+                data-action='report_feedback_tracker/summative_checkbox'
+                type='checkbox'
+                class='form-check-input'
+                cmid='$gradeitem->itemid'
+            >";
+        }
+    } else {
+        if ($gradeitem->summative) {
+            return "<i class='fa fa-check'></i>";
+        } else {
+            return '';
+        }
+    }
+}
+
+/**
  * Show / edit the hiding state of a grading item.
  *
  * @param stdClass $gradeitem
@@ -402,7 +442,6 @@ function get_hidden_state($gradeitem) {
         if ($gradeitem->hidden) {
             return "<input
                 data-action='report_feedback_tracker/hiding_checkbox'
-                test-attribute='gnupf'
                 type='checkbox'
                 class='form-check-input'
                 cmid='$gradeitem->itemid'
@@ -411,7 +450,6 @@ function get_hidden_state($gradeitem) {
         } else {
             return "<input
                 data-action='report_feedback_tracker/hiding_checkbox'
-                test-attribute='gnupf'
                 type='checkbox'
                 class='form-check-input'
                 cmid='$gradeitem->itemid'
@@ -460,13 +498,14 @@ function get_user_feedback_record ($course, $userid, $gradeitem) {
     $submissiondate = get_submissiondate($userid, $gradeitem);
 
     $record = new stdClass();
-    $record->submissiondate = $submissiondate == 0 ? '--' : date("Y-m-d", $submissiondate);
+    $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
     $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
     $record->course = get_course_link($course);
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
-    $record->duedate = $duedate == 0 ? '--' : date("Y-m-d", $duedate);
-    $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("Y-m-d", $feedbackduedate);
+    $record->summative = get_summative_state($gradeitem);
+    $record->duedate = $duedate == 0 ? '--' : date("d. M Y", $duedate);
+    $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
     $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
     $record->student = $gradeitem->student;
     $record->grader = $gradeitem->grader;

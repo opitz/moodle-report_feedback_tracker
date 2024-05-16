@@ -45,6 +45,53 @@ require_once("$CFG->dirroot/user/externallib.php");
 class report_feedback_tracker_external extends \core_external\external_api {
 
     /**
+     * Describes the parameters for save_summative_state webservice.
+     *
+     * @return external_function_parameters
+     * @since  Moodle 3.1
+     */
+    public static function save_summative_state_parameters() {
+        return new external_function_parameters(
+            [
+                'itemid' => new external_value(PARAM_RAW, 'The ID of the grade item'),
+                'summativestate' => new external_value(PARAM_RAW, 'The summative state (0 or 1)'),
+            ]
+        );
+    }
+
+    /**
+     * Saving the summative state for a grade item.
+     *
+     * @param int $itemid The ID of the grade item
+     * @param bool $summativestate The hiding state (0 or 1)
+     * @return bool will return success.
+     */
+    public static function save_summative_state(int $itemid, bool $summativestate): bool {
+        global $DB;
+
+        if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid])) {
+            $record->summative = $summativestate;
+            $DB->update_record('report_feedback_tracker', $record);
+        } else {
+            $record = new stdClass();
+            $record->gradeitem = $itemid;
+            $record->summative = $summativestate;
+            $record->feedbackduedate = 0;
+            $DB->insert_record('report_feedback_tracker', $record);
+        }
+
+        return $summativestate;
+    }
+
+    /**
+     * Describes the return value for save_summative_state
+     *
+     * @return external_warnings
+     */
+    public static function save_summative_state_returns() {
+    }
+
+    /**
      * Describes the parameters for save_hiding_state webservice.
      *
      * @return external_function_parameters

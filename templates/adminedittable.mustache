@@ -46,23 +46,23 @@
 <table class="table">
     <thead>
         <tr>
-            <th scope="col">{{#str}} assessment, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} summative, report_feedback_tracker {{/str}}</th>
+            <th scope="col" class="col_assessment">{{#str}} assessment, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} duedate, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} feedbackduedate, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} feedbacks, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} hidden_item, report_feedback_tracker {{/str}}</th>
+            <th scope="col" class="col_summative">{{#str}} summative, report_feedback_tracker {{/str}}</th>
+            <th scope="col" class="col_hidden">{{#str}} hidden_item, report_feedback_tracker {{/str}}</th>
         </tr>
     </thead>
     <tbody>
         {{#records}}
             <tr>
-                <td>{{{type}}} {{{assessment}}}</td>
-                <td>{{summative}}</td>
+                <td class="col_assessment">{{{type}}} {{{assessment}}}</td>
                 <td>{{duedate}}</td>
                 <td>{{{feedbackduedate}}}</td>
                 <td>{{{feedbacks}}}</td>
-                <td>{{{hidden}}}</td>
+                <td class="col_summative">{{{summative}}}</td>
+                <td class="col_hidden">{{{hidden}}}</td>
             </tr>
         {{/records}}
     </tbody>

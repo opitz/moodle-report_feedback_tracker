@@ -26,6 +26,16 @@ defined('MOODLE_INTERNAL') || die();
 
 $functions = [
 
+    'report_feedback_tracker_save_summative_state' => [
+        'classname'     => 'report_feedback_tracker_external',
+        'methodname'    => 'save_summative_state',
+        'classpath'     => 'report/feedback_tracker/externallib.php',
+        'description'   => 'Update the summative state via ajax',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'report/feedback_tracker:grade',
+    ],
+
     'report_feedback_tracker_save_hiding_state' => [
         'classname'     => 'report_feedback_tracker_external',
         'methodname'    => 'save_hiding_state',
