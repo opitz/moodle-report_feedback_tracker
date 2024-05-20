@@ -181,28 +181,60 @@ function get_admin_course_gradings($course, &$data) {
 
     $sql = "
     select
-    ROW_NUMBER() OVER (ORDER BY gi.id) AS unique_id,
-    gi.courseid,
-    gi.id as itemid,
-    gi.itemname,
-    gi.itemtype,
-    gi.itemmodule,
-    cm.id as assignmentid,
-    cm.visible,
-    gi.iteminstance,
-    gi.gradepass,
-    gi.grademax,
-    (select count(distinct gg.userid) from {grade_grades} gg where gg.itemid = gi.id and gg.finalgrade != '') as feedbacks,
-    rft.summative,
-    rft.hidden,
-    rft.feedbackduedate
-
+        ROW_NUMBER() OVER (ORDER BY gi.id) AS unique_id,
+        gi.courseid,
+        gi.id as itemid,
+        gi.itemname,
+        gi.itemtype,
+        gi.itemmodule,
+        cm.id as assignmentid,
+        cm.visible,
+        gi.iteminstance,
+        gi.gradepass,
+        gi.grademax,
+        CASE
+            WHEN gi.itemmodule = 'assign' THEN
+                (select duedate from {assign} where id = gi.iteminstance)
+            WHEN gi.itemmodule = 'lesson' THEN
+                (select deadline from {lesson} where id = gi.iteminstance)
+            WHEN gi.itemmodule = 'quiz' THEN
+                (select timeclose from {quiz} where id = gi.iteminstance)
+            WHEN gi.itemmodule = 'scorm' THEN
+                (select timeclose from {scorm} where id = gi.iteminstance)
+            WHEN gi.itemmodule = 'turnitintooltwo' THEN
+                0
+            WHEN gi.itemmodule = 'workshop' THEN
+                (select submissionend from {workshop} where id = gi.iteminstance)
+            ELSE 0 
+        END as duedate,
+        (select count(distinct gg.userid) from {grade_grades} gg where gg.itemid = gi.id and gg.finalgrade != '') as feedbacks,
+        CASE
+            WHEN gi.itemmodule = 'assign' THEN
+                (select count(distinct asu.userid) from {assign_submission} asu where asu.assignment = gi.iteminstance and asu.status = 'submitted')
+            WHEN gi.itemmodule = 'lesson' THEN
+                (select count(distinct la.userid) from {lesson_attempts} la where la.lessonid = gi.iteminstance)
+            WHEN gi.itemmodule = 'quiz' THEN
+                (select count(distinct qa.userid) from {quiz_attempts} qa where qa.quiz = gi.iteminstance and qa.state = 'finished')
+            WHEN gi.itemmodule = 'scorm' THEN
+                (select count(distinct sa.userid) from {scorm_attempt} sa where sa.scormid = gi.iteminstance)
+            WHEN gi.itemmodule = 'turnitintooltwo' THEN
+                (select count(distinct ts.userid) from {turnitintooltwo_submissions} ts where ts.turnitintooltwoid = gi.iteminstance and ts.submission_type = 1)
+            WHEN gi.itemmodule = 'workshop' THEN
+                (select count(distinct ws.authorid) from {workshop_submissions} ws where ws.workshopid = gi.iteminstance)
+            ELSE '--'
+        END as submissions,
+        rft.summative,
+        rft.hidden,
+        rft.feedbackduedate,
+        rft.method,
+        rft.responsibility,
+        rft.generalfeedback,
+        rft.gfurl
     from {grade_items} gi
-    left JOIN {modules} m on m.name = gi.itemmodule
-    left JOIN {course_modules} cm ON cm.instance = gi.iteminstance AND cm.course = gi.courseid AND m.id = cm.module
-    left JOIN {report_feedback_tracker} rft on rft.gradeitem = gi.id
-    where 1
-    and gi.courseid = :courseid
+        left JOIN {modules} m on m.name = gi.itemmodule
+        left JOIN {course_modules} cm ON cm.instance = gi.iteminstance AND cm.course = gi.courseid AND m.id = cm.module
+        left JOIN {report_feedback_tracker} rft on rft.gradeitem = gi.id
+    where gi.courseid = :courseid
 ";
     $params['courseid'] = $course->id;
     $gradeitems = $DB->get_records_sql($sql, $params);
@@ -234,25 +266,18 @@ function get_admin_feedback_record ($course, $gradeitem) {
     $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
     $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
 
-    // If the grade item is related to a module check and get it.
-    if ($gradeitem->itemmodule) {
-        // Get a submission due date and the number of submissions if available.
-        $feedbackmodule = get_feedback_module($gradeitem);
-    }
-    $duedate = isset($feedbackmodule->duedate) ? $feedbackmodule->duedate : 0;
-
     // Use a stored feedback due date if present, otherwise
     // calculate the feedback due date from the submission due date if there is one.
     $feedbackduedate = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
-        ($duedate ? $duedate + $feedbackperiod : 0);
+        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
 
     $record = new stdClass();
     $record->course = get_course_link($course);
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
-    $record->duedate = $duedate == 0 ? '--' : date("d/m/Y", $duedate);
+    $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d/m/Y", $gradeitem->duedate);
     $record->feedbackduedate = render_date_picker($gradeitem, $feedbackduedate);
-    $record->feedbacks = get_feedbacks($gradeitem, $feedbackmodule);
+    $record->feedbacks = get_feedbacks($gradeitem);
     $record->summative = get_summative_state($gradeitem);
     $record->hidden = get_hidden_state($gradeitem);
 
@@ -291,36 +316,54 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
 
     $sql = "
     select
-    ROW_NUMBER() OVER (ORDER BY gi.id) AS unique_id,
-    gi.courseid,
-    gi.id as itemid,
-    gi.itemname,
-    gi.itemtype,
-    gi.itemmodule,
-    gi.iteminstance,
-    u.id as studentid,
-    u.username as student,
-    gi.gradepass,
-    gi.grademax,
-    gg.finalgrade,
-    gg.feedback,
-    gg.timemodified as feedbackdate,
-    cm.id as assignmentid,
-    cm.visible,
-    um.username as grader,
-    gg.timemodified,
-    rft.summative,
-    rft.hidden,
-    rft.feedbackduedate
+        ROW_NUMBER() OVER (ORDER BY gi.id) AS unique_id,
+        gi.courseid,
+        gi.id as itemid,
+        gi.itemname,
+        gi.itemtype,
+        gi.itemmodule,
+        gi.iteminstance,
+        u.id as studentid,
+        u.username as student,
+        gi.gradepass,
+        gi.grademax,
+        CASE
+            WHEN gi.itemmodule = 'assign' THEN
+                (select duedate from {assign} where id = gi.iteminstance)
+            WHEN gi.itemmodule = 'lesson' THEN
+                (select deadline from {lesson} where id = gi.iteminstance)
+            WHEN gi.itemmodule = 'quiz' THEN
+                (select timeclose from {quiz} where id = gi.iteminstance)
+            WHEN gi.itemmodule = 'scorm' THEN
+                (select timeclose from {scorm} where id = gi.iteminstance)
+            WHEN gi.itemmodule = 'turnitintooltwo' THEN
+                0
+            WHEN gi.itemmodule = 'workshop' THEN
+                (select submissionend from {workshop} where id = gi.iteminstance)
+            ELSE 0 
+        END as duedate,
+        gg.finalgrade,
+        gg.feedback,
+        gg.timemodified as feedbackdate,
+        cm.id as assignmentid,
+        cm.visible,
+        um.username as grader,
+        gg.timemodified,
+        rft.summative,
+        rft.hidden,
+        rft.feedbackduedate,
+        rft.method,
+        rft.responsibility,
+        rft.generalfeedback,
+        rft.gfurl
     from {grade_items} gi
-    left JOIN {modules} m on m.name = gi.itemmodule
-    left JOIN {course_modules} cm ON cm.instance = gi.iteminstance AND cm.course = gi.courseid AND m.id = cm.module
-    left JOIN {report_feedback_tracker} rft on rft.gradeitem = gi.id
-    left join {grade_grades} gg on gi.id = gg.itemid and gg.userid = :userid
-    left join {user} u on u.id = gg.userid
-    left join {user} um on um.id = gg.usermodified
-    where 1
-    and gi.courseid = :courseid
+        left JOIN {modules} m on m.name = gi.itemmodule
+        left JOIN {course_modules} cm ON cm.instance = gi.iteminstance AND cm.course = gi.courseid AND m.id = cm.module
+        left JOIN {report_feedback_tracker} rft on rft.gradeitem = gi.id
+        left join {grade_grades} gg on gi.id = gg.itemid and gg.userid = :userid
+        left join {user} u on u.id = gg.userid
+        left join {user} um on um.id = gg.usermodified
+    where gi.courseid = :courseid
 ";
 
     $params['courseid'] = $course->id;
@@ -458,26 +501,20 @@ function get_user_feedback_record ($course, $userid, $gradeitem) {
     $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
     $feedbackextendperiod = $feedbackextenddays * $oneday; // Number of seconds in the feedback period.
 
-    // If the grade item is related to a module check and get it.
-    if ($gradeitem->itemmodule) {
-        // Get a submission due date if there is one.
-        $feedbackmodule = get_feedback_module($gradeitem);
-    }
-    $duedate = isset($feedbackmodule->duedate) ? $feedbackmodule->duedate : 0;
-
     // If there is a manual feedback due date use it, otherwise calculate it from the submission due date.
-    $feedbackduedate = $gradeitem->feedbackduedate ?? ($duedate ? $duedate + $feedbackperiod : 0);
+    $feedbackduedate = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
+        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
     // Get the submission date if any.
     $submissiondate = get_submissiondate($userid, $gradeitem);
 
     $record = new stdClass();
     $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
-    $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
+    $record->submissionstatus = get_submission_status($submissiondate, $gradeitem->duedate, $warningperiod);
     $record->course = get_course_link($course);
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
     $record->summative = get_summative_state($gradeitem);
-    $record->duedate = $duedate == 0 ? '--' : date("d. M Y", $duedate);
+    $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d. M Y", $gradeitem->duedate);
     $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
     $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
     $record->student = $gradeitem->student;
@@ -496,14 +533,14 @@ function get_user_feedback_record ($course, $userid, $gradeitem) {
  * @return string
  * @throws dml_exception
  */
-function get_feedbacks($gradeitem, $feedbackmodule) {
+function get_feedbacks($gradeitem) {
     global $DB;
 
     if (!$gradeitem->assignmentid) {
         return "";
     }
 
-    $content = "$gradeitem->feedbacks of $feedbackmodule->submissions";
+    $content = "$gradeitem->feedbacks of $gradeitem->submissions";
     return html_writer::div($content);
 }
 
@@ -936,6 +973,8 @@ function is_course_editor($courseid, $userid) {
 
 /**
  * Get information about the module instance.
+ *
+ * Retired for now, but could still be useful...
  *
  * @param stdClass $gradeitem
  * @return false|mixed|stdClass

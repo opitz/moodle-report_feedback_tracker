@@ -44,6 +44,10 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
         $table->add_field('hidden', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
         $table->add_field('feedbackduedate', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('method', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('responsibility', XMLDB_TYPE_TEXT, 'medium', null, null, null, null);
+        $table->add_field('generalfeedback', XMLDB_TYPE_TEXT, 'medium', null, null, null, null);
+        $table->add_field('gfurl', XMLDB_TYPE_CHAR, '255', null, null, null, null);
 
         // Adding keys to table report_feedback_tracker.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
@@ -53,8 +57,17 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
             $dbman->create_table($table);
         }
 
+        if ($oldversion < 2024052000) {
+            $field = new xmldb_field('responsibility', XMLDB_TYPE_TEXT, 'medium', null, null, null, null);
+            $dbman->add_field($table, $field);
+            $field = new xmldb_field('generalfeedback', XMLDB_TYPE_TEXT, 'medium', null, null, null, null);
+            $dbman->add_field($table, $field);
+            $field = new xmldb_field('gfurl', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $dbman->add_field($table, $field);
+        }
+
         // Savepoint reached.
-        upgrade_plugin_savepoint(true, 2024051300, 'report', 'feedback_tracker');
+        upgrade_plugin_savepoint(true, 2024052000, 'report', 'feedback_tracker');
     }
 
     return true;
