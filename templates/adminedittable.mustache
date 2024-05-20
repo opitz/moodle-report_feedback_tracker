@@ -37,6 +37,9 @@
                 "duedate": "",
                 "feedbackduedate": "",
                 "feedbacks": "",
+                "method": "",
+                "responsibility": "",
+                "generalfeedback": "",
                 "hidden": ""
             }
         ]
@@ -50,6 +53,9 @@
             <th scope="col">{{#str}} duedate, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} feedbackduedate, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} feedbacks, report_feedback_tracker {{/str}}</th>
+            <th scope="col">{{#str}} method, report_feedback_tracker {{/str}}</th>
+            <th scope="col">{{#str}} responsibility, report_feedback_tracker {{/str}}</th>
+            <th scope="col">{{#str}} generalfeedback, report_feedback_tracker {{/str}}</th>
             <th scope="col" class="col_summative">{{#str}} summative, report_feedback_tracker {{/str}}</th>
             <th scope="col" class="col_hidden">{{#str}} hidden_item, report_feedback_tracker {{/str}}</th>
         </tr>
@@ -61,6 +67,9 @@
                 <td>{{duedate}}</td>
                 <td>{{{feedbackduedate}}}</td>
                 <td>{{{feedbacks}}}</td>
+                <td>{{{method}}}</td>
+                <td>{{{responsibility}}}</td>
+                <td>{{{generalfeedback}}}</td>
                 <td class="col_summative">{{{summative}}}</td>
                 <td class="col_hidden">{{{hidden}}}</td>
             </tr>

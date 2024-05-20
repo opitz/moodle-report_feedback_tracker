@@ -3,6 +3,7 @@ import {updateHidingState} from './repository';
 import {updateFeedbackDuedate} from './repository';
 import {deleteFeedbackDuedate} from './repository';
 import {getString} from 'core/str';
+import ModalFactory from 'core/modal_factory';
 
 const Selectors = {
     actions: {
@@ -56,9 +57,15 @@ export const init = () => {
                 response = await deleteFeedbackDuedate(itemid);
                 // Hide hint.
                 document.querySelector('[data-itemid="' + itemid + '"]').style.display = 'none';
+                // Show message.
                 getString('feedbackduedate:removedmessage', 'report_feedback_tracker')
-                    .then((message) => {
-                        window.alert(message);
+                    .then(async (message) => {
+                        const modal = await ModalFactory.create({
+                            title: 'Please note:',
+                            body: message,
+                            footer: '',
+                        });
+                        modal.show();
                         return message;
                     });
             } else {

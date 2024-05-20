@@ -266,17 +266,12 @@ function get_admin_feedback_record ($course, $gradeitem) {
     $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
     $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
 
-    // Use a stored feedback due date if present, otherwise
-    // calculate the feedback due date from the submission due date if there is one.
-    $feedbackduedate = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
-        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
-
     $record = new stdClass();
     $record->course = get_course_link($course);
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
     $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d/m/Y", $gradeitem->duedate);
-    $record->feedbackduedate = render_date_picker($gradeitem, $feedbackduedate);
+    $record->feedbackduedate = render_feedbackduedate($gradeitem, $feedbackperiod);
     $record->feedbacks = get_feedbacks($gradeitem);
     $record->summative = get_summative_state($gradeitem);
     $record->hidden = get_hidden_state($gradeitem);
@@ -551,8 +546,13 @@ function get_feedbacks($gradeitem) {
  * @param int $date in seconds since 1.1.1970
  * @return string
  */
-function render_date_picker($gradeitem, $date = 0) {
+function render_feedbackduedate($gradeitem, $feedbackperiod = 0) {
     global $PAGE;
+
+    // Use a stored feedback due date if present, otherwise
+    // calculate the feedback due date from the submission due date if there is one.
+    $date = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
+        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
 
     $o = '';
     if ($PAGE->user_is_editing()) { // Render a date picker.

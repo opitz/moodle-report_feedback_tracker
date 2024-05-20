@@ -37,12 +37,16 @@ $string['feedbackduedate:removedmessage'] = 'Custom feedback due date removed.
 Feedback due date now again calculated from assessment due date where available.';
 $string['feedbacks'] = 'Feedbacks';
 $string['finalgrade_available'] = 'Finalgrade available';
+$string['generalfeedback'] = 'General Feedback';
 $string['grade'] = 'Grade';
 $string['grader'] = 'Grader';
 $string['hidden_item'] = 'Hidden';
+$string['method'] = 'Method';
 $string['navigationlink'] = 'Feedback tracker';
+$string['pleasenote'] = 'Please note:';
 $string['pluginname'] = 'Feedback tracker report';
 $string['privacy:metadata'] = 'The Feedback tracker report plugin does not store any personal data.';
+$string['responsibility'] = 'Responsibility';
 $string['settings:feedbackdeadlinedays'] = 'Feedback period';
 $string['settings:feedbackextenddays'] = 'Extension period';
 $string['settings:warningdays'] = 'Warning period';
