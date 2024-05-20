@@ -181,7 +181,6 @@ function get_admin_course_gradings($course, &$data) {
 
     $sql = "
     select
-    #gi.*,
     ROW_NUMBER() OVER (ORDER BY gi.id) AS unique_id,
     gi.courseid,
     gi.id as itemid,
@@ -189,6 +188,7 @@ function get_admin_course_gradings($course, &$data) {
     gi.itemtype,
     gi.itemmodule,
     cm.id as assignmentid,
+    cm.visible,
     gi.iteminstance,
     gi.gradepass,
     gi.grademax,
@@ -208,8 +208,8 @@ function get_admin_course_gradings($course, &$data) {
     $gradeitems = $DB->get_records_sql($sql, $params);
 
     foreach ($gradeitems as $gradeitem) {
-        // Check if the gradeitem module is supported.
-        if (!module_is_supported($gradeitem)) {
+        // Check if the gradeitem module is supported and visible.
+        if (!module_is_supported($gradeitem) || !$gradeitem->visible) {
             continue;
         }
 
@@ -306,6 +306,7 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
     gg.feedback,
     gg.timemodified as feedbackdate,
     cm.id as assignmentid,
+    cm.visible,
     um.username as grader,
     gg.timemodified,
     rft.summative,
@@ -327,15 +328,11 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
     $gradeitems = $DB->get_records_sql($sql, $params);
 
     foreach ($gradeitems as $gradeitem) {
-        // Check if the gradeitem module is supported.
-        if (!module_is_supported($gradeitem)) {
+        // Check if the gradeitem module is supported or hidden.
+        if (!$gradeitem->visible || $gradeitem->hidden || !module_is_supported($gradeitem)) {
             continue;
         }
 
-        // Check if the gradeitem is hidden in the user report.
-        if ($gradeitem->hidden) {
-            continue;
-        }
         // Check if a user is allowed to access the grade item.
         if ($userid) {
             if ($gradeitem->itemmodule) {
@@ -521,10 +518,9 @@ function render_date_picker($gradeitem, $date = 0) {
     global $PAGE;
 
     $o = '';
-    if ($PAGE->user_is_editing()) {
+    if ($PAGE->user_is_editing()) { // Render a date picker.
         // Default to current date if not specified.
-        $date = $date ?? time();
-
+        $date = isset($date) && $date > 0 ? $date : time();
         // Generate a unique ID for the date picker input field.
         $pickerid = html_writer::random_id('date_picker');
 
@@ -539,7 +535,7 @@ function render_date_picker($gradeitem, $date = 0) {
         ]);
 
         $o .= $inputfield;
-    } else {
+    } else { // Just return the date.
         $o .= $date ? date("d/m/Y", $date) : '--';
     }
 
