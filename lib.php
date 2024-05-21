@@ -22,6 +22,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// Include the AMD module for the modal form
+//$PAGE->requires->js_call_amd('report_feedback_tracker/modalform', 'init');
+
 /**
  * This function extends the course navigation with the report items
  *
@@ -320,6 +323,58 @@ function get_feedback_responsibility($gradeitem) {
 }
 
 function get_generalfeedback($gradeitem) {
+    global $OUTPUT, $PAGE;
+
+    $o = html_writer::div($gradeitem->generalfeedback, 'generalfeedback',
+        ['data-action' => 'report_feedback_tracker/generalfeedback', 'id' => 'generalfeedbacktext']);
+    $o = html_writer::start_div('generalfeedback',
+        ['data-action' => 'report_feedback_tracker/generalfeedback', 'id' => 'generalfeedbacktext']);
+    $o .= $gradeitem->generalfeedback;
+
+    if ($PAGE->user_is_editing()) {
+        $o .= html_writer::tag('i', '',
+            [
+                'id' => html_writer::random_id('generalfeedback'),
+                'class' => 'icon fa fa-pencil fa-fw',
+                'cmid' => $gradeitem->itemid,
+                'data-action' => 'report_feedback_tracker/showgeneralfeedback',
+                'data-generalfeedback' => $gradeitem->generalfeedback,
+            ]);
+//        $o .= "<i class='icon fa fa-pencil fa-fw'></i>";
+        /*
+        // Render the button to open the modal.
+        $o .= html_writer::tag('button', get_string('openmodal', 'report_feedback_tracker'),
+            [
+                'id' => 'openModalBtn',
+                'class' => 'btn btn-primary',
+                'cmid' => $gradeitem->itemid,
+                'data-action' => 'report_feedback_tracker/showgeneralfeedback',
+                'data-generalfeedback' => $gradeitem->generalfeedback,
+            ]);
+        */
+    }
+    $o .= html_writer::end_div();
+    return $o;
+}
+function get_generalfeedback1($gradeitem) {
+    global $OUTPUT, $PAGE;
+
+    $o = html_writer::div($gradeitem->generalfeedback, 'generalfeedback',
+        ['data-action' => 'report_feedback_tracker/generalfeedback', 'id' => 'generalfeedbacktext']);
+    if ($PAGE->user_is_editing()) {
+        // Render the button to open the modal.
+        $o .= html_writer::tag('button', get_string('openmodal', 'report_feedback_tracker'),
+            [
+                'id' => 'openModalBtn',
+                'class' => 'btn btn-primary',
+                'cmid' => $gradeitem->itemid,
+                'data-action' => 'report_feedback_tracker/showgeneralfeedback',
+                'data-generalfeedback' => $gradeitem->generalfeedback,
+            ]);
+    }
+    return $o;
+}
+function get_generalfeedback0($gradeitem) {
     global $OUTPUT, $PAGE;
 
     if ($PAGE->user_is_editing()) {

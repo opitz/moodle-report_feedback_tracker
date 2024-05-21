@@ -3,7 +3,7 @@ import {updateHidingState} from './repository';
 import {updateFeedbackDuedate} from './repository';
 import {deleteFeedbackDuedate} from './repository';
 import {getString} from 'core/str';
-import ModalFactory from 'core/modal_factory';
+import Modal from 'core/modal';
 
 const Selectors = {
     actions: {
@@ -60,7 +60,7 @@ export const init = () => {
                 // Show message.
                 getString('feedbackduedate:removedmessage', 'report_feedback_tracker')
                     .then(async (message) => {
-                        const modal = await ModalFactory.create({
+                        const modal = await Modal.create({
                             title: 'Please note:',
                             body: message,
                             footer: '',

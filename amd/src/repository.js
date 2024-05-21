@@ -43,3 +43,14 @@ export const deleteFeedbackDuedate = (
         itemid: itemid
     },
 }])[0];
+
+export const updateGeneralFeedback = (
+    itemid,
+    generalfeedback,
+) => pickDate([{
+    methodname: 'report_feedback_tracker_update_general_feedback',
+    args: {
+        itemid: itemid,
+        generalfeedback: generalfeedback
+    },
+}])[0];

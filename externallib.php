@@ -223,4 +223,50 @@ class report_feedback_tracker_external extends \core_external\external_api {
     public static function delete_feedback_duedate_returns() {
     }
 
+    /**
+     * Describes the parameters for delete_feedback_duedate webservice.
+     *
+     * @return external_function_parameters
+     * @since  Moodle 3.1
+     */
+    public static function update_general_feedback_parameters() {
+        return new external_function_parameters(
+            [
+                'itemid' => new external_value(PARAM_RAW, 'The ID of the grade item'),
+                'generalfeedback' => new external_value(PARAM_RAW, 'The general feedback'),
+            ]
+        );
+    }
+
+    /**
+     * Deleting the custom feedback due date for a grade item.
+     *
+     * @param int $itemid The ID of the grade item
+     * @return bool will return success.
+     */
+    public static function update_general_feedback(int $itemid, $generalfeedback): bool {
+        global $DB;
+
+        if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid])) {
+            $record->generalfeedback = $generalfeedback;
+            $DB->update_record('report_feedback_tracker', $record);
+            return true;
+        } else {
+            $record = new stdClass();
+            $record->gradeitem = $itemid;
+            $record->generalfeedback = $generalfeedback;
+            $DB->insert_record('report_feedback_tracker', $record);
+        }
+
+        return false;
+    }
+
+    /**
+     * Describes the return value for delete_feedback_duedate
+     *
+     * @return external_warnings
+     */
+    public static function update_general_feedback_returns() {
+    }
+
 }

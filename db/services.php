@@ -66,4 +66,14 @@ $functions = [
         'capabilities'  => 'report/feedback_tracker:grade',
     ],
 
+    'report_feedback_tracker_update_general_feedback' => [
+        'classname'     => 'report_feedback_tracker_external',
+        'methodname'    => 'update_general_feedback',
+        'classpath'     => 'report/feedback_tracker/externallib.php',
+        'description'   => 'Update the general feedback via ajax',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'report/feedback_tracker:grade',
+    ],
+
 ];

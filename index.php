@@ -37,6 +37,9 @@ if (!is_course_editor($courseid, $USER->id)) {
     redirect(new moodle_url("/?redirect=0"));
 }
 
+// Include the AMD module for the modal form
+$PAGE->requires->js_call_amd('report_feedback_tracker/modalform', 'init');
+
 $course = isset($courseid) ? get_course($courseid) : $COURSE;
 
 $pageparams = ['id' => $course->id];

@@ -65,3 +65,13 @@ $string['submissiondate'] = 'Submission date';
 $string['summative'] = 'Summative';
 $string['type'] = 'Type';
 $string['user'] = 'User';
+
+$string['modaltitle'] = 'Enter Text Fields';
+$string['textfield1label'] = 'Text Field 1';
+$string['textfield2label'] = 'Text Field 2';
+$string['datasaved'] = 'Data saved successfully';
+$string['error'] = 'Error';
+$string['openmodal'] = 'Open Modal';
+$string['cancel'] = 'Cancel';
+$string['submit'] = 'Submit';
+$string['loading'] = 'Loading...';
