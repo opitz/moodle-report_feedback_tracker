@@ -47,10 +47,12 @@ export const deleteFeedbackDuedate = (
 export const updateGeneralFeedback = (
     itemid,
     generalfeedback,
+    gfurl,
 ) => pickDate([{
     methodname: 'report_feedback_tracker_update_general_feedback',
     args: {
         itemid: itemid,
-        generalfeedback: generalfeedback
+        generalfeedback: generalfeedback,
+        gfurl: gfurl
     },
 }])[0];

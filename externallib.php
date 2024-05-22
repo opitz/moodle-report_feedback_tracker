@@ -234,31 +234,34 @@ class report_feedback_tracker_external extends \core_external\external_api {
             [
                 'itemid' => new external_value(PARAM_RAW, 'The ID of the grade item'),
                 'generalfeedback' => new external_value(PARAM_RAW, 'The general feedback'),
+                'gfurl' => new external_value(PARAM_RAW, 'The URL to general feedback'),
             ]
         );
     }
 
     /**
-     * Deleting the custom feedback due date for a grade item.
+     * Update or create the general feedback record for a grade item.
      *
      * @param int $itemid The ID of the grade item
+     * @param string $generalfeedback The general feedback text
+     * @param int $gfurl The general feedback URL
      * @return bool will return success.
      */
-    public static function update_general_feedback(int $itemid, $generalfeedback): bool {
+    public static function update_general_feedback(int $itemid, $generalfeedback, $gfurl): bool {
         global $DB;
 
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid])) {
             $record->generalfeedback = $generalfeedback;
+            $record->gfurl = $gfurl;
             $DB->update_record('report_feedback_tracker', $record);
-            return true;
         } else {
             $record = new stdClass();
             $record->gradeitem = $itemid;
-            $record->generalfeedback = $generalfeedback;
+            $record->generalfeedback = clean_param($generalfeedback, PARAM_TEXT);
+            $record->gfurl = clean_param($gfurl, PARAM_URL);
             $DB->insert_record('report_feedback_tracker', $record);
         }
-
-        return false;
+        return true;
     }
 
     /**

@@ -328,8 +328,10 @@ function get_generalfeedback($gradeitem) {
     $o = html_writer::div($gradeitem->generalfeedback, 'generalfeedback',
         ['data-action' => 'report_feedback_tracker/generalfeedback', 'id' => 'generalfeedbacktext']);
     $o = html_writer::start_div('generalfeedback',
-        ['data-action' => 'report_feedback_tracker/generalfeedback', 'id' => 'generalfeedbacktext']);
-    $o .= $gradeitem->generalfeedback;
+        ['data-action' => 'report_feedback_tracker/generalfeedback', 'id' => 'generalfeedback_' . $gradeitem->itemid]);
+//    $o .= $gradeitem->generalfeedback;
+    $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedback',
+        ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
 
     if ($PAGE->user_is_editing()) {
         $o .= html_writer::tag('i', '',
@@ -339,19 +341,8 @@ function get_generalfeedback($gradeitem) {
                 'cmid' => $gradeitem->itemid,
                 'data-action' => 'report_feedback_tracker/showgeneralfeedback',
                 'data-generalfeedback' => $gradeitem->generalfeedback,
+                'data-gfurl' => $gradeitem->gfurl,
             ]);
-//        $o .= "<i class='icon fa fa-pencil fa-fw'></i>";
-        /*
-        // Render the button to open the modal.
-        $o .= html_writer::tag('button', get_string('openmodal', 'report_feedback_tracker'),
-            [
-                'id' => 'openModalBtn',
-                'class' => 'btn btn-primary',
-                'cmid' => $gradeitem->itemid,
-                'data-action' => 'report_feedback_tracker/showgeneralfeedback',
-                'data-generalfeedback' => $gradeitem->generalfeedback,
-            ]);
-        */
     }
     $o .= html_writer::end_div();
     return $o;

@@ -19,8 +19,9 @@ export const init = async () => {
             const target = e.target;
             const itemid = target.getAttribute('cmid');
 
-            // Get the current general feedback text.
+            // Get the current general feedback text and URL.
             var generalfeedback = target.getAttribute('data-generalfeedback');
+            var gfurl = target.getAttribute('data-gfurl');
 
             // Show a modal with a free text and a URL field.
             const modal = await ModalSaveCancel.create({
@@ -30,20 +31,21 @@ export const init = async () => {
                         generalfeedbacklabel: 'Feedback text:',
                         generalfeedback: generalfeedback,
                         gfurllabel: 'Feedback URL:',
-                        gfurl: 'http://www.weltsensation.com'
+                        gfurl: gfurl
                     }),
-//                footer: 'An example footer content',
             });
             modal.show();
 
             modal.getRoot().on(ModalEvents.save, async () => {
-                // Get the general feedback text.
+                // Get the general feedback text and URL.
                 var generalfeedback = document.getElementById('generalfeedback').value;
+                var gfurl = document.getElementById('gfurl').value;
                 // Update the database.
-                const response = await updateGeneralFeedback(itemid, generalfeedback);
+                const response = await updateGeneralFeedback(itemid, generalfeedback, gfurl);
                 // Update the screen elements.
                 target.setAttribute('data-generalfeedback', generalfeedback);
-                document.getElementById('generalfeedbacktext').innerHTML = generalfeedback;
+                target.setAttribute('data-gfurl', gfurl);
+                document.getElementById('generalfeedbacktext_' + itemid).innerHTML = generalfeedback;
                 window.console.log(response);
             });
 
