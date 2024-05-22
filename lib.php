@@ -22,9 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-// Include the AMD module for the modal form
-//$PAGE->requires->js_call_amd('report_feedback_tracker/modalform', 'init');
-
 /**
  * This function extends the course navigation with the report items
  *
@@ -304,7 +301,7 @@ function get_feedback_method($gradeitem) {
             true,
             format_string($gradeitem->method),
             $gradeitem->method,
-            get_string('edit:module', 'report_feedback_tracker')
+            get_string('edit:method', 'report_feedback_tracker')
         );
         return html_writer::div($OUTPUT->render($edititem));
     }
