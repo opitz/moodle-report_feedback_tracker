@@ -36,12 +36,13 @@ class renderer extends plugin_renderer_base {
      * Render the table.
      *
      * @param int $userid
+     * @param int $courseid optional course id to limit output.
      * @return string
      * @throws \moodle_exception
      */
-    public function render_feedback_tracker_user_table($userid): string {
+    public function render_feedback_tracker_user_table($userid, $courseid = 0): string {
         // Get the table data.
-        $feedbacktrackerdata = get_feedback_tracker_user_data($userid);
+        $feedbacktrackerdata = get_feedback_tracker_user_data($userid, $courseid);
         // Render the table data.
         return $this->output->render_from_template('report_feedback_tracker/usertable', $feedbacktrackerdata);
     }
@@ -53,13 +54,21 @@ class renderer extends plugin_renderer_base {
      * @return string
      * @throws \moodle_exception
      */
-    public function render_feedback_tracker_admin_table($courseid): string {
+    public function render_feedback_tracker_admin_wrapper($courseid): string {
         // Get the table data.
         $feedbacktrackerdata = get_feedback_tracker_admin_data($courseid);
+        $feedbacktrackerdata->courseid = $courseid;
         // Render the table data.
         if ($feedbacktrackerdata->editmode) {
             return $this->output->render_from_template('report_feedback_tracker/adminedittable', $feedbacktrackerdata);
         }
+        return $this->output->render_from_template('report_feedback_tracker/adminwrapper', $feedbacktrackerdata);
+    }
+
+    public function render_feedback_tracker_admin_table($courseid): string {
+        // Get the table data.
+        $feedbacktrackerdata = get_feedback_tracker_admin_data($courseid);
+        // Render the table data.
         return $this->output->render_from_template('report_feedback_tracker/admintable', $feedbacktrackerdata);
     }
 

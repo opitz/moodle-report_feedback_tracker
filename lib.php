@@ -155,10 +155,21 @@ function report_feedback_tracker_supports_logstore($instance) {
  * @return stdClass
  */
 function get_feedback_tracker_admin_data($courseid) {
-    global $PAGE;
+    global $OUTPUT, $PAGE;
 
     $data = new stdClass();
     $data->records = [];
+
+    // Get the students of the course.
+    $sdata = new stdClass();
+    $context = \context_course::instance($courseid);
+    $users = get_enrolled_users($context);
+    $sdata->students = [];
+    foreach ($users as $user) {
+        $sdata->students[] = $user;
+    }
+
+    $data->studentdd = $OUTPUT->render_from_template('report_feedback_tracker/studentdropdown', $sdata);
 
     // Check if the user is in edit mode.
     $data->editmode = $PAGE->user_is_editing();
@@ -205,20 +216,25 @@ function get_admin_course_gradings($course, &$data) {
                 0
             WHEN gi.itemmodule = 'workshop' THEN
                 (select submissionend from {workshop} where id = gi.iteminstance)
-            ELSE 0 
+            ELSE 0
         END as duedate,
         (select count(distinct gg.userid) from {grade_grades} gg where gg.itemid = gi.id and gg.finalgrade != '') as feedbacks,
         CASE
             WHEN gi.itemmodule = 'assign' THEN
-                (select count(distinct asu.userid) from {assign_submission} asu where asu.assignment = gi.iteminstance and asu.status = 'submitted')
+                (select count(distinct asu.userid) from {assign_submission} asu
+                                                   where asu.assignment = gi.iteminstance and asu.status = 'submitted')
             WHEN gi.itemmodule = 'lesson' THEN
-                (select count(distinct la.userid) from {lesson_attempts} la where la.lessonid = gi.iteminstance)
+                (select count(distinct la.userid) from {lesson_attempts} la
+                                                  where la.lessonid = gi.iteminstance)
             WHEN gi.itemmodule = 'quiz' THEN
-                (select count(distinct qa.userid) from {quiz_attempts} qa where qa.quiz = gi.iteminstance and qa.state = 'finished')
+                (select count(distinct qa.userid) from {quiz_attempts} qa
+                                                  where qa.quiz = gi.iteminstance and qa.state = 'finished')
             WHEN gi.itemmodule = 'scorm' THEN
-                (select count(distinct sa.userid) from {scorm_attempt} sa where sa.scormid = gi.iteminstance)
+                (select count(distinct sa.userid) from {scorm_attempt} sa
+                                                  where sa.scormid = gi.iteminstance)
             WHEN gi.itemmodule = 'turnitintooltwo' THEN
-                (select count(distinct ts.userid) from {turnitintooltwo_submissions} ts where ts.turnitintooltwoid = gi.iteminstance and ts.submission_type = 1)
+                (select count(distinct ts.userid) from {turnitintooltwo_submissions} ts
+                                                  where ts.turnitintooltwoid = gi.iteminstance and ts.submission_type = 1)
             WHEN gi.itemmodule = 'workshop' THEN
                 (select count(distinct ws.authorid) from {workshop_submissions} ws where ws.workshopid = gi.iteminstance)
             ELSE '--'
@@ -347,7 +363,7 @@ function get_admin_generalfeedback($gradeitem) {
         $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedbacktext',
             ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
 
-        $o .= html_writer::tag('i', '',
+        $o .= ' ' . html_writer::tag('i', '',
             [
                 'id' => html_writer::random_id('generalfeedback'),
                 'class' => 'icon fa fa-pencil fa-fw',
@@ -359,8 +375,6 @@ function get_admin_generalfeedback($gradeitem) {
     } else {
         $o .= html_writer::div($gradeitem->generalfeedback, 'generalfeedbacktext',
             ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
-
-
     }
     $o .= html_writer::end_div();
     return $o;
@@ -389,15 +403,21 @@ function get_user_generalfeedback($gradeitem) {
  * Get the Feedback Tracker data for all courses of a given user.
  *
  * @param int $userid
+ * @param int $courseid
  * @return stdClass
  */
-function get_feedback_tracker_user_data($userid) {
+function get_feedback_tracker_user_data($userid, $courseid) {
     $data = new stdClass();
     $data->records = [];
 
-    $enrolledcourses = enrol_get_users_courses($userid);
-    foreach ($enrolledcourses as $course) {
+    if ($courseid) {
+        $course = get_course($courseid);
         get_user_course_gradings($course, $userid, $data);
+    } else {
+        $enrolledcourses = enrol_get_users_courses($userid);
+        foreach ($enrolledcourses as $course) {
+            get_user_course_gradings($course, $userid, $data);
+        }
     }
     return $data;
 }
@@ -441,7 +461,7 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
                 0
             WHEN gi.itemmodule = 'workshop' THEN
                 (select submissionend from {workshop} where id = gi.iteminstance)
-            ELSE 0 
+            ELSE 0
         END as duedate,
         gg.finalgrade,
         gg.feedback,

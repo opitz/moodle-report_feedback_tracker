@@ -1,11 +1,9 @@
-import {call as summativeItem} from 'core/ajax';
-import {call as hideItem} from 'core/ajax';
-import {call as pickDate} from 'core/ajax';
+import {call as ajax} from 'core/ajax';
 
 export const updateSummativeState = (
     itemid,
     summativestate,
-) => summativeItem([{
+) => ajax([{
     methodname: 'report_feedback_tracker_save_summative_state',
     args: {
         itemid: itemid,
@@ -16,7 +14,7 @@ export const updateSummativeState = (
 export const updateHidingState = (
     itemid,
     hidingstate,
-) => hideItem([{
+) => ajax([{
     methodname: 'report_feedback_tracker_save_hiding_state',
     args: {
         itemid: itemid,
@@ -27,7 +25,7 @@ export const updateHidingState = (
 export const updateFeedbackDuedate = (
     itemid,
     duedate,
-) => pickDate([{
+) => ajax([{
     methodname: 'report_feedback_tracker_save_feedback_duedate',
     args: {
         itemid: itemid,
@@ -37,7 +35,7 @@ export const updateFeedbackDuedate = (
 
 export const deleteFeedbackDuedate = (
     itemid,
-) => pickDate([{
+) => ajax([{
     methodname: 'report_feedback_tracker_delete_feedback_duedate',
     args: {
         itemid: itemid
@@ -48,11 +46,22 @@ export const updateGeneralFeedback = (
     itemid,
     generalfeedback,
     gfurl,
-) => pickDate([{
+) => ajax([{
     methodname: 'report_feedback_tracker_update_general_feedback',
     args: {
         itemid: itemid,
         generalfeedback: generalfeedback,
         gfurl: gfurl
+    },
+}])[0];
+
+export const renderStudentFeedback = (
+    studentid,
+    courseid,
+) => ajax([{
+    methodname: 'report_feedback_tracker_render_student_feedback',
+    args: {
+        studentid: studentid,
+        courseid: courseid
     },
 }])[0];

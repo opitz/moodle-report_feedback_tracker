@@ -76,4 +76,14 @@ $functions = [
         'capabilities'  => 'report/feedback_tracker:grade',
     ],
 
+    'report_feedback_tracker_render_student_feedback' => [
+        'classname'     => 'report_feedback_tracker_external',
+        'methodname'    => 'render_student_feedback',
+        'classpath'     => 'report/feedback_tracker/externallib.php',
+        'description'   => 'Render the feedback table for a student',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'report/feedback_tracker:grade',
+    ],
+
 ];

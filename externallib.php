@@ -34,6 +34,7 @@ use core_external\util as external_util;
 defined('MOODLE_INTERNAL') || die;
 
 require_once("$CFG->dirroot/user/externallib.php");
+require_once($CFG->dirroot.'/report/feedback_tracker/lib.php');
 
 /**
  * External functions.
@@ -224,7 +225,7 @@ class report_feedback_tracker_external extends \core_external\external_api {
     }
 
     /**
-     * Describes the parameters for delete_feedback_duedate webservice.
+     * Describes the parameters for update_general_feedback webservice.
      *
      * @return external_function_parameters
      * @since  Moodle 3.1
@@ -265,11 +266,52 @@ class report_feedback_tracker_external extends \core_external\external_api {
     }
 
     /**
-     * Describes the return value for delete_feedback_duedate
+     * Describes the return value for update_general_feedback
      *
      * @return external_warnings
      */
     public static function update_general_feedback_returns() {
+    }
+
+    /**
+     * Describes the parameters for render_student_feedback webservice.
+     *
+     * @return external_function_parameters
+     * @since  Moodle 3.1
+     */
+    public static function render_student_feedback_parameters() {
+        return new external_function_parameters(
+            [
+                'studentid' => new external_value(PARAM_RAW, 'The ID of the student, 0 for admin'),
+                'courseid' => new external_value(PARAM_RAW, 'The ID of the course'),
+            ]
+        );
+    }
+
+    /**
+     * Render the feedback table for a student or the admin.
+     *
+     * @param int $studentid The ID of the grade item
+     * @param int $courseid The ID of the course if any.
+     * @return string the rendered feedback table.
+     */
+    public static function render_student_feedback(int $studentid, int $courseid): string {
+        global $PAGE;
+        // Get the renderer and use it.
+        $renderer = $PAGE->get_renderer('report_feedback_tracker');
+        if ($studentid === 0) { // This is a course admin.
+            return $renderer->render_feedback_tracker_admin_table($courseid);
+        }
+        return $renderer->render_feedback_tracker_user_table($studentid, $courseid);
+
+    }
+
+    /**
+     * Describes the return value for delete_feedback_duedate
+     *
+     * @return external_warnings
+     */
+    public static function render_student_feedback_returns() {
     }
 
 }

@@ -27,10 +27,14 @@ use core\report_helper;
 require('../../config.php');
 require_once($CFG->dirroot.'/report/feedback_tracker/locallib.php');
 
+require_login();
+
 // If there is no course ID given redirect to the user report.
 if (!$courseid = optional_param('id', null, PARAM_INT)) {
     redirect(new moodle_url("$CFG->wwwroot/report/feedback_tracker/user.php?userid=".$USER->id));
 }
+
+$course = isset($courseid) ? get_course($courseid) : $COURSE;
 
 // Check if the user is able to see the report and redirect to home if not.
 if (!is_course_editor($courseid, $USER->id)) {
@@ -40,13 +44,12 @@ if (!is_course_editor($courseid, $USER->id)) {
 // Include the AMD module for manipulating general feedback output.
 $PAGE->requires->js_call_amd('report_feedback_tracker/generalfeedback', 'init');
 
-$course = isset($courseid) ? get_course($courseid) : $COURSE;
+// Include the AMD module for the student view.
+$PAGE->requires->js_call_amd('report_feedback_tracker/studentview', 'init');
 
 $pageparams = ['id' => $course->id];
 $PAGE->set_url('/report/feedback_tracker/index.php', $pageparams);
 $PAGE->set_pagelayout('report');
-
-require_login($course);
 
 // Set the header and print it.
 $PAGE->set_title($course->shortname .':' . get_string('pluginname', 'report_feedback_tracker'));
@@ -59,6 +62,6 @@ report_helper::print_report_selector($pluginname);
 
 // Get the renderer and use it.
 $renderer = $PAGE->get_renderer('report_feedback_tracker');
-echo $renderer->render_feedback_tracker_admin_table($courseid);
+echo $renderer->render_feedback_tracker_admin_wrapper($courseid);
 
 echo $OUTPUT->footer();
