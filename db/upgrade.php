@@ -32,7 +32,7 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();
 
-    if ($oldversion < 2024051300) {
+    if ($oldversion < 2024052400) {
 
         // Define table report_feedback_tracker to be created.
         $table = new xmldb_table('report_feedback_tracker');
@@ -58,19 +58,7 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
         }
 
         // Savepoint reached.
-        upgrade_plugin_savepoint(true, 2024052000, 'report', 'feedback_tracker');
-    }
-
-    if ($oldversion < 2024052000) {
-        $field = new xmldb_field('responsibility', XMLDB_TYPE_TEXT, 'medium', null, null, null, null);
-        $dbman->add_field($table, $field);
-        $field = new xmldb_field('generalfeedback', XMLDB_TYPE_TEXT, 'medium', null, null, null, null);
-        $dbman->add_field($table, $field);
-        $field = new xmldb_field('gfurl', XMLDB_TYPE_CHAR, '255', null, null, null, null);
-        $dbman->add_field($table, $field);
-
-        // Savepoint reached.
-        upgrade_plugin_savepoint(true, 2024052000, 'report', 'feedback_tracker');
+        upgrade_plugin_savepoint(true, 2024052400, 'report', 'feedback_tracker');
     }
 
     return true;

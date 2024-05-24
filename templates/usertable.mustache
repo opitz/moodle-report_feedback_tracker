@@ -34,7 +34,7 @@
                 "course": "",
                 "assessment": "",
                 "type": "",
-                "summative": "",
+                "type": "",
                 "duedate": "",
                 "submissiondate": "",
                 "feedbackduedate": "",
@@ -49,14 +49,12 @@
         <tr>
             <th scope="col">{{#str}} course, report_feedback_tracker {{/str}}</th>
             <th scope="col" class="col_assessment">{{#str}} assessment, report_feedback_tracker {{/str}}</th>
-            <th scope="col" class="col_summative">{{#str}} summative, report_feedback_tracker {{/str}}</th>
+            <th scope="col" class="col_type">{{#str}} type, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} duedate, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} submissiondate, report_feedback_tracker {{/str}}</th>
-            <th scope="col"></th>
             <th scope="col">{{#str}} feedbackduedate, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} feedback, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} method, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} responsibility, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} generalfeedback, report_feedback_tracker {{/str}}</th>
         </tr>
     </thead>
@@ -65,18 +63,14 @@
             <tr>
                 <td>{{{course}}}</td>
                 <td class="col_assessment">{{{type}}} {{{assessment}}}</td>
-                <td class="col_summative">{{{summative}}}</td>
+                <td class="col_type">{{{summative}}}</td>
                 <td>{{duedate}}</td>
                 <td>{{submissiondate}}</td>
-                <td>{{{submissionstatus}}}</td>
                 <td>{{{feedbackduedate}}}</td>
                 <td>{{{feedback}}}</td>
                 <td>{{{method}}}</td>
-                <td>{{{responsibility}}}</td>
                 <td class="col_generalfeedback">{{{generalfeedback}}}</td>
             </tr>
         {{/records}}
     </tbody>
 </table>
-
-<hr>

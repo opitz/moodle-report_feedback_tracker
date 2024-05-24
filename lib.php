@@ -551,14 +551,14 @@ function get_user_feedback_record ($course, $userid, $gradeitem) {
     $record->course = get_course_link($course);
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
-    $record->summative = $gradeitem->summative ? "<i class='fa fa-check'></i>" : '';
+    $record->summative = $gradeitem->summative ? "summative" : "formative";
     $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d. M Y", $gradeitem->duedate);
     $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
     $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
     $record->student = $gradeitem->student;
     $record->grader = $gradeitem->grader;
     $record->feedback = ($submissiondate == 0) ? '' :
-        get_feedback_badge($feedbackduedate, $feedbackextendperiod, $gradeitem->feedbackdate, $gradeitem->finalgrade);
+        get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod);
     $record->method = html_writer::div($gradeitem->method);
     $record->responsibility = html_writer::div($gradeitem->responsibility);
     $record->generalfeedback = get_user_generalfeedback($gradeitem);
@@ -599,20 +599,23 @@ function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
         // Get the submission date if any.
         $submissiondate = get_ttt_submission_date($tttpart, $userid);
 
+        $formativetext = get_string('formative', 'report_feedback_tracker');
+        $summativetext = get_string('summative', 'report_feedback_tracker');
+
         $record = new stdClass();
         $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
         $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
         $record->course = get_course_link($course);
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);
         $record->type = get_item_type($gradeitem);
-        $record->summative = $gradeitem->summative ? "<i class='fa fa-check'></i>" : '';
+        $record->summative = $gradeitem->summative ? $summativetext : $formativetext;
         $record->duedate = $duedate == 0 ? '--' : date("d. M Y", $duedate);
         $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
         $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
         $record->student = $gradeitem->student;
         $record->grader = $gradeitem->grader;
         $record->feedback = ($submissiondate == 0) ? '' :
-            get_feedback_badge($feedbackduedate, $feedbackextendperiod, $gradeitem->feedbackdate, $gradeitem->finalgrade);
+            get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod);
 
         $data->records[] = $record;
     }
@@ -632,9 +635,10 @@ function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
 function get_ttt_submission_date($tttpart, $userid) {
     global $DB;
 
-    $res = $DB->get_record('turnitintooltwo_submissions', ['submission_part' => $tttpart->id, 'userid' => $userid]);
-
-    return $res->submission_modified;
+    if ($res = $DB->get_record('turnitintooltwo_submissions', ['submission_part' => $tttpart->id, 'userid' => $userid])) {
+        return $res->submission_modified;
+    }
+    return 0;
 }
 
 /**
@@ -654,27 +658,20 @@ function get_tttparts($gradeitem) {
  * Get the feedbacks and submissions.
  *
  * @param stdClass $gradeitem
- * @param stdClass $feedbackmodule
  * @return string
  * @throws dml_exception
  */
 function get_feedbacks($gradeitem) {
-    global $DB;
-
-    if (!$gradeitem->assignmentid) {
-        return "";
-    }
-
-    $content = "$gradeitem->feedbacks of $gradeitem->submissions";
-    return html_writer::div($content);
+    return $gradeitem->assignmentid ? html_writer::div("$gradeitem->feedbacks of $gradeitem->submissions") : '';
 }
 
 /**
  * Render a date picker when in edit mode, return the date otherwise.
  *
  * @param stdClass $gradeitem
- * @param int $date in seconds since 1.1.1970
+ * @param int $feedbackperiod days of feedback extend period (yellow status) in seconds.
  * @return string
+ * @throws coding_exception
  */
 function render_feedbackduedate($gradeitem, $feedbackperiod = 0) {
     global $PAGE;
@@ -899,54 +896,111 @@ function get_submission_status($submissiondate, $duedate, $warningperiod) {
 /**
  * Get a feedback badge.
  *
+ * @param stdClass $gradeitem
  * @param int $feedbackduedate
  * @param int $feedbackextendperiod
- * @param int $feedbackdate
- * @param float $finalgrade
  * @return string
+ * @throws coding_exception
  */
-function get_feedback_badge($feedbackduedate, $feedbackextendperiod, $feedbackdate, $finalgrade) {
-
+function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod) {
+    $contact = $gradeitem->responsibility;
     // Final grade is available even if there is no due date.
-    if (!$feedbackduedate && isset($finalgrade)) {
-        return '<span class="badge badge-pill badge-success">' .
-            get_string('finalgrade_available', 'report_feedback_tracker') . '</span>';
+    if (!$feedbackduedate && isset($gradeitem->finalgrade)) {
+        $o = html_writer::div(get_string('finalgrade_available', 'report_feedback_tracker'),
+            "badge badge-pill badge-success");
+
+        if ($contact) {
+            $o .= html_writer::start_div('feedback_tracker_contact');
+            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
+                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::end_div();
+        }
+        return $o;
     }
 
     // Feedback was given in time.
-    if (isset($finalgrade) && $feedbackdate <= $feedbackduedate) {
-        return '<span class="badge badge-pill badge-success">' .
-            get_string('feedback:in_time', 'report_feedback_tracker') . '</span>';
+    if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate <= $feedbackduedate) {
+        $o = html_writer::div(get_string('feedback:in_time', 'report_feedback_tracker'),
+            "badge badge-pill badge-success");
+        if ($contact) {
+            $o .= html_writer::start_div('feedback_tracker_contact');
+            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
+                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::end_div();
+        }
+        return $o;
     }
 
     $warningduedate = $feedbackduedate + $feedbackextendperiod;
 
     // Feedback was given within the extend period.
-    if (isset($finalgrade) && $feedbackdate <= $warningduedate) {
-        return '<span class="badge badge-pill badge-warning">' .
-            get_string('feedback:warning', 'report_feedback_tracker') . '</span>';
+    if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate <= $warningduedate) {
+        $o = html_writer::div(get_string('feedback:warning', 'report_feedback_tracker'),
+            "badge badge-pill badge-warning");
+        if ($contact) {
+            $o .= html_writer::start_div('feedback_tracker_contact');
+            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
+                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::end_div();
+        }
+        return $o;
     }
 
     // Feedback was given outside the extend period.
-    if (isset($finalgrade) && $feedbackdate > $warningduedate) {
-        return '<span class="badge badge-pill badge-danger">' .
-            get_string('feedback:late', 'report_feedback_tracker') . '</span>';
+    if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate > $warningduedate) {
+        $o = html_writer::div(get_string('feedback:late', 'report_feedback_tracker'),
+            "badge badge-pill badge-danger");
+        if ($contact) {
+            $o .= html_writer::start_div('feedback_tracker_contact');
+            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
+                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::end_div();
+        }
+        return $o;
     }
 
     // NO feedback was given but it's still within the extend period.
-    if (!isset($finalgrade) && $feedbackduedate < time() && $warningduedate >= time() ) {
-        return '<span class="badge badge-pill badge-warning">' .
-            get_string('feedback:due', 'report_feedback_tracker') . '</span>';
+    if (!isset($gradeitem->finalgrade) && $feedbackduedate < time() && $warningduedate >= time() ) {
+        $o = html_writer::div(get_string('feedback:due', 'report_feedback_tracker'),
+            "badge badge-pill badge-warning");
+        if ($contact) {
+            $o .= html_writer::start_div('feedback_tracker_contact');
+            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
+                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::end_div();
+        }
+        return $o;
     }
 
     // NO feedback was given, and it is beyond the extend period.
-    if (!isset($finalgrade) && $warningduedate < time()) {
-        return '<span class="badge badge-pill badge-danger">' .
-            get_string('feedback:overdue', 'report_feedback_tracker') . '</span>';
+    if (!isset($gradeitem->finalgrade) && $warningduedate < time()) {
+        $o = html_writer::div(get_string('feedback:overdue', 'report_feedback_tracker'),
+            "badge badge-pill badge-danger");
+        if ($contact) {
+            $o .= html_writer::start_div('feedback_tracker_contact');
+            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
+                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::end_div();
+        }
+        return $o;
     }
 
-    // The feedback is due within the due time - so do nothing.
-    return '';
+    // The feedback is due within the due time - so do nothing and show a contact.
+    $o = '';
+    if ($contact) {
+        $o .= html_writer::start_div('feedback_tracker_contact');
+        $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
+            ': ', 'feedback_tracker_contact_title');
+        $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+        $o .= html_writer::end_div();
+    }
+    return $o;
 }
 
 /**
@@ -1192,6 +1246,8 @@ function get_feedback_module($gradeitem) {
 }
 
 /**
+ * Callback to handle inplace editable items.
+ *
  * @param string $itemtype
  * @param int $itemid
  * @param string $newvalue
@@ -1200,7 +1256,10 @@ function get_feedback_module($gradeitem) {
  * @throws dml_exception
  */
 function report_feedback_tracker_inplace_editable($itemtype, $itemid, $newvalue) {
-    global $DB, $USER;
+    global $DB, $PAGE;
+
+    // Set the page context.
+    $PAGE->set_context(context_system::instance());
 
     if (in_array($itemtype, ['method', 'generalfeedback', 'responsibility'])) {
         // Update the database.

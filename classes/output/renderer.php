@@ -33,7 +33,7 @@ use plugin_renderer_base;
 class renderer extends plugin_renderer_base {
 
     /**
-     * Render the table.
+     * Render the user table.
      *
      * @param int $userid
      * @param int $courseid optional course id to limit output.
@@ -48,7 +48,7 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * Render the table for an admin etc.
+     * Render the wrapper containing the table for a course admin.
      *
      * @param int $courseid
      * @return string
@@ -65,6 +65,13 @@ class renderer extends plugin_renderer_base {
         return $this->output->render_from_template('report_feedback_tracker/adminwrapper', $feedbacktrackerdata);
     }
 
+    /**
+     * Render the feedback tracker admin table.
+     *
+     * @param int $courseid
+     * @return string
+     * @throws \moodle_exception
+     */
     public function render_feedback_tracker_admin_table($courseid): string {
         // Get the table data.
         $feedbacktrackerdata = get_feedback_tracker_admin_data($courseid);

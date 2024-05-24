@@ -36,8 +36,6 @@ defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->dirroot/user/externallib.php");
 require_once($CFG->dirroot.'/report/feedback_tracker/lib.php');
 
-//$PAGE->set_context(context_course::instance($COURSE->id));
-
 /**
  * External functions.
  *

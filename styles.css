@@ -6,7 +6,7 @@
     max-width: 250px;
 }
 
-.col_summative {
+.col_type {
     text-align: center;
 }
 
@@ -25,3 +25,6 @@
     max-height: 100em; /* Height to fit the full text */
 }
 
+.feedback_tracker_contact_title {
+    font-weight: bold;
+}
