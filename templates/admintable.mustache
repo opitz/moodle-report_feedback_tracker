@@ -75,3 +75,9 @@
         {{/records}}
     </tbody>
 </table>
+
+{{#js}}
+    require(['report_feedback_tracker/studentview'], function(studentdd) {
+    studentdd.init();
+    });
+{{/js}}

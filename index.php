@@ -46,7 +46,7 @@ if (!is_course_editor($courseid, $USER->id)) {
 $PAGE->requires->js_call_amd('report_feedback_tracker/generalfeedback', 'init');
 
 // Include the AMD module for the student view.
-$PAGE->requires->js_call_amd('report_feedback_tracker/studentview', 'init');
+//$PAGE->requires->js_call_amd('report_feedback_tracker/studentview', 'init');
 
 $pageparams = ['id' => $course->id];
 $PAGE->set_url('/report/feedback_tracker/index.php', $pageparams);
