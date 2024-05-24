@@ -32,6 +32,7 @@ $userid = optional_param('userid', null, PARAM_INT); // The optional user ID.
 $course = isset($courseid) ? get_course($courseid) : $COURSE;
 
 $pageparams = ['id' => $course->id];
+$PAGE->set_context(context_course::instance($COURSE->id));
 $PAGE->set_url('/report/feedback_tracker/index.php', $pageparams);
 $PAGE->set_pagelayout('report');
 

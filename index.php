@@ -27,7 +27,7 @@ use core\report_helper;
 require('../../config.php');
 require_once($CFG->dirroot.'/report/feedback_tracker/locallib.php');
 
-require_login();
+$PAGE->set_context(context_course::instance($COURSE->id));
 
 // If there is no course ID given redirect to the user report.
 if (!$courseid = optional_param('id', null, PARAM_INT)) {

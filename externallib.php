@@ -36,6 +36,8 @@ defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->dirroot/user/externallib.php");
 require_once($CFG->dirroot.'/report/feedback_tracker/lib.php');
 
+//$PAGE->set_context(context_course::instance($COURSE->id));
+
 /**
  * External functions.
  *
@@ -297,6 +299,9 @@ class report_feedback_tracker_external extends \core_external\external_api {
      */
     public static function render_student_feedback(int $studentid, int $courseid): string {
         global $PAGE;
+
+        // Set the page context.
+        $PAGE->set_context(context_course::instance($courseid));
         // Get the renderer and use it.
         $renderer = $PAGE->get_renderer('report_feedback_tracker');
         if ($studentid === 0) { // This is a course admin.
