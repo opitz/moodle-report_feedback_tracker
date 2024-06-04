@@ -24,12 +24,12 @@ export const init = async() => {
 
             // Show a modal with a free text and a URL field.
             const modal = await ModalSaveCancel.create({
-                title: 'General Feedback',
+                title: 'Additional information',
                 body: Templates.render('report_feedback_tracker/generalfeedback_modal',
                     {
-                        generalfeedbacklabel: 'Feedback text:',
+                        generalfeedbacklabel: 'Text:',
                         generalfeedback: generalfeedback,
-                        gfurllabel: 'Feedback URL:',
+                        gfurllabel: 'URL:',
                         gfurl: gfurl
                     }),
             });
