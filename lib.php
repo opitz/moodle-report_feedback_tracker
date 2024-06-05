@@ -1010,6 +1010,8 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod)
  * @return bool
  */
 function module_is_supported($gradeitem) {
+    global $PAGE;
+
     // Course type is not supported.
     if ($gradeitem->itemtype == 'course') {
         return false;
@@ -1020,8 +1022,8 @@ function module_is_supported($gradeitem) {
         return true;
     }
 
-    // Invisible items are invisible.
-    if ($gradeitem->hidden || !$gradeitem->visible) {
+    // Invisible items are invisible unless you are editing.
+    if (($gradeitem->hidden || !$gradeitem->visible) && !$PAGE->user_is_editing()) {
         return false;
     }
 
