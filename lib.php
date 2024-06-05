@@ -192,7 +192,7 @@ function get_admin_course_gradings($course, &$data) {
 
     $sql = "
     select
-        ROW_NUMBER() OVER (ORDER BY gi.id) AS unique_id,
+        ROW_NUMBER() OVER (ORDER BY gi.id) AS uniqueid,
         gi.courseid,
         gi.id as itemid,
         gi.itemname,
@@ -456,6 +456,13 @@ function get_feedback_tracker_user_data($userid, $courseid) {
     $data = new stdClass();
     $data->records = [];
 
+    // The filter options.
+    $data->courseoptions = [];
+    $data->typeoptions = [];
+    $data->summativeoptions = [];
+    $data->feedbackoptions = [];
+    $data->methodoptions = [];
+
     if ($courseid) {
         $course = get_course($courseid);
         get_user_course_gradings($course, $userid, $data);
@@ -483,7 +490,7 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
 
     $sql = "
     select
-        ROW_NUMBER() OVER (ORDER BY gi.id) AS unique_id,
+        ROW_NUMBER() OVER (ORDER BY gi.id) AS uniqueid,
         gi.courseid,
         gi.id as itemid,
         gi.itemname,
@@ -562,6 +569,75 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
             $data->records[] = $record;
         }
     }
+
+    // Get the filter options where available.
+    get_filter_options($data);
+
+}
+
+/**
+ * Get the options for filtering the column data.
+ *
+ * @param stdClass $course
+ * @param array $gradeitems
+ * @param stdClass $data
+ * @return void
+ */
+function get_filter_options(&$data) {
+    foreach ($data->records as $record) {
+
+        // Course options.
+        if ($record->courseid) {
+            $option = new stdClass();
+            $option->key = $record->courseid;
+            $option->value = $record->coursename;
+            if (!in_array($option, $data->courseoptions)) {
+                $data->courseoptions[] = $option;
+            }
+        }
+
+        // Feedback options.
+        if ($record->feedbackstatus) {
+            $option = new stdClass();
+            $option->key = $record->feedbackstatus;
+            $option->value = $record->feedbackstatus;
+            if (!in_array($option, $data->feedbackoptions)) {
+                $data->feedbackoptions[] = $option;
+            }
+        }
+
+        // Method options.
+        if ($record->method) {
+            $option = new stdClass();
+            $option->key = $record->method;
+            $option->value = $record->method;
+            if (!in_array($option, $data->methodoptions)) {
+                $data->methodoptions[] = $option;
+            }
+        }
+
+        // Summative / formative options.
+        if ($record->summative) {
+            $option = new stdClass();
+            $option->key = $record->summative;
+            $option->value = $record->summative;
+            if (!in_array($option, $data->summativeoptions)) {
+                $data->summativeoptions[] = $option;
+            }
+        }
+
+        // Type (module) options.
+        if ($record->module) {
+            $option = new stdClass();
+            $option->key = $record->module;
+            $option->value = $record->module;
+            if (!in_array($option, $data->typeoptions)) {
+                $data->typeoptions[] = $option;
+            }
+        }
+
+    }
+
 }
 
 /**
@@ -573,7 +649,7 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
  * @return stdClass
  * @throws dml_exception
  */
-function get_user_feedback_record ($course, $userid, $gradeitem) {
+function get_user_feedback_record($course, $userid, $gradeitem) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
 
@@ -596,17 +672,23 @@ function get_user_feedback_record ($course, $userid, $gradeitem) {
     $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
     $record->submissionstatus = get_submission_status($submissiondate, $gradeitem->duedate, $warningperiod);
     $record->course = get_course_link($course);
+    $record->courseid = $course->id;
+    $record->coursename = $course->shortname;
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
+    $record->module = get_item_module($gradeitem);
     $record->summative = $gradeitem->summative ? $summativetext : "";
     $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d. M Y", $gradeitem->duedate);
     $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
     $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
     $record->student = $gradeitem->student;
     $record->grader = $gradeitem->grader;
+    $record->feedbackdate = $gradeitem->feedbackdate;
+    $record->feedbackstatus = ($submissiondate == 0) ? '' :
+        get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod);
     $record->feedback = ($submissiondate == 0) ? '' :
         get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod);
-    $record->method = html_writer::div($gradeitem->method);
+    $record->method = $gradeitem->method;
     $record->responsibility = html_writer::div($gradeitem->responsibility);
     $record->generalfeedback = get_user_generalfeedback($gradeitem);
     $record->gfurl = $gradeitem->gfurl;
@@ -652,16 +734,22 @@ function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
         $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
         $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
         $record->course = get_course_link($course);
+        $record->courseid = $course->id;
+        $record->coursename = $course->shortname;
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);
         $record->type = get_item_type($gradeitem);
+        $record->module = get_item_module($gradeitem);
         $record->summative = $gradeitem->summative ? $summativetext : "";
         $record->duedate = $duedate == 0 ? '--' : date("d. M Y", $duedate);
         $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
         $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
         $record->student = $gradeitem->student;
         $record->grader = $gradeitem->grader;
+        $record->feedbackstatus = ($submissiondate == 0) ? '' :
+            get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod);
         $record->feedback = ($submissiondate == 0) ? '' :
             get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod);
+        $record->method = $gradeitem->method;
 
         $data->records[] = $record;
     }
@@ -871,6 +959,32 @@ function get_item_type($gradeitem) {
 }
 
 /**
+ * Get the module name for a grade item.
+ *
+ * @param stdClass $gradeitem
+ * @return lang_string|string
+ * @throws coding_exception
+ */
+function get_item_module($gradeitem) {
+    switch ($gradeitem->itemmodule) {
+        case 'assign':
+            return get_string('pluginname', 'mod_assign');
+        case 'lesson':
+            return get_string('pluginname', 'mod_lesson');
+        case 'quiz':
+            return get_string('pluginname', 'mod_quiz');
+        case 'turnitintooltwo':
+            return get_string('pluginname', 'mod_turnitintooltwo');
+        case 'scorm':
+            return get_string('pluginname', 'mod_scorm');
+        case 'workshop':
+            return get_string('pluginname', 'mod_workshop');
+        default:
+            return "";
+    }
+}
+
+/**
  * Return a link to the course.
  *
  * @param stdClass $course
@@ -1047,6 +1161,52 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod)
         $o .= html_writer::end_div();
     }
     return $o;
+}
+
+/**
+ * Get a feedback status.
+ * @param stdClass $gradeitem
+ * @param int $feedbackduedate
+ * @param int $feedbackextendperiod
+ * @return lang_string|string
+ * @throws coding_exception
+ */
+function get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod) {
+    $contact = $gradeitem->responsibility;
+    // Final grade is available even if there is no due date.
+    if (!$feedbackduedate && isset($gradeitem->finalgrade)) {
+        return get_string('finalgrade_available', 'report_feedback_tracker');
+    }
+
+    // Feedback was given in time.
+    if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate <= $feedbackduedate) {
+        return get_string('feedback:in_time', 'report_feedback_tracker');
+    }
+
+    $warningduedate = $feedbackduedate + $feedbackextendperiod;
+
+    // Feedback was given within the extended period.
+    if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate <= $warningduedate) {
+        return get_string('feedback:extended', 'report_feedback_tracker');
+    }
+
+    // Feedback was given outside the extended period.
+    if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate > $warningduedate) {
+        return get_string('feedback:late', 'report_feedback_tracker');
+    }
+
+    // NO feedback was given but it's still within the extended period.
+    if (!isset($gradeitem->finalgrade) && $feedbackduedate < time() && $warningduedate >= time() ) {
+        return get_string('feedback:due', 'report_feedback_tracker');
+    }
+
+    // NO feedback was given, and it is beyond the extended period.
+    if (!isset($gradeitem->finalgrade) && $warningduedate < time()) {
+        return get_string('feedback:overdue', 'report_feedback_tracker');
+    }
+
+    // The feedback is due within the due time - so do nothing and show a contact.
+    return '';
 }
 
 /**
