@@ -262,8 +262,13 @@ function get_admin_course_gradings($course, &$data) {
         }
 
         // All good - now get and store the feedback record.
-        $record = get_admin_feedback_record($course, $gradeitem);
-        $data->records[] = $record;
+        // TurnitinToolTwo special treatment as one grading item may have several parts.
+        if ($gradeitem->itemmodule == 'turnitintooltwo') {
+            get_admin_turnitin_records($course, $gradeitem, $data);
+        } else {
+            $record = get_admin_feedback_record($course, $gradeitem);
+            $data->records[] = $record;
+        }
     }
 }
 
@@ -297,6 +302,47 @@ function get_admin_feedback_record ($course, $gradeitem) {
     $record->hidden = get_hidden_state($gradeitem);
 
     return $record;
+}
+
+/**
+ * Get the parts of a turnitintooltwo grading item and list them as separate items.
+ *
+ * @param stdClass $course
+ * @param stdClass $gradeitem
+ * @param stdClass $data
+ * @return void
+ * @throws dml_exception
+ */
+function get_admin_turnitin_records($course, $gradeitem, &$data) {
+
+    $oneday = 24 * 60 * 60; // Number of seconds in a day.
+    $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
+    $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
+
+    // Get the parts.
+    $tttparts = get_tttparts($gradeitem);
+
+    // Make each part a record and store it in the data.
+    foreach ($tttparts as $tttpart) {
+        $duedate = $tttpart->dtdue; // Each part may have its own due date.
+        // If there is a manual feedback due date use it, otherwise calculate it from the submission due date.
+        $feedbackduedate = $gradeitem->feedbackduedate ?? ($duedate ? $duedate + $feedbackperiod : 0);
+
+        $record = new stdClass();
+        $record->course = get_course_link($course);
+        $record->assessment = get_item_link($gradeitem, $tttpart->partname);
+        $record->type = get_item_type($gradeitem);
+        $record->duedate = $duedate == 0 ? '--' : date("d. M Y", $duedate);
+        $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
+        $record->feedbacks = get_feedbacks($gradeitem);
+        $record->method = get_feedback_method($gradeitem);
+        $record->responsibility = get_feedback_responsibility($gradeitem);
+        $record->generalfeedback = get_admin_generalfeedback($gradeitem);
+        $record->gfurl = $gradeitem->gfurl;
+        $record->summative = get_summative_state($gradeitem);
+        $record->hidden = get_hidden_state($gradeitem);
+        $data->records[] = $record;
+    }
 }
 
 /**
@@ -508,7 +554,6 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
         }
 
         // All good - now get and store the feedback record.
-
         // TurnitinToolTwo special treatment as one grading item may have several parts.
         if ($gradeitem->itemmodule == 'turnitintooltwo') {
             get_user_turnitin_records($course, $gradeitem, $userid, $data);
