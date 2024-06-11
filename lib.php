@@ -578,8 +578,6 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
 /**
  * Get the options for filtering the column data.
  *
- * @param stdClass $course
- * @param array $gradeitems
  * @param stdClass $data
  * @return void
  */

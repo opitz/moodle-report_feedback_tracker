@@ -13,3 +13,7 @@
 .feedback_tracker_contact_title {
     font-weight: bold;
 }
+
+#user_feedback_table_filterrow {
+    background-color: lightgrey;
+}

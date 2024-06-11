@@ -46,66 +46,66 @@
 }}
 <table class="table" id="user_feedback_table">
     <thead>
-        <tr>
-            <th scope="col">{{#str}} course, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} assessment, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} type, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} duedate, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} submissiondate, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} feedbackduedate, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} feedback, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} method, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} generalfeedback, report_feedback_tracker {{/str}}</th>
+        <tr class="user_feedback_table_header">
+            <th scope="col">{{#str}} course, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+            <th scope="col">{{#str}} assessment, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+            <th scope="col">{{#str}} type, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+            <th scope="col">{{#str}} duedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+            <th scope="col">{{#str}} submissiondate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+            <th scope="col">{{#str}} feedbackduedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+            <th scope="col">{{#str}} feedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+            <th scope="col">{{#str}} method, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+            <th scope="col">{{#str}} generalfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
         </tr>
-        <tr id="filterRow">
-            <th>
+        <tr id="user_feedback_table_filterrow">
+            <td>
                 <select id="filtercourse">
                     <option value="">All</option>
                     {{#courseoptions}}
                         <option value="{{key}}">{{value}}</option>
                     {{/courseoptions}}
                 </select>
-            </th>
-            <th>
+            </td>
+            <td>
                 <select id="filtertype">
                     <option value="">All</option>
                     {{#typeoptions}}
                         <option value="{{key}}">{{value}}</option>
                     {{/typeoptions}}
                 </select>
-            </th>
-            <th>
+            </td>
+            <td>
                 <select id="filtersummative">
                     <option value="">All</option>
                     {{#summativeoptions}}
                         <option value="{{key}}">{{value}}</option>
                     {{/summativeoptions}}
                 </select>
-            </th>
-            <th id="filterduedate">
-            </th>
-            <th id="filtersubmissiondate">
-            </th>
-            <th id="filterfeedbackduedate">
-            </th>
-            <th>
+            </td>
+            <td id="filterduedate">
+            </td>
+            <td id="filtersubmissiondate">
+            </td>
+            <td id="filterfeedbackduedate">
+            </td>
+            <td>
                 <select id="filterfeedback">
                     <option value="">All</option>
                     {{#feedbackoptions}}
                         <option value="{{key}}">{{value}}</option>
                     {{/feedbackoptions}}
                 </select>
-            </th>
-            <th>
+            </td>
+            <td>
                 <select id="filtermethod">
                     <option value="">All</option>
                     {{#methodoptions}}
                         <option value="{{key}}">{{value}}</option>
                     {{/methodoptions}}
                 </select>
-            </th>
-            <th id="filtergeneralfeedback">
-            </th>
+            </td>
+            <td id="filtergeneralfeedback">
+            </td>
         </tr>
     </thead>
     <tbody>
@@ -128,5 +128,8 @@
 {{#js}}
     require(['report_feedback_tracker/studentfilter'], function(studentfilter) {
     studentfilter.init();
+    });
+    require(['report_feedback_tracker/studentsort'], function(studentsort) {
+    studentsort.init();
     });
 {{/js}}
