@@ -160,6 +160,13 @@ function get_feedback_tracker_admin_data($courseid) {
     $data = new stdClass();
     $data->records = [];
 
+    // The filter options.
+    $data->courseoptions = [];
+    $data->typeoptions = [];
+    $data->summativeoptions = [];
+    $data->feedbackoptions = [];
+    $data->methodoptions = [];
+
     // Get the students of the course.
     $sdata = new stdClass();
     $context = \context_course::instance($courseid);
@@ -270,6 +277,9 @@ function get_admin_course_gradings($course, &$data) {
             $data->records[] = $record;
         }
     }
+
+    // Get the filter options where available.
+    get_admin_filter_options($data);
 }
 
 /**
@@ -289,8 +299,11 @@ function get_admin_feedback_record ($course, $gradeitem) {
 
     $record = new stdClass();
     $record->course = get_course_link($course);
+    $record->courseid = $course->id;
+    $record->coursename = $course->shortname;
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
+    $record->module = get_item_module($gradeitem);
     $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d/m/Y", $gradeitem->duedate);
     $record->feedbackduedate = render_feedbackduedate($gradeitem, $feedbackperiod);
     $record->feedbacks = get_feedbacks($gradeitem);
@@ -299,6 +312,7 @@ function get_admin_feedback_record ($course, $gradeitem) {
     $record->generalfeedback = get_admin_generalfeedback($gradeitem);
     $record->gfurl = $gradeitem->gfurl;
     $record->summative = get_summative_state($gradeitem);
+    $record->summativetext = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
     $record->hidden = get_hidden_state($gradeitem);
 
     return $record;
@@ -330,8 +344,11 @@ function get_admin_turnitin_records($course, $gradeitem, &$data) {
 
         $record = new stdClass();
         $record->course = get_course_link($course);
+        $record->courseid = $course->id;
+        $record->coursename = $course->shortname;
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);
         $record->type = get_item_type($gradeitem);
+        $record->module = get_item_module($gradeitem);
         $record->duedate = $duedate == 0 ? '--' : date("d. M Y", $duedate);
         $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
         $record->feedbacks = get_feedbacks($gradeitem);
@@ -340,9 +357,63 @@ function get_admin_turnitin_records($course, $gradeitem, &$data) {
         $record->generalfeedback = get_admin_generalfeedback($gradeitem);
         $record->gfurl = $gradeitem->gfurl;
         $record->summative = get_summative_state($gradeitem);
+        $record->summativetext = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
         $record->hidden = get_hidden_state($gradeitem);
         $data->records[] = $record;
     }
+}
+
+/**
+ * Get the options for filtering the admin table.
+ *
+ * @param stdClass $data
+ * @return void
+ */
+function get_admin_filter_options(&$data) {
+    foreach ($data->records as $record) {
+
+        // Course options.
+        if ($record->courseid) {
+            $option = new stdClass();
+            $option->key = $record->courseid;
+            $option->value = $record->coursename;
+            if (!in_array($option, $data->courseoptions)) {
+                $data->courseoptions[] = $option;
+            }
+        }
+
+        // Method options.
+        if ($record->method) {
+            $option = new stdClass();
+            $option->key = $record->method;
+            $option->value = $record->method;
+            if (!in_array($option, $data->methodoptions)) {
+                $data->methodoptions[] = $option;
+            }
+        }
+
+        // Summative / formative options.
+        if ($record->summative) {
+            $option = new stdClass();
+            $option->key = $record->summativetext;
+            $option->value = $record->summativetext;
+            if (!in_array($option, $data->summativeoptions)) {
+                $data->summativeoptions[] = $option;
+            }
+        }
+
+        // Type (module) options.
+        if ($record->module) {
+            $option = new stdClass();
+            $option->key = $record->module;
+            $option->value = $record->module;
+            if (!in_array($option, $data->typeoptions)) {
+                $data->typeoptions[] = $option;
+            }
+        }
+
+    }
+
 }
 
 /**
@@ -367,7 +438,7 @@ function get_feedback_method($gradeitem) {
         );
         return html_writer::div($OUTPUT->render($edititem));
     }
-    return html_writer::div($gradeitem->method);
+    return $gradeitem->method;
 }
 
 /**
@@ -571,17 +642,70 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
     }
 
     // Get the filter options where available.
-    get_filter_options($data);
-
+    get_user_filter_options($data);
 }
 
 /**
- * Get the options for filtering the column data.
+ * Get the user feedback record for a grade item.
+ *
+ * @param stdClass $course
+ * @param int $userid
+ * @param stdClass $gradeitem
+ * @return stdClass
+ * @throws dml_exception
+ */
+function get_user_feedback_record($course, $userid, $gradeitem) {
+
+    $oneday = 24 * 60 * 60; // Number of seconds in a day.
+
+    $warningdays = get_config('report_feedback_tracker', 'warningdays');
+    $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
+    $feedbackextenddays = get_config('report_feedback_tracker', 'feedbackextenddays');
+    $warningperiod = $warningdays * $oneday; // Number of seconds in the warning period.
+    $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
+    $feedbackextendperiod = $feedbackextenddays * $oneday; // Number of seconds in the feedback period.
+
+    // If there is a manual feedback due date use it, otherwise calculate it from the submission due date.
+    $feedbackduedate = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
+        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
+    // Get the submission date if any.
+    $submissiondate = get_submissiondate($userid, $gradeitem);
+
+    $record = new stdClass();
+    $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
+    $record->submissionstatus = get_submission_status($submissiondate, $gradeitem->duedate, $warningperiod);
+    $record->course = get_course_link($course);
+    $record->courseid = $course->id;
+    $record->coursename = $course->shortname;
+    $record->assessment = get_item_link($gradeitem);
+    $record->type = get_item_type($gradeitem);
+    $record->module = get_item_module($gradeitem);
+    $record->summative = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
+    $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d. M Y", $gradeitem->duedate);
+    $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
+    $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
+    $record->student = $gradeitem->student;
+    $record->grader = $gradeitem->grader;
+    $record->feedbackdate = $gradeitem->feedbackdate;
+    $record->feedbackstatus = ($submissiondate == 0) ? '' :
+        get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod);
+    $record->feedback = ($submissiondate == 0) ? '' :
+        get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod);
+    $record->method = $gradeitem->method;
+    $record->responsibility = html_writer::div($gradeitem->responsibility);
+    $record->generalfeedback = get_user_generalfeedback($gradeitem);
+    $record->gfurl = $gradeitem->gfurl;
+
+    return $record;
+}
+
+/**
+ * Get the options for filtering the user table.
  *
  * @param stdClass $data
  * @return void
  */
-function get_filter_options(&$data) {
+function get_user_filter_options(&$data) {
     foreach ($data->records as $record) {
 
         // Course options.
@@ -639,62 +763,6 @@ function get_filter_options(&$data) {
 }
 
 /**
- * Get the user feedback record for a grade item.
- *
- * @param stdClass $course
- * @param int $userid
- * @param stdClass $gradeitem
- * @return stdClass
- * @throws dml_exception
- */
-function get_user_feedback_record($course, $userid, $gradeitem) {
-
-    $oneday = 24 * 60 * 60; // Number of seconds in a day.
-
-    $warningdays = get_config('report_feedback_tracker', 'warningdays');
-    $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
-    $feedbackextenddays = get_config('report_feedback_tracker', 'feedbackextenddays');
-    $warningperiod = $warningdays * $oneday; // Number of seconds in the warning period.
-    $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
-    $feedbackextendperiod = $feedbackextenddays * $oneday; // Number of seconds in the feedback period.
-
-    // If there is a manual feedback due date use it, otherwise calculate it from the submission due date.
-    $feedbackduedate = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
-        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
-    // Get the submission date if any.
-    $submissiondate = get_submissiondate($userid, $gradeitem);
-
-    $summativetext = get_string('summative', 'report_feedback_tracker');
-
-    $record = new stdClass();
-    $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
-    $record->submissionstatus = get_submission_status($submissiondate, $gradeitem->duedate, $warningperiod);
-    $record->course = get_course_link($course);
-    $record->courseid = $course->id;
-    $record->coursename = $course->shortname;
-    $record->assessment = get_item_link($gradeitem);
-    $record->type = get_item_type($gradeitem);
-    $record->module = get_item_module($gradeitem);
-    $record->summative = $gradeitem->summative ? $summativetext : "";
-    $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d. M Y", $gradeitem->duedate);
-    $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
-    $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
-    $record->student = $gradeitem->student;
-    $record->grader = $gradeitem->grader;
-    $record->feedbackdate = $gradeitem->feedbackdate;
-    $record->feedbackstatus = ($submissiondate == 0) ? '' :
-        get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod);
-    $record->feedback = ($submissiondate == 0) ? '' :
-        get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod);
-    $record->method = $gradeitem->method;
-    $record->responsibility = html_writer::div($gradeitem->responsibility);
-    $record->generalfeedback = get_user_generalfeedback($gradeitem);
-    $record->gfurl = $gradeitem->gfurl;
-
-    return $record;
-}
-
-/**
  * Get the parts of a turnitintooltwo grading item and list them as separate items.
  *
  * @param stdClass $course
@@ -726,8 +794,6 @@ function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
         // Get the submission date if any.
         $submissiondate = get_ttt_submission_date($tttpart, $userid);
 
-        $summativetext = get_string('summative', 'report_feedback_tracker');
-
         $record = new stdClass();
         $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
         $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
@@ -737,7 +803,7 @@ function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);
         $record->type = get_item_type($gradeitem);
         $record->module = get_item_module($gradeitem);
-        $record->summative = $gradeitem->summative ? $summativetext : "";
+        $record->summative = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
         $record->duedate = $duedate == 0 ? '--' : date("d. M Y", $duedate);
         $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
         $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;

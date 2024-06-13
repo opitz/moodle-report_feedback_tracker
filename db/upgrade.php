@@ -61,5 +61,15 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024052400, 'report', 'feedback_tracker');
     }
 
-    return true;
+    if ($oldversion < 2024061200) {
+        // Define table report_feedback_tracker to be created.
+        $table = new xmldb_table('report_feedback_tracker');
+
+        $field = new xmldb_field('gfdate', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $dbman->add_field($table, $field);
+
+        // Savepoint reached.
+        upgrade_plugin_savepoint(true, 2024061200, 'report', 'feedback_tracker');
+    }
+        return true;
 }

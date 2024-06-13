@@ -15,6 +15,7 @@
         <FIELD NAME="responsibility" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="generalfeedback" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="gfurl" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="gfdate" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

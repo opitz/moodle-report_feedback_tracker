@@ -1,8 +1,14 @@
-
 export const init = () => {
-    window.console.log('studentsort.js initialised');
+    tableSort();
+};
 
-    const dataTable = document.getElementById('user_feedback_table');
+/**
+ * Sort the student table.
+ */
+export function tableSort() {
+    window.console.log('tablesort.js initialised');
+
+    const dataTable = document.getElementById('feedback_table');
     const headers = dataTable.querySelectorAll('th');
     const directions = Array.from(headers).map(() => 1); // Initial sort directions
     const indicators = dataTable.querySelectorAll('.indicator');
@@ -29,7 +35,7 @@ export const init = () => {
             const cellA = rowA.querySelectorAll('td')[columnIndex].textContent.trim();
             const cellB = rowB.querySelectorAll('td')[columnIndex].textContent.trim();
 
-            return cellA.localeCompare(cellB, undefined, { numeric: true }) * direction;
+            return cellA.localeCompare(cellB, undefined, {numeric: true}) * direction;
         });
 
         // Remove existing rows
@@ -54,5 +60,4 @@ export const init = () => {
             }
         });
     }
-
-};
+}
