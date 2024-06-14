@@ -53,6 +53,9 @@ export const init = async() => {
                 target.setAttribute('data-gfurl', gfurl);
                 target.setAttribute('data-gfdate', gfdate);
                 document.getElementById('generalfeedbacktext_' + itemid).innerHTML = generalfeedback;
+
+                // Show/hide a hint for general feedback only.
+                document.getElementById('gfdate_hint_' + itemid).style.display = gfdate ? '' : 'none';
                 window.console.log(response);
             });
 

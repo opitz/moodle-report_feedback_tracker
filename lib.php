@@ -493,9 +493,17 @@ function get_admin_generalfeedback($gradeitem) {
                 'data-gfdate' => $gradeitem->gfdate,
             ]);
     } else {
-        $o .= html_writer::div($gradeitem->generalfeedback, 'generalfeedbacktext',
+        $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedbacktext',
             ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
     }
+
+    // Show a hint badge when there is general feedback only.
+    $classes = 'fa fa-info-circle text-primary gfdate';
+    $style = $gradeitem->gfdate ? '' : 'display: none;';
+    $title = get_string('generalfeedback:hint', 'report_feedback_tracker');
+    $o .= " <i class='$classes' id='gfdate_hint_$gradeitem->itemid' title='$title' data-itemid='$gradeitem->itemid'
+                data-action='report_feedback_tracker/gfhint' style='$style'></i>";
+
     $o .= html_writer::end_div();
     return $o;
 }
@@ -904,6 +912,7 @@ function render_feedbackduedate($gradeitem, $feedbackperiod = 0) {
         $o .= $date ? date($dateformat, $date) : '--';
     }
 
+    // Show a hint badge when date is set manually.
     if ($date) {
         $classes = 'fa fa-info-circle text-primary';
         $style = $gradeitem->feedbackduedate ? '' : 'display: none;';
