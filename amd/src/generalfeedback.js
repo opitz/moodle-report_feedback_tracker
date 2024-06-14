@@ -19,12 +19,12 @@ export const init = async() => {
             const target = e.target;
             const itemid = target.getAttribute('cmid');
 
-            // Get the current general feedback text and URL.
+            // Get the current values for general feedback text, URL and date.
             var generalfeedback = target.getAttribute('data-generalfeedback');
             var gfurl = target.getAttribute('data-gfurl');
             var gfdate = target.getAttribute('data-gfdate');
 
-            // Show a modal with a free text and a URL field.
+            // Show a modal with a text field, a URL field and a checkbox.
             const modal = await ModalSaveCancel.create({
                 title: await getString('generalfeedback', 'report_feedback_tracker'),
                 body: Templates.render('report_feedback_tracker/generalfeedback_modal',
@@ -41,17 +41,9 @@ export const init = async() => {
 
             modal.getRoot().on(ModalEvents.save, async() => {
                 // Get the general feedback text, URL and optional date.
-                var generalfeedback = document.getElementById('generalfeedback').value;
-                var gfurl = document.getElementById('gfurl').value;
-//                var gfdate = document.getElementById('gfdate').value;
-
-//                const gfdateCheckbox = document.getElementById('gfdate');
-                gfdate = document.getElementById('gfdate').checked;
-//                var gfdate = 999;
-                window.console.log('----------');
-                window.console.log('gfdate: ');
-                window.console.log(gfdate);
-                window.console.log('----------');
+                const generalfeedback = document.getElementById('generalfeedback').value;
+                const gfurl = document.getElementById('gfurl').value;
+                const gfdate = document.getElementById('gfdate').checked;
 
                 // Update the database.
                 const response = await updateGeneralFeedback(itemid, generalfeedback, gfurl, gfdate);

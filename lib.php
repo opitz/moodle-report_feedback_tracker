@@ -295,6 +295,7 @@ function get_admin_feedback_record ($course, $gradeitem) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
     $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
+    $dateformat = get_config('report_feedback_tracker', 'dateformat');
     $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
 
     $record = new stdClass();
@@ -304,7 +305,7 @@ function get_admin_feedback_record ($course, $gradeitem) {
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
     $record->module = get_item_module($gradeitem);
-    $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d/m/Y", $gradeitem->duedate);
+    $record->duedate = $gradeitem->duedate == 0 ? '--' : date($dateformat, $gradeitem->duedate);
     $record->feedbackduedate = render_feedbackduedate($gradeitem, $feedbackperiod);
     $record->feedbacks = get_feedbacks($gradeitem);
     $record->method = get_feedback_method($gradeitem);
@@ -332,6 +333,7 @@ function get_admin_turnitin_records($course, $gradeitem, &$data) {
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
     $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
     $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
+    $dateformat = get_config('report_feedback_tracker', 'dateformat');
 
     // Get the parts.
     $tttparts = get_tttparts($gradeitem);
@@ -349,8 +351,8 @@ function get_admin_turnitin_records($course, $gradeitem, &$data) {
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);
         $record->type = get_item_type($gradeitem);
         $record->module = get_item_module($gradeitem);
-        $record->duedate = $duedate == 0 ? '--' : date("d. M Y", $duedate);
-        $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
+        $record->duedate = $duedate == 0 ? '--' : date($dateformat, $duedate);
+        $record->feedbackduedate = render_feedbackduedate($gradeitem, $feedbackperiod);
         $record->feedbacks = get_feedbacks($gradeitem);
         $record->method = get_feedback_method($gradeitem);
         $record->responsibility = get_feedback_responsibility($gradeitem);
@@ -666,17 +668,16 @@ function get_user_feedback_record($course, $userid, $gradeitem) {
     $warningperiod = $warningdays * $oneday; // Number of seconds in the warning period.
     $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
     $feedbackextendperiod = $feedbackextenddays * $oneday; // Number of seconds in the feedback period.
+    $dateformat = get_config('report_feedback_tracker', 'dateformat');
 
-    // If there is a manual feedback due date use it, otherwise if there is a general feedback only date use that,
-    // otherwise calculate it from the submission due date.
+    // If there is a manual feedback due date use it, otherwise calculate it from the submission due date where set.
     $feedbackduedate = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
-        ($gradeitem->gfdate ? $gradeitem->gfdate :
-        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0));
+        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
     // Get the submission date if any.
     $submissiondate = get_submissiondate($userid, $gradeitem);
 
     $record = new stdClass();
-    $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
+    $record->submissiondate = $submissiondate == 0 ? '--' : date($dateformat, $submissiondate);
     $record->submissionstatus = get_submission_status($submissiondate, $gradeitem->duedate, $warningperiod);
     $record->course = get_course_link($course);
     $record->courseid = $course->id;
@@ -685,8 +686,8 @@ function get_user_feedback_record($course, $userid, $gradeitem) {
     $record->type = get_item_type($gradeitem);
     $record->module = get_item_module($gradeitem);
     $record->summative = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
-    $record->duedate = $gradeitem->duedate == 0 ? '--' : date("d. M Y", $gradeitem->duedate);
-    $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
+    $record->duedate = $gradeitem->duedate == 0 ? '--' : date($dateformat, $gradeitem->duedate);
+    $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date($dateformat, $feedbackduedate);
     $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
     $record->student = $gradeitem->student;
     $record->grader = $gradeitem->grader;
@@ -784,6 +785,7 @@ function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
     $warningperiod = $warningdays * $oneday; // Number of seconds in the warning period.
     $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
     $feedbackextendperiod = $feedbackextenddays * $oneday; // Number of seconds in the feedback period.
+    $dateformat = get_config('report_feedback_tracker', 'dateformat');
 
     // Get the parts.
     $tttparts = get_tttparts($gradeitem);
@@ -797,7 +799,7 @@ function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
         $submissiondate = get_ttt_submission_date($tttpart, $userid);
 
         $record = new stdClass();
-        $record->submissiondate = $submissiondate == 0 ? '--' : date("d. M Y", $submissiondate);
+        $record->submissiondate = $submissiondate == 0 ? '--' : date($dateformat, $submissiondate);
         $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
         $record->course = get_course_link($course);
         $record->courseid = $course->id;
@@ -806,8 +808,8 @@ function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
         $record->type = get_item_type($gradeitem);
         $record->module = get_item_module($gradeitem);
         $record->summative = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
-        $record->duedate = $duedate == 0 ? '--' : date("d. M Y", $duedate);
-        $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date("d. M Y", $feedbackduedate);
+        $record->duedate = $duedate == 0 ? '--' : date($dateformat, $duedate);
+        $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date($dateformat, $feedbackduedate);
         $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
         $record->student = $gradeitem->student;
         $record->grader = $gradeitem->grader;
@@ -877,8 +879,7 @@ function render_feedbackduedate($gradeitem, $feedbackperiod = 0) {
     // Use a stored feedback due date if present, otherwise
     // calculate the feedback due date from the submission due date if there is one.
     $date = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
-        ($gradeitem->gfdate ? $gradeitem->gfdate :
-        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0));
+        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
 
     $o = '';
     if ($PAGE->user_is_editing()) { // Render a date picker.
@@ -899,7 +900,8 @@ function render_feedbackduedate($gradeitem, $feedbackperiod = 0) {
 
         $o .= $inputfield;
     } else { // Just return the date.
-        $o .= $date ? date("d/m/Y", $date) : '--';
+        $dateformat = get_config('report_feedback_tracker', 'dateformat');
+        $o .= $date ? date($dateformat, $date) : '--';
     }
 
     if ($date) {

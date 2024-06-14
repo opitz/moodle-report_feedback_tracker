@@ -25,6 +25,7 @@
 $string['assessment'] = 'Assessment';
 $string['contact'] = 'Contact';
 $string['course'] = 'Course';
+$string['dateformat:default'] = "d. M Y";
 $string['duedate'] = 'Due date';
 $string['edit:generalfeedback'] = 'Edit general feedback';
 $string['edit:method'] = 'Edit method';
@@ -56,6 +57,8 @@ $string['pleasenote'] = 'Please note:';
 $string['pluginname'] = 'Feedback tracker report';
 $string['privacy:metadata'] = 'The Feedback tracker report plugin does not store any personal data.';
 $string['responsibility'] = 'Responsibility';
+$string['settings:dateformat'] = 'Date format';
+$string['settings:dateformatinfo'] = 'Date format used in report tables.';
 $string['settings:feedbackdeadlinedays'] = 'Feedback period';
 $string['settings:feedbackdeadlinedaysinfo'] = 'Default number of calendar days between assessment due date and feedback due date.';
 $string['settings:feedbackextenddays'] = 'Extension period';

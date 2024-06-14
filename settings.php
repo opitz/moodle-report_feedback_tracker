@@ -29,6 +29,7 @@ if ($ADMIN->fulltree) {
     $warningdaysdefault = 14;
     $feedbackdeadlinedaysdefault = 30;
     $feedbackextenddaysdefault = 7;
+    $dateformatdefault = get_string('dateformat:default', 'report_feedback_tracker');
 
     $settings->add(new admin_setting_configtext('report_feedback_tracker/warningdays',
         get_string('settings:warningdays', 'report_feedback_tracker'),
@@ -44,5 +45,10 @@ if ($ADMIN->fulltree) {
         get_string('settings:feedbackextenddays', 'report_feedback_tracker'),
         get_string('settings:feedbackextenddaysinfo', 'report_feedback_tracker'),
         $feedbackextenddaysdefault, PARAM_RAW, 5));
+
+    $settings->add(new admin_setting_configtext('report_feedback_tracker/dateformat',
+        get_string('settings:dateformat', 'report_feedback_tracker'),
+        get_string('settings:dateformatinfo', 'report_feedback_tracker'),
+        $dateformatdefault, PARAM_RAW, 15));
 
 }
