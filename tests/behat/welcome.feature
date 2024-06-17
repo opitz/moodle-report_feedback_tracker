@@ -14,8 +14,7 @@ Feature: In a course administration page, navigate through report page, test for
       | student1 | Student    | 1         | student1@example.com  |
     And the following "course enrolments" exist:
       | user      | course  | role            |
-      | admin     | C1      | editingteacher  |
-      | teacher1  | C1      | teacher  |
+      | teacher1  | C1      | editingteacher  |
       | student1  | C1      | student         |
     And I log in as "admin"
     And I add a quiz activity to course "Course 1" section "3" and I fill the form with:
@@ -33,6 +32,14 @@ Feature: In a course administration page, navigate through report page, test for
     Then "Report" "field" should exist in the "tertiary-navigation" "region"
     And I should see "Feedback tracker report" in the "tertiary-navigation" "region"
     And I should see "Test quiz"
+    And I should not see "Hide from report"
+    And I am on "Course 1" course homepage with editing mode on
+    When I navigate to "Reports" in current page administration
+    And I click on "Feedback tracker report" "link"
+    Then I should see "Feedback tracker report" in the "tertiary-navigation" "region"
+    And I should see "Test quiz"
+    And I should see "Hide from report"
+    And I log out
 
   @javascript
   Scenario: For a teacher the selector should be available in course feedback report report page
