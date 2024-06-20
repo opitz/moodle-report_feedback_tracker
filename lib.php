@@ -938,7 +938,7 @@ function get_summative_state($gradeitem) {
             return "<input
                 data-action='report_feedback_tracker/summative_checkbox'
                 type='checkbox'
-                class='form-check-input'
+                class='form-check-input summative_checkbox'
                 cmid='$gradeitem->itemid'
                 checked='checked'
             >";
@@ -946,7 +946,7 @@ function get_summative_state($gradeitem) {
             return "<input
                 data-action='report_feedback_tracker/summative_checkbox'
                 type='checkbox'
-                class='form-check-input'
+                class='form-check-input summative_checkbox'
                 cmid='$gradeitem->itemid'
             >";
         }
@@ -969,7 +969,7 @@ function get_hidden_state($gradeitem) {
             return "<input
                 data-action='report_feedback_tracker/hiding_checkbox'
                 type='checkbox'
-                class='form-check-input'
+                class='form-check-input hiding_checkbox'
                 cmid='$gradeitem->itemid'
                 checked='checked'
             >";
@@ -977,7 +977,7 @@ function get_hidden_state($gradeitem) {
             return "<input
                 data-action='report_feedback_tracker/hiding_checkbox'
                 type='checkbox'
-                class='form-check-input'
+                class='form-check-input hiding_checkbox'
                 cmid='$gradeitem->itemid'
             >";
         }
