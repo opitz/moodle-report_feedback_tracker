@@ -36,7 +36,7 @@ require_once($CFG->dirroot.'/course/lib.php');
  * @throws dml_exception
  */
 function get_admin_course_gradings($course, &$data) {
-    global $DB;
+    global $CFG, $DB;
 
     $sql = "
     select
@@ -80,9 +80,16 @@ function get_admin_course_gradings($course, &$data) {
             WHEN gi.itemmodule = 'scorm' THEN
                 (select count(distinct sa.userid) from {scorm_attempt} sa
                                                   where sa.scormid = gi.iteminstance)
+";
+    // Check if Turnitintooltwo is installed.
+    if (file_exists($CFG->dirroot.'/mod/turnitintooltwo/version.php')) {
+        $sql .= "
             WHEN gi.itemmodule = 'turnitintooltwo' THEN
                 (select count(distinct ts.userid) from {turnitintooltwo_submissions} ts
                                                   where ts.turnitintooltwoid = gi.iteminstance and ts.submission_type = 1)
+";
+    }
+    $sql .= "
             WHEN gi.itemmodule = 'workshop' THEN
                 (select count(distinct ws.authorid) from {workshop_submissions} ws where ws.workshopid = gi.iteminstance)
             ELSE '--'
