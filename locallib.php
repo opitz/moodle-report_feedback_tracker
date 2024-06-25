@@ -111,6 +111,8 @@ function get_admin_course_gradings($course, &$data) {
     $params['courseid'] = $course->id;
     $gradeitems = $DB->get_records_sql($sql, $params);
 
+    $summativeids = get_summative_ids($course->id);
+
     foreach ($gradeitems as $gradeitem) {
         // Check if the gradeitem module is supported.
         if (!module_is_supported($gradeitem)) {
@@ -120,9 +122,9 @@ function get_admin_course_gradings($course, &$data) {
         // All good - now get and store the feedback record.
         // TurnitinToolTwo special treatment as one grading item may have several parts.
         if ($gradeitem->itemmodule == 'turnitintooltwo') {
-            get_admin_turnitin_records($course, $gradeitem, $data);
+            get_admin_turnitin_records($course, $gradeitem, $summativeids, $data);
         } else {
-            $record = get_admin_feedback_record($course, $gradeitem);
+            $record = get_admin_feedback_record($course, $gradeitem, $summativeids);
             $data->records[] = $record;
         }
     }
@@ -132,14 +134,40 @@ function get_admin_course_gradings($course, &$data) {
 }
 
 /**
+ * Return an array of IDs of summative assessments for a given course
+ *
+ * @param int $courseid
+ * @return array
+ */
+function get_summative_ids($courseid) {
+    global $CFG;
+
+    $summativeids = [];
+    // Check if SITSgradepush is installed.
+    if (file_exists($CFG->dirroot.'/local/sitsgradepush/version.php')) {
+        require_once($CFG->dirroot . '/local/sitsgradepush/classes/external/get_summative_grade_items.php');
+
+        $instance = new local_sitsgradepush\external\get_summative_grade_items;
+        $result = $instance::execute($courseid);
+        $summativegradeitems = $result['gradeitems'];
+        // Build an array of summative IDs.
+        foreach ($summativegradeitems as $summativegradeitem) {
+            $summativeids[] = $summativegradeitem->id;
+        }
+    }
+    return $summativeids;
+}
+
+/**
  * Get the admin feedback record for a grade item.
  *
  * @param stdClass $course
  * @param stdClass $gradeitem
+ * @param array $summativeids
  * @return stdClass
  * @throws dml_exception
  */
-function get_admin_feedback_record ($course, $gradeitem) {
+function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
     $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
@@ -160,7 +188,7 @@ function get_admin_feedback_record ($course, $gradeitem) {
     $record->responsibility = get_feedback_responsibility($gradeitem);
     $record->generalfeedback = get_admin_generalfeedback($gradeitem);
     $record->gfurl = $gradeitem->gfurl;
-    $record->summative = get_summative_state($gradeitem);
+    $record->summative = get_admin_summative($gradeitem, $summativeids);
     $record->summativetext = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
     $record->hidden = get_hidden_state($gradeitem);
 
@@ -212,11 +240,12 @@ function get_admin_generalfeedback($gradeitem) {
  *
  * @param stdClass $course
  * @param stdClass $gradeitem
+ * @param array $summativeids
  * @param stdClass $data
  * @return void
  * @throws dml_exception
  */
-function get_admin_turnitin_records($course, $gradeitem, &$data) {
+function get_admin_turnitin_records($course, $gradeitem, $summativeids, &$data) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
     $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
@@ -246,7 +275,7 @@ function get_admin_turnitin_records($course, $gradeitem, &$data) {
         $record->responsibility = get_feedback_responsibility($gradeitem);
         $record->generalfeedback = get_admin_generalfeedback($gradeitem);
         $record->gfurl = $gradeitem->gfurl;
-        $record->summative = get_summative_state($gradeitem);
+        $record->summative = get_admin_summative($gradeitem, $summativeids);
         $record->summativetext = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
         $record->hidden = get_hidden_state($gradeitem);
         $data->records[] = $record;
@@ -810,12 +839,19 @@ function get_submission_status($submissiondate, $duedate, $warningperiod) {
  * Show / edit the summative state of a grading item.
  *
  * @param stdClass $gradeitem
+ * @param array $summativeids an array with summative item ids from sitsgradepush
  * @return string
  */
-function get_summative_state($gradeitem) {
+function get_admin_summative($gradeitem, $summativeids) {
     global $PAGE;
 
-    if ($PAGE->user_is_editing()) {
+    // Check if an item is declared summative by SITS.
+    if (in_array($gradeitem->itemid, $summativeids)) {
+        $gradeitem->summative = 2;
+    }
+
+    // If not set by SITS one may still declare summative manually.
+    if ($PAGE->user_is_editing() && $gradeitem->summative < 2) {
         if ($gradeitem->summative) {
             return "<input
                 data-action='report_feedback_tracker/summative_checkbox'
@@ -940,6 +976,8 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
     $params['userid'] = $userid;
     $gradeitems = $DB->get_records_sql($sql, $params);
 
+    $summativeids = get_summative_ids($course->id);
+
     foreach ($gradeitems as $gradeitem) {
         // Check if the gradeitem module is supported.
         if (!module_is_supported($gradeitem)) {
@@ -959,9 +997,9 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
         // All good - now get and store the feedback record.
         // TurnitinToolTwo special treatment as one grading item may have several parts.
         if ($gradeitem->itemmodule == 'turnitintooltwo') {
-            get_user_turnitin_records($course, $gradeitem, $userid, $data);
+            get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, $data);
         } else {
-            $record = get_user_feedback_record($course, $userid, $gradeitem);
+            $record = get_user_feedback_record($course, $userid, $gradeitem, $summativeids);
             $data->records[] = $record;
         }
     }
@@ -976,10 +1014,11 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
  * @param stdClass $course
  * @param int $userid
  * @param stdClass $gradeitem
+ * @param array $summativeids
  * @return stdClass
  * @throws dml_exception
  */
-function get_user_feedback_record($course, $userid, $gradeitem) {
+function get_user_feedback_record($course, $userid, $gradeitem, $summativeids) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
 
@@ -1006,7 +1045,7 @@ function get_user_feedback_record($course, $userid, $gradeitem) {
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
     $record->module = get_item_module($gradeitem);
-    $record->summative = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
+    $record->summative = get_user_summative($gradeitem, $summativeids);
     $record->duedate = $gradeitem->duedate == 0 ? '--' : date($dateformat, $gradeitem->duedate);
     $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date($dateformat, $feedbackduedate);
     $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
@@ -1021,6 +1060,19 @@ function get_user_feedback_record($course, $userid, $gradeitem) {
     $record->gfurl = $gradeitem->gfurl;
 
     return $record;
+}
+
+/**
+ * Show a summative text for a summative grade item in students/users report.
+ *
+ * @param stdClass $gradeitem
+ * @param array $summativeids
+ * @return lang_string|string
+ * @throws coding_exception
+ */
+function get_user_summative($gradeitem, $summativeids) {
+    return $gradeitem->summative || in_array($gradeitem->itemid, $summativeids) ?
+        get_string('summative', 'report_feedback_tracker') : "";
 }
 
 /**
@@ -1111,11 +1163,12 @@ function get_user_generalfeedback($gradeitem) {
  * @param stdClass $course
  * @param stdClass $gradeitem
  * @param int $userid
+ * @param array $summativeids
  * @param stdClass $data
  * @return void
  * @throws dml_exception
  */
-function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
+function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, &$data) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
 
@@ -1147,7 +1200,7 @@ function get_user_turnitin_records($course, $gradeitem, $userid, &$data) {
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);
         $record->type = get_item_type($gradeitem);
         $record->module = get_item_module($gradeitem);
-        $record->summative = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
+        $record->summative = get_user_summative($gradeitem, $summativeids);
         $record->duedate = $duedate == 0 ? '--' : date($dateformat, $duedate);
         $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date($dateformat, $feedbackduedate);
         $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
