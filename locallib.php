@@ -92,7 +92,7 @@ function get_admin_course_gradings($course, &$data) {
     $sql .= "
             WHEN gi.itemmodule = 'workshop' THEN
                 (select count(distinct ws.authorid) from {workshop_submissions} ws where ws.workshopid = gi.iteminstance)
-            ELSE '--'
+            ELSE 0
         END as submissions,
         rft.summative,
         rft.hidden,
