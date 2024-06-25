@@ -335,6 +335,7 @@ function get_feedbacks($gradeitem) {
  * @param stdClass $gradeitem
  * @param int $feedbackduedate
  * @param int $feedbackextendperiod
+ * @param int $submissiondate
  * @return string
  * @throws coding_exception
  */
@@ -499,6 +500,7 @@ function get_feedback_responsibility($gradeitem) {
  * @param stdClass $gradeitem
  * @param int $feedbackduedate
  * @param int $feedbackextendperiod
+ * @param int $submissiondate
  * @return lang_string|string
  * @throws coding_exception
  */

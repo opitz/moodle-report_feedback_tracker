@@ -247,7 +247,10 @@ class report_feedback_tracker_external extends \core_external\external_api {
      * @param int $itemid The ID of the grade item
      * @param string $generalfeedback The general feedback text
      * @param int $gfurl The general feedback URL
-     * @return bool will return success.
+     * @param int $gfdate
+     * @return bool
+     * @throws coding_exception
+     * @throws dml_exception
      */
     public static function update_general_feedback(int $itemid, $generalfeedback, $gfurl, $gfdate): bool {
         global $DB;
