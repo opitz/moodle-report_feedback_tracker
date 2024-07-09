@@ -144,9 +144,9 @@ async function createReasonModal(itemid, date) {
         // Check if the reason input is empty
         if (duedatereason.trim() === '') {
             e.preventDefault();
-            reasonError.show();
+            reasonError.removeClass('d-none').addClass('d-flex');
         } else {
-            reasonError.hide();
+            reasonError.removeClass('d-flex').addClass('d-none');
 
             // Update custom date.
             let response = await updateFeedbackDuedate(itemid, date, duedatereason);

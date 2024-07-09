@@ -39,13 +39,13 @@
 </div>
 <div class="modal-body">
     <form id="modalForm">
-        <div class="reason_horizontal">
-            <i class="fa fa-info-circle text-danger" title="{{#str}} field_required, report_feedback_tracker {{/str}}"></i>
+        <div class="d-flex flex-start">
+            <i class="fa fa-info-circle text-danger mr-1" title="{{#str}} field_required, report_feedback_tracker {{/str}}"></i>
             <textarea class="form-control" id="duedatereason" name="duedatereason" rows= "5">{{{reason}}}</textarea>
         </div>
         <br>
-        <div id="reason-error" class="reason_horizontal" style="color: red; display: none;">
-            <i class="fa fa-info-circle text-danger" title="{{#str}} field_required, report_feedback_tracker {{/str}}"></i>
+        <div id="reason-error" class="align-items-center d-none text-danger">
+            <i class="fa fa-info-circle text-danger mr-1" title="{{#str}} field_required, report_feedback_tracker {{/str}}"></i>
             <span>{{#str}} field_required, report_feedback_tracker {{/str}}</span>
         </div>
     </form>

@@ -179,7 +179,7 @@ function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
 function get_admin_generalfeedback($gradeitem) {
     global $PAGE;
 
-    $o = html_writer::start_div('generalfeedback horizontal-aligned');
+    $o = html_writer::start_div('generalfeedback d-flex align-items-center');
     if ($PAGE->user_is_editing()) {
         $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedbacktext',
             ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
@@ -200,7 +200,7 @@ function get_admin_generalfeedback($gradeitem) {
     }
 
     // Show a hint badge when there is general feedback only.
-    $classes = 'fa fa-info-circle text-primary gfdate';
+    $classes = 'fa fa-info-circle text-primary gfdate ml-1';
     $style = $gradeitem->gfdate ? '' : 'display: none;';
     $title = get_string('generalfeedback:hint', 'report_feedback_tracker');
     $o .= " <i class='$classes' id='gfdate_hint_$gradeitem->itemid' title='$title' data-itemid='$gradeitem->itemid'
@@ -388,6 +388,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
     }
 
     $contact = $gradeitem->responsibility;
+
     // Final grade is available even if there is no due date.
     if (!$feedbackduedate && isset($gradeitem->finalgrade)) {
         $o = html_writer::div(get_string('grade:released', 'report_feedback_tracker'),
@@ -395,8 +396,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
 
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
-                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
             $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
             $o .= html_writer::end_div();
         }
@@ -409,8 +409,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
             "badge badge-pill badge-success");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
-                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
             $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
             $o .= html_writer::end_div();
         }
@@ -425,8 +424,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
             "badge badge-pill badge-warning");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
-                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
             $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
             $o .= html_writer::end_div();
         }
@@ -439,8 +437,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
             "badge badge-pill badge-warning");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
-                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
             $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
             $o .= html_writer::end_div();
         }
@@ -453,8 +450,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
             "badge badge-pill badge-warning");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
-                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
             $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
             $o .= html_writer::end_div();
         }
@@ -467,8 +463,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
             "badge badge-pill badge-danger");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
-                ': ', 'feedback_tracker_contact_title');
+            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
             $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
             $o .= html_writer::end_div();
         }
@@ -479,8 +474,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
     $o = '';
     if ($contact) {
         $o .= html_writer::start_div('feedback_tracker_contact');
-        $o .= html_writer::span(get_string('contact', 'report_feedback_tracker') .
-            ': ', 'feedback_tracker_contact_title');
+        $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
         $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
         $o .= html_writer::end_div();
     }
@@ -507,7 +501,7 @@ function get_feedback_method($gradeitem) {
             $gradeitem->method,
             get_string('edit:method', 'report_feedback_tracker')
         );
-        return html_writer::div($OUTPUT->render($edititem), "horizontal-aligned");
+        return html_writer::div($OUTPUT->render($edititem), "d-flex align-items-center");
     }
     return $gradeitem->method;
 }
@@ -1296,7 +1290,7 @@ function render_feedbackduedate($gradeitem, $feedbackperiod = 0) {
     $date = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
         ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
 
-    $o = html_writer::start_div("horizontal-aligned");
+    $o = html_writer::start_div("d-flex align-items-center");
     if ($PAGE->user_is_editing()) { // Render a date picker.
         // Default to current date if not specified.
         $date = isset($date) && $date > 0 ? $date : time();
@@ -1322,7 +1316,7 @@ function render_feedbackduedate($gradeitem, $feedbackperiod = 0) {
 
     // Show a hint badge when date is set manually.
     if ($date) {
-        $classes = 'fa fa-info-circle text-primary';
+        $classes = 'fa fa-info-circle text-primary ml-1';
         $style = $gradeitem->feedbackduedate ? '' : 'display: none;';
         $title = get_string('feedbackduedate:custom', 'report_feedback_tracker');
         $o .= " <i class='$classes' title='$title' data-itemid='$gradeitem->itemid'
