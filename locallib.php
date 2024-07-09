@@ -25,7 +25,6 @@
 defined('MOODLE_INTERNAL') || die;
 
 require_once(__DIR__.'/lib.php');
-require_once($CFG->dirroot.'/course/lib.php');
 
 /**
  * Get the gradings for all users of a course and amend the data with the findings.

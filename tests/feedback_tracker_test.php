@@ -32,11 +32,12 @@ use context_course;
 final class feedback_tracker_test extends advanced_testcase {
 
     public static function setUpBeforeClass(): void {
+        parent::setUpBeforeClass();
         require_once(__DIR__ . '/../lib.php');
     }
 
     public function setUp(): void {
-        global $PAGE;
+        parent::setUp();
         $this->resetAfterTest();
         $this->setAdminUser();
     }
@@ -205,10 +206,11 @@ final class feedback_tracker_test extends advanced_testcase {
     /**
      * Update a submission for a student and a course module.
      *
-     * @param \stdClass $dmodule
-     * @param \stdClass $student
+     * @param \stdClass $module
+     * @param int $studentid
      * @param int $submissiondate
      * @return void
+     * @throws \dml_exception
      */
     private function update_submission($module, $studentid, $submissiondate) {
         global $DB;
