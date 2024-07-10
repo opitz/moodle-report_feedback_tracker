@@ -43,7 +43,7 @@ $string['feedbackduedate:reason'] = 'Please give a reason for a manual feedback 
 $string['feedbackduedate:removedmessage'] = 'Custom feedback due date removed.
 Feedback due date now again calculated from assessment due date where available.';
 $string['feedbackduedate:updated'] = 'Feedback due date updated';
-$string['feedbacks'] = 'Feedbacks';
+$string['feedbacks'] = 'Feedback provided';
 $string['field_required'] = 'This field is required!';
 $string['formative'] = 'formative';
 $string['generalfeedback'] = 'Additional information';
@@ -53,7 +53,7 @@ $string['generalfeedback:text'] = 'Text:';
 $string['generalfeedback:updated'] = 'General feedback created/updated';
 $string['generalfeedback:url'] = 'URL:';
 $string['grade'] = 'Grade';
-$string['grade:released'] = 'Grade released';
+$string['grade:released'] = 'Marks released';
 $string['grader'] = 'Grader';
 $string['hidden_item'] = 'Hide from report';
 $string['method'] = 'Feedback method';
