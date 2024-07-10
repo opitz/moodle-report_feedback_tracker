@@ -44,8 +44,9 @@
     }
 
 }}
-<table class="table" id="feedback_table">
-    <thead>
+<div class="table-responsive">
+    <table class="table" id="feedback_table">
+        <thead>
         <tr class="feedback_table_header">
             <th scope="col">{{#str}} course, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
             <th scope="col">{{#str}} assessment, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
@@ -101,8 +102,8 @@
             <td id="filtergeneralfeedback">
             </td>
         </tr>
-    </thead>
-    <tbody>
+        </thead>
+        <tbody>
         {{#records}}
             <tr>
                 <td class="col_course" data-filter="{{courseid}}">{{{course}}}</td>
@@ -116,8 +117,9 @@
                 <td class="col_generalfeedback">{{{generalfeedback}}}</td>
             </tr>
         {{/records}}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
 
 {{#js}}
     require(['report_feedback_tracker/tablefilters'], function(tablefilters) {

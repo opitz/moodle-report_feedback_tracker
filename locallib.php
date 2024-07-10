@@ -151,7 +151,7 @@ function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
     $record = new stdClass();
     $record->course = get_course_link($course);
     $record->courseid = $course->id;
-    $record->coursename = $course->shortname;
+    $record->coursename = $course->fullname;
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
     $record->module = get_item_module($gradeitem);
@@ -329,7 +329,7 @@ function get_admin_turnitin_records($course, $gradeitem, $summativeids, &$data) 
         $record = new stdClass();
         $record->course = get_course_link($course);
         $record->courseid = $course->id;
-        $record->coursename = $course->shortname;
+        $record->coursename = $course->fullname;
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);
         $record->type = get_item_type($gradeitem);
         $record->module = get_item_module($gradeitem);
@@ -356,7 +356,7 @@ function get_admin_turnitin_records($course, $gradeitem, $summativeids, &$data) 
 function get_course_link($course) {
     global $CFG;
 
-    return html_writer::link("$CFG->wwwroot/course/view.php?id=$course->id", $course->shortname);
+    return html_writer::link("$CFG->wwwroot/course/view.php?id=$course->id", $course->fullname);
 }
 
 /**
@@ -1034,7 +1034,7 @@ function get_user_feedback_record($course, $userid, $gradeitem, $summativeids) {
     $record->submissionstatus = get_submission_status($submissiondate, $gradeitem->duedate, $warningperiod);
     $record->course = get_course_link($course);
     $record->courseid = $course->id;
-    $record->coursename = $course->shortname;
+    $record->coursename = $course->fullname;
     $record->assessment = get_item_link($gradeitem);
     $record->type = get_item_type($gradeitem);
     $record->module = get_item_module($gradeitem);
@@ -1189,7 +1189,7 @@ function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, 
         $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
         $record->course = get_course_link($course);
         $record->courseid = $course->id;
-        $record->coursename = $course->shortname;
+        $record->coursename = $course->fullname;
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);
         $record->type = get_item_type($gradeitem);
         $record->module = get_item_module($gradeitem);
