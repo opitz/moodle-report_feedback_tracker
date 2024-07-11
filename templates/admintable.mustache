@@ -45,8 +45,9 @@
     }
 
 }}
-<table id="feedback_table" class="table table-responsive">
-    <thead>
+<div class="table-responsive">
+    <table id="feedback_table" class="table">
+        <thead>
         <tr>
             <th scope="col">{{#str}} assessment, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
             <th scope="col">{{#str}} duedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
@@ -103,8 +104,8 @@
                 </select>
             </td>
         </tr>
-    </thead>
-    <tbody>
+        </thead>
+        <tbody>
         {{#records}}
             <tr>
                 <td class="col_assessment" data-filter="{{module}}">{{{type}}} {{{assessment}}}</td>
@@ -117,8 +118,9 @@
                 <td class="col_summative" data-filter="{{summativetext}}">{{{summative}}}</td>
             </tr>
         {{/records}}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
 
 {{#js}}
     require(['report_feedback_tracker/studentview'], function(studentdd) {

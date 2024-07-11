@@ -46,8 +46,9 @@
     }
 
 }}
-<table class="table table-responsive">
-    <thead>
+<div class="table-responsive">
+    <table class="table">
+        <thead>
         <tr>
             <th scope="col" class="col_assessment">{{#str}} assessment, report_feedback_tracker {{/str}}</th>
             <th scope="col">{{#str}} duedate, report_feedback_tracker {{/str}}</th>
@@ -59,8 +60,8 @@
             <th scope="col" class="col_summative">{{#str}} summative, report_feedback_tracker {{/str}}</th>
             <th scope="col" class="col_hidden text-center">{{#str}} hidden_item, report_feedback_tracker {{/str}}</th>
         </tr>
-    </thead>
-    <tbody>
+        </thead>
+        <tbody>
         {{#records}}
             <tr>
                 <td class="col_assessment">{{{type}}} {{{assessment}}}</td>
@@ -74,8 +75,9 @@
                 <td class="col_hidden text-center">{{{hidden}}}</td>
             </tr>
         {{/records}}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
 
 {{#js}}
     require(['report_feedback_tracker/adminedit'], function(Edit) {
