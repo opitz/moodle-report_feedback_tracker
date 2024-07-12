@@ -38,7 +38,7 @@ export function tableFilters() {
                 (!feedbackColumn || feedbackColumn.getAttribute('data-filter') === feedbackValue || !feedbackValue) &&
                 (!methodColumn || methodColumn.getAttribute('data-filter') === methodValue || !methodValue) &&
                 (!summativeColumn || summativeColumn.getAttribute('data-filter') === summativeValue || !summativeValue) &&
-                (!typeColumn || typeColumn.getAttribute('data-filter') === typeValue || !typeValue)
+                (!typeColumn || typeColumn.getAttribute('data-filter-assessment') === typeValue || !typeValue)
             );
 
             row.style.display = match ? '' : 'none';

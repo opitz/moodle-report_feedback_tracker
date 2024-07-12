@@ -46,37 +46,51 @@
     }
 
 }}
-<div class="table-responsive">
-    <table class="table">
-        <thead>
-        <tr class="bg-secondary">
-            <th scope="col" class="col_assessment">{{#str}} assessment, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} duedate, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} feedbackduedate, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} feedbacks, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} method, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} contact, report_feedback_tracker {{/str}}</th>
-            <th scope="col">{{#str}} generalfeedback, report_feedback_tracker {{/str}}</th>
-            <th scope="col" class="col_summative">{{#str}} summative, report_feedback_tracker {{/str}}</th>
-            <th scope="col" class="col_hidden text-center">{{#str}} hidden_item, report_feedback_tracker {{/str}}</th>
-        </tr>
-        </thead>
-        <tbody>
-        {{#records}}
+<div class="full-width">
+    <div class="table-responsive p-5">
+        <table class="table">
+            <thead class="small bg-light">
             <tr>
-                <td class="col_assessment">{{{type}}} {{{assessment}}}</td>
-                <td class="col_duedate text-nowrap">{{duedate}}</td>
-                <td class="col_feedbackduedate text-nowrap">{{{feedbackduedate}}}</td>
-                <td class="col_feedbacks">{{{feedbacks}}}</td>
-                <td class="col_method">{{{method}}}</td>
-                <td class="col_responsibility">{{{responsibility}}}</td>
-                <td class="col_generalfeedback">{{{generalfeedback}}}</td>
-                <td class="col_summative text-center">{{{summative}}}</td>
-                <td class="col_hidden text-center">{{{hidden}}}</td>
+                <th scope="col" class="col_assessment align-top">{{#str}} assessment, report_feedback_tracker {{/str}}</th>
+                <th scope="col" class="align-top">{{#str}} duedate, report_feedback_tracker {{/str}}</th>
+                <th scope="col" class="align-top">{{#str}} feedbacks, report_feedback_tracker {{/str}}</th>
+                <th scope="col" class="align-top">{{#str}} method, report_feedback_tracker {{/str}}</th>
+                <th scope="col" class="align-top">{{#str}} contact, report_feedback_tracker {{/str}}</th>
+                <th scope="col" class="align-top">{{#str}} generalfeedback, report_feedback_tracker {{/str}}</th>
+                <th scope="col" class="col_summative align-top">{{#str}} summative, report_feedback_tracker {{/str}}</th>
+                <th scope="col" class="col_hidden text-center align-top">{{#str}} hidden_item, report_feedback_tracker {{/str}}</th>
             </tr>
-        {{/records}}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {{#records}}
+                <tr>
+                    <td class="col_assessment" data-filter="{{module}}" data-filter-assessment="{{module}}">
+                        <div class="small w-100">
+                            {{{course}}}
+                        </div>
+                        <div class="w-100">
+                            {{{type}}} {{{assessment}}}
+                        </div>
+                    </td>
+                    <td class="col_duedate text-nowrap">{{duedate}}</td>
+                    <td class="col_feedbacks">
+                        <div class="small w-100 text-nowrap">
+                            {{{feedbackduedate}}}
+                        </div>
+                        <div class="w-100">
+                            {{{feedbacks}}}
+                        </div>
+                    </td>
+                    <td class="col_method">{{{method}}}</td>
+                    <td class="col_responsibility">{{{responsibility}}}</td>
+                    <td class="col_generalfeedback">{{{generalfeedback}}}</td>
+                    <td class="col_summative text-center">{{{summative}}}</td>
+                    <td class="col_hidden text-center">{{{hidden}}}</td>
+                </tr>
+            {{/records}}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {{#js}}

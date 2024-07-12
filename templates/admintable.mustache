@@ -45,81 +45,90 @@
     }
 
 }}
-<div class="table-responsive">
-    <table id="feedback_table" class="table">
-        <thead>
-        <tr class="bg-secondary">
-            <th scope="col">{{#str}} assessment, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-            <th scope="col">{{#str}} duedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-            <th scope="col">{{#str}} feedbackduedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-            <th scope="col">{{#str}} feedbacks, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-            <th scope="col">{{#str}} method, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-            <th scope="col">{{#str}} contact, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-            <th scope="col">{{#str}} generalfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-            <th scope="col">{{#str}} summative, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-        </tr>
-        <tr id="feedback_table_filterrow" class="bg-light">
-            <td  style="display: none;">
-                <select id="filtercourse">
-                    <option value="">&nbsp;</option>
-                    {{#courseoptions}}
-                        <option value="{{key}}">{{value}}</option>
-                    {{/courseoptions}}
-                </select>
-            </td>
-            <td>
-                <select id="filtertype">
-                    <option value="">&nbsp;</option>
-                    {{#typeoptions}}
-                        <option value="{{key}}">{{value}}</option>
-                    {{/typeoptions}}
-                </select>
-            </td>
-            <td id="filterduedate">
-            </td>
-            <td id="filterfeedbackduedate">
-            </td>
-            <td id="filterfeedbacks">
-            </td>
-            <td>
-                <select id="filtermethod">
-                    <option value="">&nbsp;</option>
-                    {{#methodoptions}}
-                        <option value="{{key}}">{{value}}</option>
-                    {{/methodoptions}}
-                </select>
-            </td>
-            <td id="filterresponsibility">
-                <input type="text" class="filterresponsibility-input" data-column="0" placeholder="Type to filter">
-            </td>
-            <td id="filtergeneralfeedback">
-                <input type="text" class="filtergeneralfeedback-input" data-column="0" placeholder="Type to filter">
-            </td>
-            <td>
-                <select id="filtersummative">
-                    <option value="">&nbsp;</option>
-                    {{#summativeoptions}}
-                        <option value="{{key}}">{{value}}</option>
-                    {{/summativeoptions}}
-                </select>
-            </td>
-        </tr>
-        </thead>
-        <tbody>
-        {{#records}}
+<div class="full-width">
+    <div class="table-responsive p-5">
+        <table id="feedback_table" class="table">
+            <thead class="small bg-light">
             <tr>
-                <td class="col_assessment" data-filter="{{module}}">{{{type}}} {{{assessment}}}</td>
-                <td class="col_duedate text-nowrap">{{duedate}}</td>
-                <td class="col_feedbackduedate text-nowrap">{{{feedbackduedate}}}</td>
-                <td class="col_feedbacks">{{{feedbacks}}}</td>
-                <td class="col_method" data-filter="{{method}}">{{{method}}}</td>
-                <td class="col_responsibility textsearchable">{{{responsibility}}}</td>
-                <td class="col_generalfeedback textsearchable">{{{generalfeedback}}}</td>
-                <td class="col_summative text-center" data-filter="{{summativetext}}">{{{summative}}}</td>
+                <th scope="col" class="align-top" style="min-width: 300px; width: 300px;">{{#str}} assessment, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} duedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} feedbacks, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} method, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} contact, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} generalfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} summative, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
             </tr>
-        {{/records}}
-        </tbody>
-    </table>
+            <tr id="feedback_table_filterrow">
+                <td>
+                    <label for="filtertype" class="sr-only">{{#str}}filter:type, report_feedback_tracker{{/str}}</label>
+                    <select id="filtertype" class="custom-select custom-select-sm w-100">
+                        <option value="">{{#str}}filter:type, report_feedback_tracker{{/str}}</option>
+                        {{#typeoptions}}
+                            <option value="{{key}}">{{value}}</option>
+                        {{/typeoptions}}
+                    </select>
+                </td>
+                <td>
+                </td>
+                <td>
+                </td>
+                <td>
+                    <label for="filtermethod" class="sr-only">{{#str}}filter:method, report_feedback_tracker{{/str}}</label>
+                    <select id="filtermethod" class="custom-select custom-select-sm w-100">
+                        <option value="">{{#str}}filter:method, report_feedback_tracker{{/str}}</option>
+                        {{#methodoptions}}
+                            <option value="{{key}}">{{value}}</option>
+                        {{/methodoptions}}
+                    </select>
+                </td>
+                <td>
+                    <label for="filterresponsibility" class="sr-only">{{#str}}filter:contact, report_feedback_tracker{{/str}}</label>
+                    <input id="filterresponsibility" type="text" class="form-control form-control-sm w-100 filterresponsibility-input" data-column="0" placeholder="{{#str}}filter:typeto, report_feedback_tracker{{/str}}">
+                </td>
+                <td>
+                    <label for="filtergeneralfeedback" class="sr-only">{{#str}}filter:generalfeedback, report_feedback_tracker{{/str}}</label>
+                    <input id="filtergeneralfeedback" type="text" class="form-control form-control-sm w-100 filtergeneralfeedback-input" data-column="0" placeholder="{{#str}}filter:typeto, report_feedback_tracker{{/str}}">
+                </td>
+                <td>
+                    <label for="filtersummative" class="sr-only">{{#str}}filter:summative, report_feedback_tracker{{/str}}</label>
+                    <select id="filtersummative" class="custom-select custom-select-sm w-100">
+                        <option value="">{{#str}}filter:summative, report_feedback_tracker{{/str}}</option>
+                        {{#summativeoptions}}
+                            <option value="{{key}}">{{value}}</option>
+                        {{/summativeoptions}}
+                    </select>
+                </td>
+            </tr>
+            </thead>
+            <tbody>
+            {{#records}}
+                <tr>
+                    <td class="col_assessment" data-filter="{{module}}" data-filter-assessment="{{module}}">
+                        <div class="small w-100">
+                            {{{course}}}
+                        </div>
+                        <div class="w-100">
+                            {{{type}}} {{{assessment}}}
+                        </div>
+                    </td>
+                    <td class="col_duedate text-nowrap small">{{duedate}}</td>
+                    <td class="col_feedbacks">
+                        <div class="small w-100 text-nowrap">
+                            {{{feedbackduedate}}}
+                        </div>
+                        <div class="w-100">
+                            {{{feedbacks}}}
+                        </div>
+                    </td>
+                    <td class="col_method" data-filter="{{method}}">{{{method}}}</td>
+                    <td class="col_responsibility textsearchable">{{{responsibility}}}</td>
+                    <td class="col_generalfeedback textsearchable">{{{generalfeedback}}}</td>
+                    <td class="col_summative text-center" data-filter="{{summativetext}}">{{{summative}}}</td>
+                </tr>
+            {{/records}}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {{#js}}

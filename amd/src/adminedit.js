@@ -58,7 +58,7 @@ export const init = () => {
                 const itemid = target.getAttribute('itemid');
                 const date = new Date(e.target.value).getTime() / 1000;
                 const deadlinedays = target.getAttribute('data-deadlinedays');
-                const duedate = target.parentElement.parentElement.parentElement.
+                const duedate = target.parentElement.parentElement.parentElement.parentElement.
                 querySelector('.col_duedate').innerHTML;
 
                 let response = '';

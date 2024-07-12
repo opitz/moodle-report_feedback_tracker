@@ -29,7 +29,7 @@ Feature: As a student I want to see, sort and filter the results of the feredbac
     And I follow "Profile" in the user menu
     And I follow "Feedback tracker"
     Then I should see "Feedback tracker report"
-    And I should see "Feedback due date"
+    And I should see "Due"
     And I should see "Test assignment"
     And I should see "Test quiz"
     When I select "Quiz" from the "filtertype" dropdown

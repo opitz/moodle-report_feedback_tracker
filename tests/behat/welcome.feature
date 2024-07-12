@@ -1,4 +1,4 @@
-@report @report_feedback_tracker
+@report @report_feedback_tracker @workbench
 Feature: In a course administration page, navigate through report page, test for feedback tracker report page
   In order to navigate through report page
   As an admin
@@ -56,5 +56,5 @@ Feature: In a course administration page, navigate through report page, test for
     And I follow "Profile" in the user menu
     And I follow "Feedback tracker"
     Then I should see "Feedback tracker report"
-    And I should see "Feedback due date"
+    And I should see "Due"
     And I should see "Test quiz"

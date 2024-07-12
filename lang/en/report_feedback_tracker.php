@@ -23,10 +23,11 @@
  */
 
 $string['assessment'] = 'Assessment';
+$string['classification'] = 'Classification';
 $string['contact'] = 'Contact';
 $string['course'] = 'Course';
 $string['dateformat:default'] = "d. M Y";
-$string['duedate'] = 'Due date';
+$string['duedate'] = 'Due';
 $string['edit:generalfeedback'] = 'Edit general feedback';
 $string['edit:method'] = 'Edit method';
 $string['edit:responsibility'] = 'Edit responsibility';
@@ -37,14 +38,23 @@ $string['feedback:in_time'] = 'Released';
 $string['feedback:late'] = 'Late';
 $string['feedback:overdue'] = 'Overdue';
 $string['feedback:warning'] = 'Warning!';
-$string['feedbackduedate'] = 'Feedback due date';
+$string['feedbackduedate'] = 'Feedback due';
 $string['feedbackduedate:custom'] = 'Feedback due date set manually';
 $string['feedbackduedate:reason'] = 'Please give a reason for a manual feedback due date:';
 $string['feedbackduedate:removedmessage'] = 'Custom feedback due date removed.
 Feedback due date now again calculated from assessment due date where available.';
 $string['feedbackduedate:updated'] = 'Feedback due date updated';
-$string['feedbacks'] = 'Feedback provided';
+$string['feedbacks'] = 'Feedback due provided';
 $string['field_required'] = 'This field is required!';
+$string['filter:by'] = 'Filter by';
+$string['filter:contact'] = 'Filter by contact';
+$string['filter:course'] = 'Filter by course';
+$string['filter:feedback'] = 'Filter by feedback';
+$string['filter:generalfeedback'] = 'Filter by general feedback';
+$string['filter:method'] = 'Filter by method';
+$string['filter:summative'] = 'Filter by classification';
+$string['filter:type'] = 'Filter by type';
+$string['filter:typeto'] = 'Type to filter';
 $string['formative'] = 'formative';
 $string['generalfeedback'] = 'Additional information';
 $string['generalfeedback:hint'] = 'General feedback only';
@@ -84,7 +94,7 @@ $string['submission:late'] = 'Submission was late!';
 $string['submission:overdue'] = 'Submission is overdue!';
 $string['submission:success'] = 'Submission in time';
 $string['submission:warning'] = 'Submission due date approaching!';
-$string['submissiondate'] = 'Submission date';
+$string['submissiondate'] = 'Submitted';
 $string['summative'] = 'Summative';
 $string['type'] = 'Assessment type';
 $string['user'] = 'User';

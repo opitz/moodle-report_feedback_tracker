@@ -45,7 +45,7 @@ function get_admin_course_gradings($course, &$data) {
         gi.itemname,
         gi.itemtype,
         gi.itemmodule,
-        cm.id as assignmentid,
+        cm.id as cmid,
         cm.visible,
         gi.iteminstance,
         gi.gradepass,
@@ -149,7 +149,7 @@ function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
     $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
 
     $record = new stdClass();
-    $record->course = get_course_link($course);
+    $record->course = $course->fullname;
     $record->courseid = $course->id;
     $record->coursename = $course->fullname;
     $record->assessment = get_item_link($gradeitem);
@@ -322,7 +322,7 @@ function get_admin_turnitin_records($course, $gradeitem, $summativeids, &$data) 
         $feedbackduedate = $gradeitem->feedbackduedate ?? ($duedate ? $duedate + $feedbackperiod : 0);
 
         $record = new stdClass();
-        $record->course = get_course_link($course);
+        $record->course = $course->fullname;
         $record->courseid = $course->id;
         $record->coursename = $course->fullname;
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);
@@ -362,7 +362,7 @@ function get_course_link($course) {
  * @throws dml_exception
  */
 function get_feedbacks($gradeitem) {
-    return $gradeitem->assignmentid ? html_writer::div("$gradeitem->feedbacks of $gradeitem->submissions") : '';
+    return $gradeitem->cmid ? html_writer::div("$gradeitem->feedbacks of $gradeitem->submissions") : '';
 }
 
 /**
@@ -386,12 +386,12 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
     // Final grade is available even if there is no due date.
     if (!$feedbackduedate && isset($gradeitem->finalgrade)) {
         $o = html_writer::div(get_string('grade:released', 'report_feedback_tracker'),
-            "badge badge-pill badge-success");
+            "badge badge-success");
 
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
-            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::tag('small', get_string('contact', 'report_feedback_tracker') . ': ');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body small');
             $o .= html_writer::end_div();
         }
         return $o;
@@ -400,11 +400,11 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
     // Feedback was given in time.
     if (isset($gradeitem->gfdate) || (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate <= $feedbackduedate)) {
         $o = html_writer::div(get_string('feedback:in_time', 'report_feedback_tracker'),
-            "badge badge-pill badge-success");
+            "badge badge-success");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
-            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::tag('small', get_string('contact', 'report_feedback_tracker') . ': ');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body small');
             $o .= html_writer::end_div();
         }
         return $o;
@@ -415,11 +415,11 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
     // Feedback was given within the extended period.
     if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate <= $warningduedate) {
         $o = html_writer::div(get_string('feedback:extended', 'report_feedback_tracker'),
-            "badge badge-pill badge-warning");
+            "badge badge-warning");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
-            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::tag('small', get_string('contact', 'report_feedback_tracker') . ': ');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body small');
             $o .= html_writer::end_div();
         }
         return $o;
@@ -428,11 +428,11 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
     // Feedback was given outside the extended period.
     if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate > $warningduedate) {
         $o = html_writer::div(get_string('feedback:late', 'report_feedback_tracker'),
-            "badge badge-pill badge-warning");
+            "badge badge-warning");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
-            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::tag('small', get_string('contact', 'report_feedback_tracker') . ': ');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body small');
             $o .= html_writer::end_div();
         }
         return $o;
@@ -441,11 +441,11 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
     // NO feedback was given but it's still within the extended period.
     if (!isset($gradeitem->finalgrade) && $feedbackduedate < time() && $warningduedate >= time() ) {
         $o = html_writer::div(get_string('feedback:due', 'report_feedback_tracker'),
-            "badge badge-pill badge-warning");
+            "badge badge-warning");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
-            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::tag('small', get_string('contact', 'report_feedback_tracker') . ': ');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body small');
             $o .= html_writer::end_div();
         }
         return $o;
@@ -454,11 +454,11 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
     // NO feedback was given, and it is beyond the extended period.
     if (!isset($gradeitem->finalgrade) && $warningduedate < time()) {
         $o = html_writer::div(get_string('feedback:overdue', 'report_feedback_tracker'),
-            "badge badge-pill badge-danger");
+            "badge badge-danger");
         if ($contact) {
             $o .= html_writer::start_div('feedback_tracker_contact');
-            $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
-            $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+            $o .= html_writer::tag('small', get_string('contact', 'report_feedback_tracker') . ': ');
+            $o .= html_writer::span($contact, 'feedback_tracker_contact_body small');
             $o .= html_writer::end_div();
         }
         return $o;
@@ -468,8 +468,8 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
     $o = '';
     if ($contact) {
         $o .= html_writer::start_div('feedback_tracker_contact');
-        $o .= html_writer::tag('strong', get_string('contact', 'report_feedback_tracker') . ': ');
-        $o .= html_writer::span($contact, 'feedback_tracker_contact_body');
+        $o .= html_writer::tag('small', get_string('contact', 'report_feedback_tracker') . ': ');
+        $o .= html_writer::span($contact, 'feedback_tracker_contact_body small');
         $o .= html_writer::end_div();
     }
     return $o;
@@ -622,10 +622,10 @@ function get_hidden_state($gradeitem) {
 function get_item_link($gradeitem, $partname = '') {
     global $CFG, $USER;
 
-    if (!isset($gradeitem->assignmentid)) {
+    if (!isset($gradeitem->cmid)) {
         $url = "$CFG->wwwroot/grade/report/user/index.php?id=$gradeitem->courseid&userid=$USER->id";
     } else {
-        $url = "$CFG->wwwroot/mod/$gradeitem->itemmodule/view.php?id=$gradeitem->assignmentid";
+        $url = "$CFG->wwwroot/mod/$gradeitem->itemmodule/view.php?id=$gradeitem->cmid";
     }
     $linktext = $partname ? "$gradeitem->itemname - $partname" : $gradeitem->itemname;
     return html_writer::link($url, $linktext);
@@ -638,40 +638,39 @@ function get_item_link($gradeitem, $partname = '') {
  * @return mixed|string
  */
 function get_item_type($gradeitem) {
-    global $CFG;
 
-    $path = '';
+    // If there is no itemmodule it is manual feedback.
+    if (!$gradeitem->itemmodule) {
+        return '<i class="icon fa-regular fa-hand-spock"></i>';
+    }
+
+    $modinfo = get_fast_modinfo($gradeitem->courseid)->get_cm($gradeitem->cmid);
+    $path = $modinfo->get_icon_url()->out(false);
+
     switch ($gradeitem->itemmodule) {
         case 'assign':
-            $path = "$CFG->wwwroot/mod/assign/pix/monologo.svg";
             $title = get_string('pluginname', 'mod_assign');
             break;
         case 'lesson':
-            $path = "$CFG->wwwroot/mod/lesson/pix/monologo.svg";
             $title = get_string('pluginname', 'mod_lesson');
             break;
         case 'quiz':
-            $path = "$CFG->wwwroot/mod/quiz/pix/monologo.svg";
             $title = get_string('pluginname', 'mod_quiz');
             break;
         case 'turnitintooltwo':
-            $path = "$CFG->wwwroot/mod/turnitintooltwo/pix/icon.png";
             $title = get_string('pluginname', 'mod_turnitintooltwo');
             break;
         case 'scorm':
-            $path = "$CFG->wwwroot/mod/scorm/pix/monologo.svg";
             $title = get_string('pluginname', 'mod_scorm');
             break;
         case 'workshop':
-            $path = "$CFG->wwwroot/mod/workshop/pix/monologo.svg";
             $title = get_string('pluginname', 'mod_workshop');
             break;
         default:
             return $gradeitem->itemmodule;
-            break;
     }
 
-    return "<img src='$path' alt='$gradeitem->itemmodule' title=$title>";
+    return "<img class='icon mr-0' src='$path' alt='$gradeitem->itemmodule' title=$title>";
 
 }
 
@@ -938,7 +937,7 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
         gg.finalgrade,
         gg.feedback,
         gg.timemodified as feedbackdate,
-        cm.id as assignmentid,
+        cm.id as cmid,
         cm.visible,
         um.username as grader,
         gg.timemodified,
@@ -976,7 +975,7 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
         if ($userid) {
             if ($gradeitem->itemmodule) {
                 $capability = 'mod/' . $gradeitem->itemmodule . ':view';
-                if (!has_capability($capability, context_module::instance($gradeitem->assignmentid))) {
+                if (!has_capability($capability, context_module::instance($gradeitem->cmid))) {
                     continue;
                 }
             }
@@ -1027,7 +1026,7 @@ function get_user_feedback_record($course, $userid, $gradeitem, $summativeids) {
     $record = new stdClass();
     $record->submissiondate = $submissiondate == 0 ? '--' : date($dateformat, $submissiondate);
     $record->submissionstatus = get_submission_status($submissiondate, $gradeitem->duedate, $warningperiod);
-    $record->course = get_course_link($course);
+    $record->course = $course->fullname;
     $record->courseid = $course->id;
     $record->coursename = $course->fullname;
     $record->assessment = get_item_link($gradeitem);
@@ -1182,7 +1181,7 @@ function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, 
         $record = new stdClass();
         $record->submissiondate = $submissiondate == 0 ? '--' : date($dateformat, $submissiondate);
         $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
-        $record->course = get_course_link($course);
+        $record->course = $course->fullname;
         $record->courseid = $course->id;
         $record->coursename = $course->fullname;
         $record->assessment = get_item_link($gradeitem, $tttpart->partname);

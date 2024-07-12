@@ -49,26 +49,30 @@
         <table class="table" id="feedback_table">
             <thead class="small bg-light">
             <tr class="feedback_table_header">
+                <th scope="col" class="align-top" style="min-width: 300px; width: 300px;">{{#str}} course, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top" style="min-width: 300px; width: 300px;">{{#str}} assessment, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top">{{#str}} type, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top">{{#str}} duedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top">{{#str}} submissiondate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top">{{#str}} feedbackduedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} feedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top">{{#str}} method, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top">{{#str}} generalfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
             </tr>
             <tr id="feedback_table_filterrow" class="bg-light">
-                <td class="d-flex align-items-center">
+                <td>
                     <label for="filtercourse" class="sr-only">{{#str}}filter:course, report_feedback_tracker{{/str}}</label>
                     <select id="filtercourse" class="custom-select custom-select-sm w-100">
-                        <option value="">{{#str}}filter:course, report_feedback_tracker{{/str}}</option>
+                        <option value="">{{#str}}filter:by, report_feedback_tracker{{/str}}</option>
                         {{#courseoptions}}
                             <option value="{{key}}">{{value}}</option>
                         {{/courseoptions}}
                     </select>
+                </td>
+                <td>
                     <label for="filtertype" class="sr-only">{{#str}}filter:type, report_feedback_tracker{{/str}}</label>
                     <select id="filtertype" class="custom-select custom-select-sm w-100">
-                        <option value="">{{#str}}filter:type, report_feedback_tracker{{/str}}</option>
+                        <option value="">{{#str}}filter:by, report_feedback_tracker{{/str}}</option>
                         {{#typeoptions}}
                             <option value="{{key}}">{{value}}</option>
                         {{/typeoptions}}
@@ -77,20 +81,22 @@
                 <td>
                     <label for="filtersummative" class="sr-only">{{#str}}filter:summative, report_feedback_tracker{{/str}}</label>
                     <select id="filtersummative" class="custom-select custom-select-sm w-100">
-                        <option value="">{{#str}}filter:summative, report_feedback_tracker{{/str}}</option>
+                        <option value="">{{#str}}filter:by, report_feedback_tracker{{/str}}</option>
                         {{#summativeoptions}}
                             <option value="{{key}}">{{value}}</option>
                         {{/summativeoptions}}
                     </select>
                 </td>
-                <td>
+                <td id="filterduedate">
                 </td>
-                <td>
+                <td id="filtersubmissiondate">
+                </td>
+                <td id="filterfeedbackduedate">
                 </td>
                 <td>
                     <label for="filterfeedback" class="sr-only">{{#str}}filter:feedback, report_feedback_tracker{{/str}}</label>
                     <select id="filterfeedback" class="custom-select custom-select-sm w-100">
-                        <option value="">{{#str}}filter:feedback, report_feedback_tracker{{/str}}</option>
+                        <option value="">{{#str}}filter:by, report_feedback_tracker{{/str}}</option>
                         {{#feedbackoptions}}
                             <option value="{{key}}">{{value}}</option>
                         {{/feedbackoptions}}
@@ -105,25 +111,13 @@
             <tbody>
             {{#records}}
                 <tr>
-                    <td class="col_course col_assessment" data-filter="{{courseid}}" data-filter-assessment="{{module}}">
-                        <div class="small w-100">
-                            {{{course}}}
-                        </div>
-                        <div class="w-100">
-                            {{{type}}} {{{assessment}}}
-                        </div>
-                    </td>
+                    <td class="col_course" data-filter="{{courseid}}">{{{course}}}</td>
+                    <td class="col_assessment" data-filter="{{module}}">{{{type}}} {{{assessment}}}</td>
                     <td class="col_summative small" data-filter="{{summative}}">{{{summative}}}</td>
                     <td class="col_duedate text-nowrap small">{{duedate}}</td>
                     <td class="col_submissiondate text-nowrap small">{{submissiondate}}</td>
-                    <td class="col_feedback" data-filter="{{feedbackstatus}}">
-                        <div class="small w-100">
-                            {{{feedbackduedate}}}
-                        </div>
-                        <div class="w-100">
-                            {{{feedback}}}
-                        </div>
-                    </td>
+                    <td class="col_feedbackduedate text-nowrap small">{{{feedbackduedate}}}</td>
+                    <td class="col_feedback" data-filter="{{feedbackstatus}}">{{{feedback}}}</td>
                     <td class="col_method" data-filter="{{method}}">{{{method}}}</td>
                     <td class="col_generalfeedback">{{{generalfeedback}}}</td>
                 </tr>
