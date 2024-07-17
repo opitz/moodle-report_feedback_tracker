@@ -65,7 +65,7 @@ function get_admin_course_gradings($course, &$data) {
                 (select submissionend from {workshop} where id = gi.iteminstance)
             ELSE 0
         END as duedate,
-        (select count(distinct gg.userid) from {grade_grades} gg where gg.itemid = gi.id and gg.finalgrade != null) as feedbacks,
+        (select count(distinct gg.userid) from {grade_grades} gg where gg.itemid = gi.id and gg.finalgrade > -1) as feedbacks,
         CASE
             WHEN gi.itemmodule = 'assign' THEN
                 (select count(distinct asu.userid) from {assign_submission} asu
