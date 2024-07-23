@@ -921,7 +921,7 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
         gi.grademax,
         CASE
             WHEN gi.itemmodule = 'assign' THEN
-                (select duedate from {assign} where id = gi.iteminstance)
+                (select duedate from {assign} where id = gi.iteminstance )
             WHEN gi.itemmodule = 'lesson' THEN
                 (select deadline from {lesson} where id = gi.iteminstance)
             WHEN gi.itemmodule = 'quiz' THEN
@@ -979,6 +979,10 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
         }
 
         // All good - now get and store the feedback record.
+        // Check for assignment due date extensions.
+        if ($gradeitem->itemmodule == 'assign' && $extension = get_assign_extension($gradeitem->iteminstance, $userid)) {
+            $gradeitem->duedate = $extension;
+        }
         // TurnitinToolTwo special treatment as one grading item may have several parts.
         if ($gradeitem->itemmodule == 'turnitintooltwo') {
             get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, $data);
@@ -990,6 +994,20 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
 
     // Get the filter options where available.
     get_user_filter_options($data);
+}
+
+/**
+ * Get a user due date extension for an assignment where available.
+ *
+ * @param int $assignmentid
+ * @param int $userid
+ * @return false|mixed
+ * @throws dml_exception
+ */
+function get_assign_extension($assignmentid, $userid) {
+    global $DB;
+
+    return $DB->get_field('assign_user_flags', 'extensionduedate', ['assignment' => $assignmentid, 'userid' => $userid]);
 }
 
 /**
