@@ -11,6 +11,17 @@ export const updateSummativeState = (
     },
 }])[0];
 
+export const updateCohortState = (
+    itemid,
+    cohortstate,
+) => ajax([{
+    methodname: 'report_feedback_tracker_save_cohort_state',
+    args: {
+        itemid: itemid,
+        cohortstate: cohortstate
+    },
+}])[0];
+
 export const updateHidingState = (
     itemid,
     hidingstate,
@@ -48,14 +59,12 @@ export const updateGeneralFeedback = (
     itemid,
     generalfeedback,
     gfurl,
-    gfdate,
 ) => ajax([{
     methodname: 'report_feedback_tracker_update_general_feedback',
     args: {
         itemid: itemid,
         generalfeedback: generalfeedback,
-        gfurl: gfurl,
-        gfdate: gfdate
+        gfurl: gfurl
     },
 }])[0];
 

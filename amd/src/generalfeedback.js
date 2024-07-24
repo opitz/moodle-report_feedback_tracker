@@ -22,9 +22,8 @@ export const init = async() => {
             // Get the current values for general feedback text, URL and date.
             var generalfeedback = target.getAttribute('data-generalfeedback');
             var gfurl = target.getAttribute('data-gfurl');
-            var gfdate = target.getAttribute('data-gfdate');
 
-            // Show a modal with a text field, a URL field and a checkbox.
+            // Show a modal with a text field and a URL field.
             const modal = await ModalSaveCancel.create({
                 title: await getString('generalfeedback', 'report_feedback_tracker'),
                 body: Templates.render('report_feedback_tracker/generalfeedback_modal',
@@ -32,9 +31,7 @@ export const init = async() => {
                         generalfeedbacklabel: await getString('generalfeedback:text', 'report_feedback_tracker'),
                         generalfeedback: generalfeedback,
                         gfurllabel: await getString('generalfeedback:url', 'report_feedback_tracker'),
-                        gfurl: gfurl,
-                        gfdatelabel: await getString('generalfeedback:only', 'report_feedback_tracker'),
-                        gfdate: gfdate
+                        gfurl: gfurl
                     }),
             });
             modal.show();
@@ -43,19 +40,15 @@ export const init = async() => {
                 // Get the general feedback text, URL and optional date.
                 const generalfeedback = document.getElementById('generalfeedback').value;
                 const gfurl = document.getElementById('gfurl').value;
-                const gfdate = document.getElementById('gfdate').checked;
 
                 // Update the database.
-                const response = await updateGeneralFeedback(itemid, generalfeedback, gfurl, gfdate);
+                const response = await updateGeneralFeedback(itemid, generalfeedback, gfurl);
 
                 // Update the screen elements.
                 target.setAttribute('data-generalfeedback', generalfeedback);
                 target.setAttribute('data-gfurl', gfurl);
-                target.setAttribute('data-gfdate', gfdate);
                 document.getElementById('generalfeedbacktext_' + itemid).innerHTML = generalfeedback;
 
-                // Show/hide a hint for general feedback only.
-                document.getElementById('gfdate_hint_' + itemid).style.display = gfdate ? '' : 'none';
                 window.console.log(response);
             });
 

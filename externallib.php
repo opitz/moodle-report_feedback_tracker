@@ -140,6 +140,53 @@ class report_feedback_tracker_external extends \core_external\external_api {
     }
 
     /**
+     * Describes the parameters for save_cohort_state webservice.
+     *
+     * @return external_function_parameters
+     * @since  Moodle 3.1
+     */
+    public static function save_cohort_state_parameters() {
+        return new external_function_parameters(
+            [
+                'itemid' => new external_value(PARAM_RAW, 'The ID of the grade item'),
+                'cohortstate' => new external_value(PARAM_RAW, 'The hiding state (0 or 1)'),
+            ]
+        );
+    }
+
+    /**
+     * Saving the cohort state for a grade item.
+     *
+     * @param int $itemid The ID of the grade item
+     * @param bool $cohortstate The cohort state (0 or 1)
+     * @return bool will return success.
+     */
+    public static function save_cohort_state(int $itemid, bool $cohortstate): bool {
+        global $DB;
+
+        if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid])) {
+            $record->gfdate = $cohortstate ? time() : null;
+            $DB->update_record('report_feedback_tracker', $record);
+        } else {
+            $record = new stdClass();
+            $record->gradeitem = $itemid;
+            $record->gfdate = $cohortstate ? time() : null;
+            $record->feedbackduedate = 0;
+            $DB->insert_record('report_feedback_tracker', $record);
+        }
+
+        return $cohortstate;
+    }
+
+    /**
+     * Describes the return value for save_cohort_state
+     *
+     * @return external_warnings
+     */
+    public static function save_cohort_state_returns() {
+    }
+
+    /**
      * Describes the parameters for save_feedback_duedate webservice.
      *
      * @return external_function_parameters
@@ -248,7 +295,6 @@ class report_feedback_tracker_external extends \core_external\external_api {
                 'itemid' => new external_value(PARAM_RAW, 'The ID of the grade item'),
                 'generalfeedback' => new external_value(PARAM_RAW, 'The general feedback'),
                 'gfurl' => new external_value(PARAM_RAW, 'The URL to general feedback'),
-                'gfdate' => new external_value(PARAM_RAW, 'The due date for general feedback only'),
             ]
         );
     }
@@ -259,25 +305,22 @@ class report_feedback_tracker_external extends \core_external\external_api {
      * @param int $itemid The ID of the grade item
      * @param string $generalfeedback The general feedback text
      * @param int $gfurl The general feedback URL
-     * @param int $gfdate
      * @return string
      * @throws coding_exception
      * @throws dml_exception
      */
-    public static function update_general_feedback(int $itemid, $generalfeedback, $gfurl, $gfdate): bool {
+    public static function update_general_feedback(int $itemid, $generalfeedback, $gfurl): bool {
         global $DB;
 
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid])) {
             $record->generalfeedback = $generalfeedback;
             $record->gfurl = $gfurl;
-            $record->gfdate = $gfdate ? strtotime('now') : null;
             $DB->update_record('report_feedback_tracker', $record);
         } else {
             $record = new stdClass();
             $record->gradeitem = $itemid;
             $record->generalfeedback = clean_param($generalfeedback, PARAM_TEXT);
             $record->gfurl = clean_param($gfurl, PARAM_URL);
-            $record->gfdate = $gfdate ? strtotime('now') : null;
             $DB->insert_record('report_feedback_tracker', $record);
         }
         return get_string('generalfeedback:updated', 'report_feedback_tracker');

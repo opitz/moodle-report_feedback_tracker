@@ -56,6 +56,7 @@
                 <th scope="col" class="align-top">{{#str}} method, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top">{{#str}} contact, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top">{{#str}} generalfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} cohortfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
                 <th scope="col" class="align-top">{{#str}} summative, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
             </tr>
             <tr id="feedback_table_filterrow">
@@ -88,6 +89,8 @@
                 <td>
                     <label for="filtergeneralfeedback" class="sr-only">{{#str}}filter:generalfeedback, report_feedback_tracker{{/str}}</label>
                     <input id="filtergeneralfeedback" type="text" class="form-control form-control-sm w-100 filtergeneralfeedback-input" data-column="0" placeholder="{{#str}}filter:typeto, report_feedback_tracker{{/str}}">
+                </td>
+                <td>
                 </td>
                 <td>
                     <label for="filtersummative" class="sr-only">{{#str}}filter:summative, report_feedback_tracker{{/str}}</label>
@@ -123,6 +126,7 @@
                     <td class="col_method" data-filter="{{method}}">{{{method}}}</td>
                     <td class="col_responsibility textsearchable">{{{responsibility}}}</td>
                     <td class="col_generalfeedback textsearchable">{{{generalfeedback}}}</td>
+                    <td class="col_cohortfeedback textsearchable">{{{cohortfeedback}}}</td>
                     <td class="col_summative text-center" data-filter="{{summativetext}}">{{{summative}}}</td>
                 </tr>
             {{/records}}

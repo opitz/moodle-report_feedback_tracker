@@ -40,8 +40,8 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
         // Adding fields to table report_feedback_tracker.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('gradeitem', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('summative', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('hidden', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('summative', XMLDB_TYPE_INTEGER, '1', null, null, null, null);
+        $table->add_field('hidden', XMLDB_TYPE_INTEGER, '1', null, null, null, null);
         $table->add_field('feedbackduedate', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
         $table->add_field('method', XMLDB_TYPE_CHAR, '255', null, null, null, null);
         $table->add_field('responsibility', XMLDB_TYPE_TEXT, 'medium', null, null, null, null);

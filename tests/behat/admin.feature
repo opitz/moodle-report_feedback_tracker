@@ -82,7 +82,6 @@ Feature: As an admin I want to be able to hide a grade item from the report, I w
     And I turn editing mode on
     When I click on ".fa-pencil:nth-child(2)" "css_element"
     Then I should see "Additional information"
-    And I should see "General feedback only"
     When I set the following fields to these values:
       | generalfeedback | Some general feedback |
       | gfurl           | https://www.ucl.ac.uk  |

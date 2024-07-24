@@ -161,6 +161,7 @@ function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
     $record->method = get_feedback_method($gradeitem);
     $record->responsibility = get_feedback_responsibility($gradeitem);
     $record->generalfeedback = get_admin_generalfeedback($gradeitem);
+    $record->cohortfeedback = get_admin_cohortfeedback($gradeitem);
     $record->gfurl = $gradeitem->gfurl;
     $record->summative = get_admin_summative($gradeitem, $summativeids);
     $record->summativetext = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
@@ -197,13 +198,6 @@ function get_admin_generalfeedback($gradeitem) {
         $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedbacktext',
             ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
     }
-
-    // Show a hint badge when there is general feedback only.
-    $classes = 'fa fa-info-circle text-primary gfdate ml-1';
-    $style = $gradeitem->gfdate ? '' : 'display: none;';
-    $title = get_string('generalfeedback:hint', 'report_feedback_tracker');
-    $o .= " <i class='$classes' id='gfdate_hint_$gradeitem->itemid' title='$title' data-itemid='$gradeitem->itemid'
-                data-action='report_feedback_tracker/gfhint' style='$style'></i>";
 
     $o .= html_writer::end_div();
     return $o;
@@ -610,6 +604,41 @@ function get_hidden_state($gradeitem) {
         }
     } else {
         if ($gradeitem->hidden) {
+            return "<i class='fa fa-check'></i>";
+        } else {
+            return '';
+        }
+    }
+}
+
+/**
+ * Edit / show the cohort feedback status for course admins.
+ *
+ * @param stdClass $gradeitem
+ * @return string
+ */
+function get_admin_cohortfeedback($gradeitem) {
+    global $PAGE;
+
+    if ($PAGE->user_is_editing()) {
+        if ($gradeitem->gfdate) {
+            return "<input
+                data-action='report_feedback_tracker/cohort_checkbox'
+                type='checkbox'
+                class='form-check-input cohort_checkbox'
+                cmid='$gradeitem->itemid'
+                checked='checked'
+            >";
+        } else {
+            return "<input
+                data-action='report_feedback_tracker/cohort_checkbox'
+                type='checkbox'
+                class='form-check-input cohort_checkbox'
+                cmid='$gradeitem->itemid'
+            >";
+        }
+    } else {
+        if ($gradeitem->gfdate) {
             return "<i class='fa fa-check'></i>";
         } else {
             return '';

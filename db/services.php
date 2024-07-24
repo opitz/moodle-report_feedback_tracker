@@ -36,6 +36,16 @@ $functions = [
         'capabilities'  => 'report/feedback_tracker:grade',
     ],
 
+    'report_feedback_tracker_save_cohort_state' => [
+        'classname'     => 'report_feedback_tracker_external',
+        'methodname'    => 'save_cohort_state',
+        'classpath'     => 'report/feedback_tracker/externallib.php',
+        'description'   => 'Update the cohort state via ajax',
+        'type'          => 'write',
+        'ajax'          => true,
+        'capabilities'  => 'report/feedback_tracker:grade',
+    ],
+
     'report_feedback_tracker_save_hiding_state' => [
         'classname'     => 'report_feedback_tracker_external',
         'methodname'    => 'save_hiding_state',

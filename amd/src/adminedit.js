@@ -1,4 +1,5 @@
 import {updateSummativeState} from './repository';
+import {updateCohortState} from './repository';
 import {updateHidingState} from './repository';
 import {updateFeedbackDuedate} from './repository';
 import {deleteFeedbackDuedate} from './repository';
@@ -11,6 +12,7 @@ import Templates from 'core/templates';
 const Selectors = {
     actions: {
         toggleSummativeState: '[data-action="report_feedback_tracker/summative_checkbox"]',
+        toggleCohortState: '[data-action="report_feedback_tracker/cohort_checkbox"]',
         toggleHideState: '[data-action="report_feedback_tracker/hiding_checkbox"]',
         datePicker: '[data-action="report_feedback_tracker/datepicker"]',
         customHint: '[data-action="report_feedback_tracker/customhint"]',
@@ -32,6 +34,21 @@ export const init = () => {
                 summativestate = '0';
             }
             const response = await updateSummativeState(itemid, summativestate);
+            window.console.log(response);
+        }
+    });
+
+    document.addEventListener('click', async e => {
+        if (e.target.closest(Selectors.actions.toggleCohortState)) {
+            const target = e.target;
+            const itemid = target.getAttribute('cmid');
+            let cohortstate = '1';
+            if (target.checked === true) {
+                cohortstate = '1';
+            } else {
+                cohortstate = '0';
+            }
+            const response = await updateCohortState(itemid, cohortstate);
             window.console.log(response);
         }
     });

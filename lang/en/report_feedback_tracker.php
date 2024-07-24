@@ -24,6 +24,7 @@
 
 $string['assessment'] = 'Assessment';
 $string['classification'] = 'Classification';
+$string['cohortfeedback'] = 'Cohort feedback<br>provided';
 $string['contact'] = 'Contact';
 $string['course'] = 'Course';
 $string['dateformat:default'] = "d. M Y";
@@ -45,7 +46,7 @@ $string['feedbackduedate:reason'] = 'Please give a reason for a manual feedback 
 $string['feedbackduedate:removedmessage'] = 'Custom feedback due date removed.
 Feedback due date now again calculated from assessment due date where available.';
 $string['feedbackduedate:updated'] = 'Feedback due date updated';
-$string['feedbacks'] = 'Feedback due provided';
+$string['feedbacks'] = 'Feedback due<br>provided';
 $string['field_required'] = 'This field is required!';
 $string['filter:by'] = 'Filter by';
 $string['filter:contact'] = 'Filter by contact';
@@ -59,7 +60,6 @@ $string['filter:typeto'] = 'Type to filter';
 $string['formative'] = 'formative';
 $string['generalfeedback'] = 'Additional information';
 $string['generalfeedback:hint'] = 'General feedback only';
-$string['generalfeedback:only'] = 'General feedback only';
 $string['generalfeedback:text'] = 'Text:';
 $string['generalfeedback:updated'] = 'General feedback created/updated';
 $string['generalfeedback:url'] = 'URL:';
