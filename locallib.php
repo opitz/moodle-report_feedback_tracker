@@ -979,8 +979,8 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
         }
 
         // All good - now get and store the feedback record.
-        // Check for assignment due date extensions.
-        if ($gradeitem->itemmodule == 'assign' && $extension = get_assign_extension($gradeitem->iteminstance, $userid)) {
+        // Check for due date extensions.
+        if ($extension = get_duedate_extension($gradeitem, $userid)) {
             $gradeitem->duedate = $extension;
         }
         // TurnitinToolTwo special treatment as one grading item may have several parts.
@@ -997,17 +997,40 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
 }
 
 /**
- * Get a user due date extension for an assignment where available.
+ * Get a due date extension where available.
  *
- * @param int $assignmentid
+ * @param stdClass $gradeitem
  * @param int $userid
  * @return false|mixed
  * @throws dml_exception
  */
-function get_assign_extension($assignmentid, $userid) {
+function get_duedate_extension($gradeitem, $userid) {
     global $DB;
 
-    return $DB->get_field('assign_user_flags', 'extensionduedate', ['assignment' => $assignmentid, 'userid' => $userid]);
+    switch ($gradeitem->itemmodule) {
+        case "assign":
+            return $DB->get_field('assign_user_flags', 'extensionduedate',
+                ['assignment' => $gradeitem->iteminstance, 'userid' => $userid]);
+        case "quiz":
+            // Quizzes may have group and/or user due date extensions. Return whatever is higher.
+            $groupextension = 0;
+            if ($usergroups = groups_get_user_groups($gradeitem->courseid, $userid)[0]) {
+                foreach ($usergroups as $usergroupid) {
+                    if ($gext = $DB->get_field('quiz_overrides', 'timeclose',
+                        ['quiz' => $gradeitem->iteminstance, 'groupid' => $usergroupid])) {
+                        $groupextension = $gext > $groupextension ? $gext : $groupextension;
+                    }
+                }
+            }
+            $userextension = $DB->get_field('quiz_overrides', 'timeclose',
+                ['quiz' => $gradeitem->iteminstance, 'userid' => $userid]);
+
+            return $groupextension > $userextension ? $groupextension : $userextension;
+        case "turnitintooltwo":
+            return false;
+        default:
+            return false;
+    }
 }
 
 /**
