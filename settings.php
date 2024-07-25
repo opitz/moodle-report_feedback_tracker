@@ -68,8 +68,8 @@ if ($ADMIN->fulltree) {
 
     // Check if TurnitinToolTwo is installed.
     if (file_exists($CFG->dirroot.'/mod/turnitintooltwo/version.php')) {
-        $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/supportturnitin',
-            get_string('settings:supportturnitin', 'report_feedback_tracker'), '', true));
+        $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/supportturnitintooltwo',
+            get_string('settings:supportturnitintooltwo', 'report_feedback_tracker'), '', true));
     }
 
     $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/supportquiz',
