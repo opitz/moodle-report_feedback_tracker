@@ -179,7 +179,7 @@ function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
 function get_admin_generalfeedback($gradeitem) {
     global $PAGE;
 
-    $o = html_writer::start_div('generalfeedback d-flex align-items-center');
+    $o = html_writer::start_div('generalfeedback align-items-center');
     if ($PAGE->user_is_editing()) {
         $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedbacktext',
             ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
@@ -198,6 +198,11 @@ function get_admin_generalfeedback($gradeitem) {
         $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedbacktext',
             ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
     }
+
+    // Show the URL.
+    $link = "<a href='$gradeitem->gfurl'>$gradeitem->gfurl</a>";
+    $o .= html_writer::div($link, 'gfurl',
+        ['id' => 'gfurl_' . $gradeitem->itemid]);
 
     $o .= html_writer::end_div();
     return $o;

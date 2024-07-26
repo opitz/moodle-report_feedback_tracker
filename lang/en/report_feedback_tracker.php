@@ -27,6 +27,7 @@ $string['classification'] = 'Classification';
 $string['cohortfeedback'] = 'Cohort feedback<br>provided';
 $string['contact'] = 'Contact';
 $string['course'] = 'Course';
+$string['courseadmin'] = 'Course admin';
 $string['dateformat:default'] = "d. M Y";
 $string['duedate'] = 'Due';
 $string['duesubmissiondate'] = 'Due /<br>Submission';
