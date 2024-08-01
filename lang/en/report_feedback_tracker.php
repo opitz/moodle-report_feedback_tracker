@@ -48,6 +48,8 @@ $string['feedbackduedate:removedmessage'] = 'Custom feedback due date removed.
 Feedback due date now again calculated from assessment due date where available.';
 $string['feedbackduedate:updated'] = 'Feedback due date updated';
 $string['feedbacks'] = 'Feedback due<br>provided';
+$string['feedback_tracker:view'] = 'View feedback tracker';
+$string['feedback_tracker:viewuserreport'] = 'View feedback tracker user report';
 $string['field_required'] = 'This field is required!';
 $string['filter:academicyear'] = 'Filter by academic year';
 $string['filter:by'] = 'Filter by';
