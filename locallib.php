@@ -589,8 +589,8 @@ function get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod
         return '';
     }
 
-    // Final grade is available even if there is no due date.
-    if (!$feedbackduedate && isset($gradeitem->finalgrade)) {
+    // Final grade is available even if there is no due date or when only cohort feedback is given.
+    if ((!$feedbackduedate && isset($gradeitem->finalgrade)) || (isset($gradeitem->gfdate) && $gradeitem->gfdate > 0)) {
         return get_string('grade:released', 'report_feedback_tracker');
     }
 
