@@ -113,9 +113,12 @@ function get_admin_course_gradings($course, &$data) {
 
     $summativeids = get_summative_ids($course->id);
 
+    $previousitemid = false;
     foreach ($gradeitems as $gradeitem) {
-        // Check if the gradeitem module is supported.
-        if (!module_is_supported($gradeitem)) {
+        // Check if the gradeitem module is supported
+        // and make sure only one (turnitintooltwo) assessment is listed even if there are multiple parts.
+        if (!module_is_supported($gradeitem) || $gradeitem->itemid == $previousitemid) {
+            $previousitemid = $gradeitem->itemid;
             continue;
         }
 
@@ -127,10 +130,42 @@ function get_admin_course_gradings($course, &$data) {
             $record = get_admin_feedback_record($course, $gradeitem, $summativeids);
             $data->records[] = $record;
         }
+        $previousitemid = $gradeitem->itemid;
     }
 
     // Get the filter options where available.
     get_admin_filter_options($data);
+}
+
+function compile_admin_record($course, $gradeitem, $partname, $duedate, $summativeids) {
+
+    $oneday = 24 * 60 * 60; // Number of seconds in a day.
+    $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
+    $dateformat = get_config('report_feedback_tracker', 'dateformat');
+    $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
+
+    $record = new stdClass();
+    $record->course = $course->fullname;
+    $record->courseid = $course->id;
+    $record->coursename = $course->fullname;
+    $record->academicyear = get_academic_year($gradeitem->courseid);
+    $record->assessment = get_item_link($gradeitem, $partname);
+    $record->type = get_item_type($gradeitem);
+    $record->module = get_item_module($gradeitem);
+    $record->duedate = $duedate == 0 ? '--' : date($dateformat, $duedate);
+    $record->feedbackduedate = render_feedbackduedate($gradeitem, $partname, $feedbackperiod);
+    $record->feedbacks = get_feedbacks($gradeitem);
+    $record->method = get_feedback_method($gradeitem);
+    $record->responsibility = get_feedback_responsibility($gradeitem);
+    $record->generalfeedback = get_admin_generalfeedback($gradeitem);
+    $record->cohortfeedback = get_admin_cohortfeedback($gradeitem, $partname);
+    $record->gfurl = $gradeitem->gfurl;
+    $record->summative = get_admin_summative($gradeitem, $partname, $summativeids);
+    $record->summativetext = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
+    $record->hidden = get_hidden_state($gradeitem, $partname);
+    $record->partname = $partname;
+
+    return $record;
 }
 
 /**
@@ -142,7 +177,11 @@ function get_admin_course_gradings($course, &$data) {
  * @return stdClass
  * @throws dml_exception
  */
-function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
+function get_admin_feedback_record($course, $gradeitem, $summativeids) {
+    $partname = $gradeitem->partname ? $gradeitem->partname : null; // Only turnitintooltwo assessments may have parts.
+    return compile_admin_record($course, $gradeitem, $partname, $gradeitem->duedate, $summativeids);
+}
+function get_admin_feedback_record0($course, $gradeitem, $summativeids) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
     $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
@@ -391,6 +430,27 @@ function  get_admin_ttt_summative($gradeitem, $tttpart, $partname, $summativeids
  * @throws dml_exception
  */
 function get_admin_turnitin_records($course, $gradeitem, $summativeids, &$data) {
+    // Get the parts.
+    $tttparts = get_tttparts($gradeitem);
+
+    // Make each part a record and store it in the data.
+    foreach ($tttparts as $tttpart) {
+        $duedate = $tttpart->dtdue; // Each part may have its own due date.
+        $partname = $tttpart->partname;
+
+        $gradeitem->summative = $tttpart->summative;
+        $gradeitem->hidden = $tttpart->hidden;
+        $gradeitem->feedbackduedate = $tttpart->feedbackduedate ? $tttpart->feedbackduedate : $gradeitem->feedbackduedate;
+        $gradeitem->method = $tttpart->method;
+        $gradeitem->responsibility = $tttpart->responsibility;
+        $gradeitem->generalfeedback = $tttpart->generalfeedback;
+        $gradeitem->gfurl = $tttpart->gfurl;
+        $gradeitem->gfdate = $tttpart->gfdate;
+
+        $data->records[] = compile_admin_record($course, $gradeitem, $partname, $duedate, $summativeids);
+    }
+}
+function get_admin_turnitin_records0($course, $gradeitem, $summativeids, &$data) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
     $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
@@ -677,9 +737,12 @@ function get_admin_cohortfeedback($gradeitem, $partname) {
  * @param string $partname
  * @return mixed|string
  */
-function get_item_link($gradeitem, $partname = '') {
+function get_item_link($gradeitem, $partname = null) {
     global $CFG, $USER;
 
+    if (!$partname && $gradeitem->partname) {
+        $partname = $gradeitem->partname;
+    }
     if (!isset($gradeitem->cmid)) {
         $url = "$CFG->wwwroot/grade/report/user/index.php?id=$gradeitem->courseid&userid=$USER->id";
     } else {
@@ -947,6 +1010,32 @@ function get_ttt_submission_date($tttpart, $userid) {
 function get_tttparts($gradeitem) {
     global $DB;
 
+//    return $DB->get_records('turnitintooltwo_parts', ['turnitintooltwoid' => $gradeitem->iteminstance]);
+
+    $sql = "
+    select
+    tttp.*,
+    rft.summative,
+    rft.hidden,
+    rft.feedbackduedate,
+    rft.method,
+    rft.responsibility,
+    rft.generalfeedback,
+    rft.gfurl,
+    rft.gfdate
+    
+    from {turnitintooltwo_parts} tttp
+    join {grade_items} gi on gi.itemmodule = 'turnitintooltwo' and gi.iteminstance = tttp.turnitintooltwoid
+    left join {report_feedback_tracker} rft on
+        rft.gradeitem = gi.id and rft.partname collate utf8mb4_unicode_ci = tttp.partname collate utf8mb4_unicode_ci
+    where tttp.turnitintooltwoid = $gradeitem->iteminstance
+    ";
+
+    return $DB->get_records_sql($sql);
+}
+function get_tttparts0($gradeitem) {
+    global $DB;
+
     return $DB->get_records('turnitintooltwo_parts', ['turnitintooltwoid' => $gradeitem->iteminstance]);
 }
 
@@ -1091,6 +1180,52 @@ function get_duedate_extension($gradeitem, $userid) {
     }
 }
 
+function compile_user_record($course, $userid, $gradeitem, $partname, $duedate, $summativeids) {
+
+    $oneday = 24 * 60 * 60; // Number of seconds in a day.
+
+    $warningdays = get_config('report_feedback_tracker', 'warningdays');
+    $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
+    $feedbackextenddays = get_config('report_feedback_tracker', 'feedbackextenddays');
+    $warningperiod = $warningdays * $oneday; // Number of seconds in the warning period.
+    $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
+    $feedbackextendperiod = $feedbackextenddays * $oneday; // Number of seconds in the feedback period.
+    $dateformat = get_config('report_feedback_tracker', 'dateformat');
+
+    // If there is a manual feedback due date use it, otherwise calculate it from the submission due date where set.
+    $feedbackduedate = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
+        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
+    // Get the submission date if any.
+    $submissiondate = get_submissiondate($userid, $gradeitem);
+
+    $record = new stdClass();
+    $record->submissiondate = $submissiondate == 0 ? '--' : date($dateformat, $submissiondate);
+    $record->submissionstatus = get_submission_status($submissiondate, $duedate, $warningperiod);
+    $record->course = $course->fullname;
+    $record->courseid = $course->id;
+    $record->coursename = $course->fullname;
+    $record->academicyear = get_academic_year($gradeitem->courseid);
+    $record->assessment = get_item_link($gradeitem, $partname);
+    $record->type = get_item_type($gradeitem);
+    $record->module = get_item_module($gradeitem);
+    $record->summative = get_user_summative($gradeitem, $summativeids);
+    $record->duedate = $duedate == 0 ? '--' : date($dateformat, $duedate);
+    $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date($dateformat, $feedbackduedate);
+    $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
+    $record->student = $gradeitem->student;
+    $record->grader = $gradeitem->grader;
+    $record->feedbackdate = $gradeitem->feedbackdate ? $gradeitem->feedbackdate : $gradeitem->gfdate;
+    $record->feedbackstatus = get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate);
+    $record->feedback = get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate);
+    $record->method = $gradeitem->method;
+    $record->responsibility = html_writer::div($gradeitem->responsibility);
+    $record->generalfeedback = get_user_generalfeedback($gradeitem);
+    $record->gfurl = $gradeitem->gfurl;
+
+    return $record;
+}
+
+
 /**
  * Get the user feedback record for a grade item.
  *
@@ -1102,6 +1237,11 @@ function get_duedate_extension($gradeitem, $userid) {
  * @throws dml_exception
  */
 function get_user_feedback_record($course, $userid, $gradeitem, $summativeids) {
+    $partname = null; // Only turnitintooltwo assessments may have parts.
+
+    return compile_user_record($course, $userid, $gradeitem, $partname, $gradeitem->duedate, $summativeids);
+}
+function get_user_feedback_record0($course, $userid, $gradeitem, $summativeids) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
 
@@ -1272,6 +1412,15 @@ function get_user_summative($gradeitem, $summativeids) {
  * @throws dml_exception
  */
 function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, &$data) {
+    // Get the parts.
+    $tttparts = get_tttparts($gradeitem);
+
+    // Make each part a record and store it in the data.
+    foreach ($tttparts as $tttpart) {
+        $data->records[] = compile_user_record($course, $userid, $gradeitem, $tttpart->partname, $tttpart->dtdue, $summativeids);
+    }
+}
+function get_user_turnitin_records0($course, $gradeitem, $userid, $summativeids, &$data) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
 

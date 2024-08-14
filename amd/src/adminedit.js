@@ -27,7 +27,7 @@ export const init = () => {
         if (e.target.closest(Selectors.actions.toggleSummativeState)) {
             const target = e.target;
             const itemid = target.getAttribute('cmid');
-            const partname = target.getAttribute('partname') != '' ? target.getAttribute('partname') : 0;
+            const partname = target.getAttribute('partname') != '' ? target.getAttribute('partname') : null;
 
             let summativestate = '1';
             if (target.checked === true) {
@@ -44,7 +44,7 @@ export const init = () => {
         if (e.target.closest(Selectors.actions.toggleCohortState)) {
             const target = e.target;
             const itemid = target.getAttribute('cmid');
-            const partname = target.getAttribute('partname') != '' ? target.getAttribute('partname') : 0;
+            const partname = target.getAttribute('partname') != '' ? target.getAttribute('partname') : null;
 
             let cohortstate = '1';
             if (target.checked === true) {
@@ -61,7 +61,7 @@ export const init = () => {
         if (e.target.closest(Selectors.actions.toggleHideState)) {
             const target = e.target;
             const itemid = target.getAttribute('cmid');
-            const partname = target.getAttribute('partname') != '' ? target.getAttribute('partname') : 0;
+            const partname = target.getAttribute('partname') != '' ? target.getAttribute('partname') : null;
 
             let hiddenstate = '1';
             if (target.checked === true) {
@@ -79,7 +79,7 @@ export const init = () => {
             try {
                 const target = e.target;
                 const itemid = target.getAttribute('itemid');
-                const partname = target.getAttribute('partname') != '' ? target.getAttribute('partname') : 0;
+                const partname = target.getAttribute('partname') != '' ? target.getAttribute('partname') : null;
                 const date = new Date(e.target.value).getTime() / 1000;
                 const deadlinedays = target.getAttribute('data-deadlinedays');
                 const duedate = target.parentElement.parentElement.parentElement.parentElement.

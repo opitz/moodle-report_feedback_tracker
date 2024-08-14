@@ -65,11 +65,11 @@ class report_feedback_tracker_external extends \core_external\external_api {
      * Saving the summative state for a grade item.
      *
      * @param int $itemid The ID of the grade item
-     * @param string $partname optional partname for turnitintooltwo assessments only.
+     * @param string|null $partname optional partname for turnitintooltwo assessments only.
      * @param bool $summativestate The summative state (0 or 1)
      * @return bool will return success.
      */
-    public static function save_summative_state(int $itemid, string $partname, bool $summativestate): bool {
+    public static function save_summative_state(int $itemid, string|null $partname, bool $summativestate): bool {
         global $DB;
 
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid, 'partname' => $partname])) {
@@ -115,11 +115,11 @@ class report_feedback_tracker_external extends \core_external\external_api {
      * Saving the hiding state for a grade item.
      *
      * @param int $itemid The ID of the grade item
-     * @param string $partname optional partname for turnitintooltwo assessments only.
+     * @param string|null $partname optional partname for turnitintooltwo assessments only.
      * @param bool $hidingstate The hiding state (0 or 1)
      * @return bool will return success.
      */
-    public static function save_hiding_state(int $itemid, string $partname, bool $hidingstate): bool {
+    public static function save_hiding_state(int $itemid, string|null $partname, bool $hidingstate): bool {
         global $DB;
 
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid, 'partname' => $partname])) {
@@ -165,11 +165,11 @@ class report_feedback_tracker_external extends \core_external\external_api {
      * Saving the cohort state for a grade item.
      *
      * @param int $itemid The ID of the grade item
-     * @param string $partname optional partname for turnitintooltwo assessments only.
+     * @param string|null $partname optional partname for turnitintooltwo assessments only.
      * @param bool $cohortstate The cohort state (0 or 1)
      * @return bool will return success.
      */
-    public static function save_cohort_state(int $itemid, string $partname, bool $cohortstate): bool {
+    public static function save_cohort_state(int $itemid, string|null $partname, bool $cohortstate): bool {
         global $DB;
 
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid, 'partname' => $partname])) {
@@ -216,12 +216,12 @@ class report_feedback_tracker_external extends \core_external\external_api {
      * Saving the custom feedback due date for a grade item.
      *
      * @param int $itemid The ID of the grade item
-     * @param string $partname optional partname for turnitintooltwo assessments only.
+     * @param string|null $partname optional partname for turnitintooltwo assessments only.
      * @param int $duedate The due date in seconds
      * @param string $duedatereason The reason for a manual due date
      * @return string returns success.
      */
-    public static function save_feedback_duedate(int $itemid, string $partname, int $duedate, string $duedatereason): bool {
+    public static function save_feedback_duedate(int $itemid, string|null $partname, int $duedate, string $duedatereason): bool {
         global $DB, $USER;
 
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid, 'partname' => $partname])) {
@@ -276,10 +276,10 @@ class report_feedback_tracker_external extends \core_external\external_api {
      * Deleting the custom feedback due date for a grade item.
      *
      * @param int $itemid The ID of the grade item
-     * @param string $partname optional partname for turnitintooltwo assessments only.
+     * @param string|null $partname optional partname for turnitintooltwo assessments only.
      * @return bool will return success.
      */
-    public static function delete_feedback_duedate(int $itemid, string $partname): bool {
+    public static function delete_feedback_duedate(int $itemid, string|null $partname): bool {
         global $DB;
 
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid, 'partname' => $partname])) {
@@ -319,14 +319,14 @@ class report_feedback_tracker_external extends \core_external\external_api {
      * Update or create the general feedback record for a grade item.
      *
      * @param int $itemid The ID of the grade item
-     * @param string $partname optional partname for turnitintooltwo assessments only.
+     * @param string|null $partname optional partname for turnitintooltwo assessments only.
      * @param string $generalfeedback The general feedback text
      * @param int $gfurl The general feedback URL
      * @return string
      * @throws coding_exception
      * @throws dml_exception
      */
-    public static function update_general_feedback(int $itemid, string $partname, $generalfeedback, $gfurl): bool {
+    public static function update_general_feedback(int $itemid, string|null $partname, $generalfeedback, $gfurl): bool {
         global $DB;
 
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid, 'partname' => $partname])) {

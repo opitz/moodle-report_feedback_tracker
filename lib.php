@@ -160,7 +160,8 @@ function report_feedback_tracker_supports_logstore($instance) {
  * @throws coding_exception
  * @throws dml_exception
  */
-function report_feedback_tracker_inplace_editable($itemtype, $itemid, $newvalue) {
+function report_feedback_tracker_inplace_editable($itemtype, $itemid, $newvalue): \core\output\inplace_editable
+{
     global $DB, $PAGE;
 
     // Set the page context.
