@@ -130,6 +130,11 @@ function get_admin_course_gradings($course, &$data) {
 
     // Get the filter options where available.
     get_admin_filter_options($data);
+
+    // Sort the records by feedback due date.
+    usort($data->records, function($a, $b) {
+        return strcmp($a->feedbackduedateraw, $b->feedbackduedateraw);
+    });
 }
 
 /**
@@ -160,7 +165,7 @@ function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
     $record->duedateraw = $gradeitem->duedate;
     $record->feedbackduedate = render_feedbackduedate($gradeitem, $feedbackperiod);
     $record->feedbackduedateraw = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
-        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
+        ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 9999999999);
     $record->feedbacks = get_feedbacks($gradeitem);
     $record->method = get_feedback_method($gradeitem);
     $record->responsibility = get_feedback_responsibility($gradeitem);
@@ -380,7 +385,7 @@ function get_admin_turnitin_records($course, $gradeitem, $summativeids, &$data) 
         $record->duedateraw = $duedate;
         $record->feedbackduedate = render_feedbackduedate($gradeitem, $feedbackperiod);
         $record->feedbackduedateraw = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
-            ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
+            ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 9999999999);
         $record->feedbacks = get_feedbacks($gradeitem);
         $record->method = get_feedback_method($gradeitem);
         $record->responsibility = get_feedback_responsibility($gradeitem);
@@ -1005,6 +1010,11 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
 
     // Get the filter options where available.
     get_user_filter_options($data);
+
+    // Sort the records by feedback due date.
+    usort($data->records, function($a, $b) {
+        return strcmp($a->feedbackduedateraw, $b->feedbackduedateraw);
+    });
 }
 
 /**
@@ -1086,7 +1096,7 @@ function get_user_feedback_record($course, $userid, $gradeitem, $summativeids) {
     $record->duedate = $gradeitem->duedate == 0 ? '--' : date($dateformat, $gradeitem->duedate);
     $record->duedateraw = $gradeitem->duedate;
     $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date($dateformat, $feedbackduedate);
-    $record->feedbackduedateraw = $feedbackduedate;
+    $record->feedbackduedateraw = $feedbackduedate == 0 ? 9999999999 : $feedbackduedate;
     $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
     $record->student = $gradeitem->student;
     $record->grader = $gradeitem->grader;
@@ -1261,7 +1271,7 @@ function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, 
         $record->duedate = $duedate == 0 ? '--' : date($dateformat, $duedate);
         $record->duedateraw = $duedate;
         $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date($dateformat, $feedbackduedate);
-        $record->feedbackduedateraw = $feedbackduedate;
+        $record->feedbackduedateraw = $feedbackduedate == 0 ? 9999999999 : $feedbackduedate;
         $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
         $record->student = $gradeitem->student;
         $record->grader = $gradeitem->grader;
