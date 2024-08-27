@@ -456,7 +456,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
             "badge badge-warning");
     } else if (!isset($gradeitem->finalgrade) && $feedbackduedate < time()) {
         // NO feedback was given, and it is beyond the feedback due date.
-        $o .= html_writer::div(get_string('feedback:overdue', 'report_feedback_tracker'),
+        $o .= html_writer::div(get_string('feedback:notreleased', 'report_feedback_tracker'),
             "badge badge-danger");
     }
 
@@ -552,7 +552,7 @@ function get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod
 
     // NO feedback was given, and it is beyond the feedback due date.
     if (!isset($gradeitem->finalgrade) && $feedbackduedate < time()) {
-        return get_string('feedback:overdue', 'report_feedback_tracker');
+        return get_string('feedback:notreleased', 'report_feedback_tracker');
     }
 
     // The feedback is due within the due time - so do nothing and show a contact.
@@ -822,6 +822,43 @@ function get_submissiondate($userid, $gradeitem) {
  * @return string
  */
 function get_submission_status($submissiondate, $duedate, $warningperiod) {
+
+    // Submission was in time.
+    if ($submissiondate && $submissiondate <= $duedate) {
+//        $title = get_string('submission:success', 'report_feedback_tracker');
+//        return " <i class='fa fa-check-square text-success fa-2x' title='$title'></i>";
+        return html_writer::div(get_string('submission:success', 'report_feedback_tracker'),
+            "badge badge-success");
+    }
+
+    // Submission was late.
+    if ($duedate && $submissiondate && $submissiondate > $duedate) {
+//        $title = get_string('submission:late', 'report_feedback_tracker');
+//        return " <i class='fa fa-check-square text-danger fa-2x' title='$title'></i>";
+        return html_writer::div(get_string('submission:late', 'report_feedback_tracker'),
+            "badge badge-warning");
+    }
+
+    // NO submission but approaching due date within warning period.
+    if (!$submissiondate && time() <= $duedate && time() >= $duedate - $warningperiod) {
+//        $title = get_string('submission:warning', 'report_feedback_tracker');
+//        return " <i class='fa fa-exclamation-triangle text-warning fa-2x' title='$title'></i>";
+        return html_writer::div(get_string('submission:warning', 'report_feedback_tracker'),
+            "badge badge-warning");
+    }
+
+    // NO submission and the due date has passed.
+    if ($duedate && !$submissiondate && time() > $duedate ) {
+//        $title = get_string('submission:overdue', 'report_feedback_tracker');
+//        return " <i class='fa fa-exclamation-circle text-danger fa-2x' title='$title'></i>";
+        return html_writer::div(get_string('submission:overdue', 'report_feedback_tracker'),
+            "badge badge-danger");
+    }
+
+    // The submission is not due yet - so return nothing.
+    return '';
+}
+function get_submission_status0($submissiondate, $duedate, $warningperiod) {
 
     // Submission was in time.
     if ($submissiondate && $submissiondate <= $duedate) {
@@ -1102,7 +1139,7 @@ function get_user_feedback_record($course, $userid, $gradeitem, $summativeids) {
     $record->grader = $gradeitem->grader;
     $record->feedbackdate = $gradeitem->feedbackdate ? $gradeitem->feedbackdate : $gradeitem->gfdate;
     $record->feedbackstatus = get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate);
-    $record->feedback = get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate);
+    $record->feedbackbadge = get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate);
     $record->method = $gradeitem->method;
     $record->responsibility = html_writer::div($gradeitem->responsibility);
     $record->generalfeedback = get_user_generalfeedback($gradeitem);
@@ -1276,7 +1313,7 @@ function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, 
         $record->student = $gradeitem->student;
         $record->grader = $gradeitem->grader;
         $record->feedbackstatus = get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate);
-        $record->feedback = get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate);
+        $record->feedbackbadge = get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate);
         $record->method = $gradeitem->method;
 
         $data->records[] = $record;

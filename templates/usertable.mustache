@@ -118,13 +118,13 @@
                         </div>
                     </td>
                     <td class="col_summative small sort-this" data-filter="{{summative}}">{{{summative}}}</td>
-                    <td class="col_submissiondate text-nowrap small">
+                    <td class="col_submissiondate text-nowrap">
                         <div class="sort-this hidden">{{{duedateraw}}}</div>
-                        <div class="text-nowrap w-100 mb-1">
+                        <div class="text-nowrap small w-100 mb-1">
                             {{duedate}}
                         </div>
-                        <div class="text-nowrap strong w-100">
-                            {{submissiondate}}
+                        <div class="w-100">
+                            {{{submissionstatus}}}
                         </div>
                     </td>
                     <td class="col_feedback" data-filter="{{feedbackstatus}}">
@@ -133,7 +133,7 @@
                             {{{feedbackduedate}}}
                         </div>
                         <div class="w-100">
-                            {{{feedback}}}
+                            {{{feedbackbadge}}}
                         </div>
                     </td>
                     <td class="col_method" data-filter="{{method}}">
