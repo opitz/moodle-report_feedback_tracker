@@ -132,9 +132,11 @@ function get_admin_course_gradings($course, &$data) {
     get_admin_filter_options($data);
 
     // Sort the records by feedback due date.
-    usort($data->records, function($a, $b) {
-        return strcmp($a->feedbackduedateraw, $b->feedbackduedateraw);
-    });
+    if (is_array($data->records)) {
+        usort($data->records, function($a, $b) {
+            return strcmp($a->feedbackduedateraw, $b->feedbackduedateraw);
+        });
+    }
 }
 
 /**
@@ -1025,9 +1027,11 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
     }
 
     // Sort the courseobject records by feedback due date.
-    usort($courseobject->records, function($a, $b) {
-        return strcmp($a->feedbackduedateraw, $b->feedbackduedateraw);
-    });
+    if (is_array($courseobject->records)) {
+        usort($courseobject->records, function($a, $b) {
+            return strcmp($a->feedbackduedateraw, $b->feedbackduedateraw);
+        });
+    }
 
     $data->courses[] = $courseobject;
 

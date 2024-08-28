@@ -12,7 +12,7 @@
     {{/hasyears}}
 
     {{#academicyearoptions}}
-        <div class="btn btn-sm" data-value="{{key}}">{{value}}</div>
+        <div class="btn btn-sm" data-action="select-ay" data-value="{{key}}">{{value}}</div>
     {{/academicyearoptions}}
 
     {{! Courses quickjump. }}
@@ -31,20 +31,22 @@
 
 </div>
 
-{{#courses}}
-    <div id="{{courseid}}" class="pb-4">
-        <h3 class="d-flex align-items-center pb-4">
-            {{#image}}
-                <div class="rounded-circle mr-2 bg-cover" style="height: 3rem; width: 3rem; background-image: url('{{image}}');"></div>
-            {{/image}}
-            <a href="{{{url}}}">{{{fullname}}}{{#academicyear}} ({{academicyear}}){{/academicyear}}</a>
-        </h3>
+<div id="courses_area">
+    {{#courses}}
+        <div id="{{courseid}}" class="pb-4 course_row" data-ay="{{academicyear}}">
+            <h3 class="d-flex align-items-center pb-4">
+                {{#image}}
+                    <div class="rounded-circle mr-2 bg-cover" style="height: 3rem; width: 3rem; background-image: url('{{image}}');"></div>
+                {{/image}}
+                <a href="{{{url}}}">{{{fullname}}}{{#academicyear}} ({{academicyear}}){{/academicyear}}</a>
+            </h3>
 
-        {{#records}}
-            {{> report_feedback_tracker/mod }}
-        {{/records}}
-    </div>
-{{/courses}}
+            {{#records}}
+                {{> report_feedback_tracker/mod }}
+            {{/records}}
+        </div>
+    {{/courses}}
+</div>
 
 {{#js}}
     require(['report_feedback_tracker/academicyears'], function(academicyears) {

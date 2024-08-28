@@ -100,9 +100,11 @@ function get_feedback_tracker_user_data($userid, $courseid = 0) {
     }
 
     // Sort the courses by name.
-    usort($data->courses, function($a, $b) {
-        return strcmp($a->fullname, $b->fullname);
-    });
+    if (is_array($data->courses)) {
+        usort($data->courses, function($a, $b) {
+            return strcmp($a->fullname, $b->fullname);
+        });
+    }
 
     return $data;
 }
