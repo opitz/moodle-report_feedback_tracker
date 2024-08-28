@@ -186,7 +186,7 @@ function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
  *
  * @param int $courseid
  */
-function get_academic_year1(int $courseid): ?string {
+function get_academic_year1§(int $courseid): ?string {
     // Return a random academic year from the array.
     $dummyacademicyears = ['2021-22', '2022-23', '2023-24', '2024-25'];
     return $dummyacademicyears[array_rand($dummyacademicyears)];
