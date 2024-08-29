@@ -72,10 +72,6 @@
                     <br>
                     {{{feedbackbadge}}}
                 {{/feedbackbadge}}
-                {{#method}}
-                    <br>
-                    <span class="text-nowrap small">{{#str}}method, report_feedback_tracker{{/str}}: {{{method}}}</span>
-                {{/method}}
             </div>
 
             <!-- Mark data. -->
@@ -100,15 +96,17 @@
         </div>
     </div>
 
+</div>
+<div class="row">
     <!-- Free text fields. -->
 
     {{#additionaldata}}
         <div class="col p-2 bg-light small">
-            {{#content}}
+            {{#contact}}
                 <span class="text-muted">{{#str}}contact, report_feedback_tracker{{/str}}:</span>
-                Kyle Minogue
+                {{.}}
                 <br>
-            {{/content}}
+            {{/contact}}
 
             {{#method}}
                 <span class="text-muted">{{#str}}method, report_feedback_tracker{{/str}}:</span>
@@ -116,11 +114,11 @@
                 <br>
             {{/method}}
 
-            {{#additionalinformation}}
+            {{#generalfeedback}}
                 <span class="text-muted">{{#str}}additionalinformation, report_feedback_tracker{{/str}}:</span>
-                {{.}}
+                {{{.}}}
                 <br>
-            {{/additionalinformation}}
+            {{/generalfeedback}}
 
         </div>
     {{/additionaldata}}

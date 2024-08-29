@@ -1168,9 +1168,11 @@ function get_user_feedback_record($course, $userid, $gradeitem, $summativeids) {
     $record->feedbackbadge = get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate);
     $record->method = $gradeitem->method;
     $record->responsibility = html_writer::div($gradeitem->responsibility);
-    $record->generalfeedback = get_user_generalfeedback($gradeitem);
+    $record->generalfeedback = $gradeitem->generalfeedback;
     $record->gfurl = $gradeitem->gfurl;
     $record->contact = $gradeitem->responsibility;
+
+    $record->additionaldata = $record->generalfeedback || $record->method || $record->contact;
 
     return $record;
 }
@@ -1270,14 +1272,17 @@ function get_user_filter_options(&$data) {
  */
 function get_user_generalfeedback($gradeitem) {
 
-    $o = html_writer::start_div('generalfeedback');
-    $o .= html_writer::div($gradeitem->generalfeedback, 'generalfeedbacktext',
-        ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
-    $link = "<a href='$gradeitem->gfurl'>$gradeitem->gfurl</a>";
-    $o .= html_writer::div($link, 'gfurl',
-        ['id' => 'gfurl_' . $gradeitem->itemid]);
+    $o = '';
+    if ($gradeitem->generalfeedback) {
+        $o .= html_writer::start_div('generalfeedback');
+        $o .= html_writer::div($gradeitem->generalfeedback, 'generalfeedbacktext',
+            ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
+        $link = "<a href='$gradeitem->gfurl'>$gradeitem->gfurl</a>";
+        $o .= html_writer::div($link, 'gfurl',
+            ['id' => 'gfurl_' . $gradeitem->itemid]);
 
-    $o .= html_writer::end_div();
+        $o .= html_writer::end_div();
+    }
     return $o;
 }
 
