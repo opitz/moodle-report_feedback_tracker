@@ -182,15 +182,21 @@ function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
 }
 
 /**
- * Get course academic year from custom course fields.
+ * Get a random academic year for test purposes only..
  *
  * @param int $courseid
  */
-function get_academic_year1§(int $courseid): ?string {
+function get_academic_year1(int $courseid): ?string {
     // Return a random academic year from the array.
     $dummyacademicyears = ['2021-22', '2022-23', '2023-24', '2024-25'];
     return $dummyacademicyears[array_rand($dummyacademicyears)];
 }
+
+/**
+ * Get course academic year from custom course fields.
+ *
+ * @param int $courseid
+ */
 function get_academic_year(int $courseid): ?string {
     $academicyear = null;
     $handler = \core_course\customfield\course_handler::create();
@@ -835,14 +841,22 @@ function get_submission_status($submissiondate, $duedate, $warningperiod) {
     if ($submissiondate && $submissiondate <= $duedate) {
         return html_writer::span(get_string('submission:success', 'report_feedback_tracker'),
             "badge badge-success",
-            ['data-toggle' => 'tooltip', 'data-placement' => 'bottom', 'title' => "Submitted " . date($dateformat, $submissiondate)]);
+            [
+                'data-toggle' => 'tooltip',
+                'data-placement' => 'bottom',
+                'title' => "Submitted " . date($dateformat, $submissiondate),
+            ]);
     }
 
     // Submission was late.
     if ($duedate && $submissiondate && $submissiondate > $duedate) {
         return html_writer::span(get_string('submission:late', 'report_feedback_tracker'),
             "badge badge-warning",
-            ['data-toggle' => 'tooltip', 'data-placement' => 'bottom', 'title' => "Submitted " . date($dateformat, $submissiondate)]);
+            [
+                'data-toggle' => 'tooltip',
+                'data-placement' => 'bottom',
+                'title' => "Submitted " . date($dateformat, $submissiondate),
+            ]);
     }
 
     // NO submission but approaching due date within warning period.
@@ -1254,6 +1268,7 @@ function get_user_summative($gradeitem, $summativeids) {
  * @param int $userid
  * @param array $summativeids
  * @param stdClass $data
+ * @param stdClass $courseobject
  * @return void
  * @throws dml_exception
  */
