@@ -41,6 +41,10 @@
                 <a href="{{{url}}}">{{{fullname}}}{{#academicyear}} ({{academicyear}}){{/academicyear}}</a>
             </h3>
 
+            {{#modheader}}
+                {{> report_feedback_tracker/modheader }}
+            {{/modheader}}
+
             {{#records}}
                 {{> report_feedback_tracker/mod }}
             {{/records}}

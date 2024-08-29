@@ -77,4 +77,11 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/supportworkshop',
         get_string('settings:supportworkshop', 'report_feedback_tracker'), '', false));
+
+    $settings->add(new admin_setting_heading('report_feedback_tracker_layout',
+        get_string('settings:layoutheading', 'report_feedback_tracker'), ''));
+
+    $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/modheader',
+        get_string('settings:modheader', 'report_feedback_tracker'), '', false));
+
 }

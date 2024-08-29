@@ -87,6 +87,9 @@ function get_feedback_tracker_user_data($userid, $courseid = 0) {
     $data->records = [];
     $data->courses = [];
 
+    // Check if we want to show a module header.
+    $data->modheader = get_config('report_feedback_tracker', 'modheader');
+
     // If a course ID is given return data for that course only
     // otherwise return data for all courses a user is enrolled in.
     if ($courseid) {
