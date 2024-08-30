@@ -186,7 +186,7 @@ function get_admin_feedback_record ($course, $gradeitem, $summativeids) {
  *
  * @param int $courseid
  */
-function get_academic_year1(int $courseid): ?string {
+function get_academic_year(int $courseid): ?string {
     // Return a random academic year from the array.
     $dummyacademicyears = ['2021-22', '2022-23', '2023-24', '2024-25'];
     return $dummyacademicyears[array_rand($dummyacademicyears)];
@@ -197,7 +197,7 @@ function get_academic_year1(int $courseid): ?string {
  *
  * @param int $courseid
  */
-function get_academic_year(int $courseid): ?string {
+function get_academic_year0(int $courseid): ?string {
     $academicyear = null;
     $handler = \core_course\customfield\course_handler::create();
     $data = $handler->get_instance_data($courseid, true);
