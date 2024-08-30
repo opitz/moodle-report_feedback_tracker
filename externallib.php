@@ -382,7 +382,7 @@ class report_feedback_tracker_external extends \core_external\external_api {
      * @return external_warnings
      */
     public static function render_student_feedback_returns(): external_value {
-        return new external_value(PARAM_TEXT, 'The rendered student assessments');
+        return new external_value(PARAM_RAW, 'The rendered student assessments');
     }
 
 }

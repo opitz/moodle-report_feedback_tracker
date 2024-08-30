@@ -29,7 +29,7 @@ require_once(__DIR__ . '/locallib.php');
 
 // If there is no course ID given redirect to the user report.
 if (!$courseid = optional_param('id', null, PARAM_INT)) {
-    redirect(new moodle_url("$CFG->wwwroot/report/feedback_tracker/user.php?userid=".$USER->id));
+    redirect(new moodle_url("$CFG->wwwroot/report/feedback_tracker/user.php"));
 }
 
 $course = isset($courseid) ? get_course($courseid) : $COURSE;

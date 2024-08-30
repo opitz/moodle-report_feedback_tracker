@@ -27,8 +27,8 @@ use core\report_helper;
 require('../../config.php');
 require_once($CFG->dirroot.'/report/feedback_tracker/locallib.php');
 
+$userid = $USER->id;
 $courseid = optional_param('id', null, PARAM_INT); // The optional course ID.
-$userid = optional_param('userid', null, PARAM_INT); // The optional user ID.
 $course = isset($courseid) ? get_course($courseid) : $COURSE;
 
 $pageparams = ['id' => $course->id];
