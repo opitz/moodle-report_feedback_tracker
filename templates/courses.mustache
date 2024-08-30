@@ -53,20 +53,20 @@
         {{> report_feedback_tracker/ayselector }}
     {{/hasyears}}
 
-
-    {{! Courses quickjump. }}
-    <div class="ml-auto">
-        <div class="dropdown">
-            <button class="btn btn-sm dropdown-toggle" type="button" id="coursejump" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {{#str}}jumpto, report_feedback_tracker{{/str}}
-            </button>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="coursejump">
-                {{#courses}}
-                    <a class="dropdown-item line-clamp-2" href="#{{courseid}}">{{{fullname}}}</a>
-                {{/courses}}
+    {{#donotshowfornow}}
+        <div class="ml-auto">
+            <div class="dropdown">
+                <button class="btn btn-sm dropdown-toggle" type="button" id="coursejump" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {{#str}}jumpto, report_feedback_tracker{{/str}}
+                </button>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="coursejump">
+                    {{#courses}}
+                        <a class="dropdown-item line-clamp-2" href="#{{courseid}}">{{{fullname}}}</a>
+                    {{/courses}}
+                </div>
             </div>
         </div>
-    </div>
+    {{/donotshowfornow}}
 </div>
 <hr>
 

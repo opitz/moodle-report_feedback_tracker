@@ -46,18 +46,18 @@
 }}
 
 <div class="row">
-    
+
     <!-- Mod name. -->
     <div class="col-12 col-md-5 mb-3 mb-md-0">
         {{{type}}} {{{assessment}}}
     </div>
-    
+
     <!-- Mod metadata. -->
     <div class="col">
         <div class="row">
             <div class="col-4">
                 <small>
-                    <span class="text-muted">{{#str}}duedate, report_feedback_tracker{{/str}}:</span> 
+                    <span class="text-muted">{{#str}}duedate, report_feedback_tracker{{/str}}:</span>
                     <span class="text-nowrap">{{duedate}}</span>
                 </small>
                 <br>
@@ -80,9 +80,9 @@
 
             <!-- Mark data. -->
             <div class="col-4 text-right">
-                {{#grade}}
-                    <small class="text-muted">{{#str}}mark, report_feedback_tracker{{/str}}:</small> <strong>{{grade}}</strong>
-                {{/grade}}
+                <small class="text-muted">{{#str}}mark, report_feedback_tracker{{/str}}:</small>
+                {{#grade}} <strong> {{.}} </strong> {{/grade}}
+                {{^grade}} <small> {{#str}}feedback:notreleased, report_feedback_tracker{{/str}} </small> {{/grade}}
                 <br>
                 {{#summative}}
                     <span data-toggle="tooltip"
