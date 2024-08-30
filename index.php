@@ -23,9 +23,9 @@
  */
 
 use core\report_helper;
+use report_feedback_tracker\local\helper;
 
 require(__DIR__ . '/../../config.php');
-require_once(__DIR__ . '/locallib.php');
 
 // If there is no course ID given redirect to the user report.
 if (!$courseid = optional_param('id', null, PARAM_INT)) {
@@ -43,7 +43,7 @@ $PAGE->set_pagelayout('report');
 $context = context_course::instance($course->id);
 
 // Check if the user is able to see the report and redirect to home if not.
-if (!is_course_editor($courseid, $USER->id)) {
+if (!helper::is_course_editor($courseid, $USER->id)) {
     redirect(new moodle_url("/?redirect=0"));
 }
 

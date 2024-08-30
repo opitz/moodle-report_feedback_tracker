@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die;
+use report_feedback_tracker\local\helper;
 
 /**
  * This file contains public API of feedback_tracker report
@@ -23,8 +23,6 @@ defined('MOODLE_INTERNAL') || die;
  * @copyright  2024 UCL <m.opitz@ucl.ac.uk>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-require_once('locallib.php');
 
 /**
  * Get the Feedback Tracker data for all enrolled users of a given course.
@@ -70,7 +68,7 @@ function get_feedback_tracker_admin_data($courseid) {
 
     $course = get_course($courseid);
     // Get the gradings and append them to the data.
-    get_admin_course_gradings($course, $data);
+    helper::get_admin_course_gradings($course, $data);
 
     return $data;
 }
@@ -94,11 +92,11 @@ function get_feedback_tracker_user_data($userid, $courseid = 0) {
     // otherwise return data for all courses a user is enrolled in.
     if ($courseid) {
         $course = get_course($courseid);
-        get_user_course_gradings($course, $userid, $data);
+        helper::get_user_course_gradings($course, $userid, $data);
     } else {
         $enrolledcourses = enrol_get_users_courses($userid);
         foreach ($enrolledcourses as $course) {
-            get_user_course_gradings($course, $userid, $data);
+            helper::get_user_course_gradings($course, $userid, $data);
         }
     }
 
