@@ -1405,15 +1405,19 @@ class helper {
             return false;
         }
 
-        // Invisible items are invisible unless you are editing.
-        if (($gradeitem->hidden || !$gradeitem->visible) && !$PAGE->user_is_editing()) {
-            return false;
-        }
-
         // Manual feedback is supported if checked in the settings.
         if ($gradeitem->itemtype == 'manual' && !$gradeitem->itemmodule &&
             get_config('report_feedback_tracker', 'supportmanual')) {
+            // Do not show hidden manual items unless the user is editing.
+            if ($gradeitem->hidden  && !$PAGE->user_is_editing()) {
+                return false;
+            }
             return true;
+        }
+
+        // Invisible or hidden items are invisible unless you are editing.
+        if (($gradeitem->hidden || !$gradeitem->visible) && !$PAGE->user_is_editing()) {
+            return false;
         }
 
         $modulelist = [
