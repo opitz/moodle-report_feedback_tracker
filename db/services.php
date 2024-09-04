@@ -27,9 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 $functions = [
 
     'report_feedback_tracker_save_summative_state' => [
-        'classname'         => 'report_feedback_tracker_external',
-        'methodname'        => 'save_summative_state',
-        'classpath'         => 'report/feedback_tracker/externallib.php',
+        'classname'         => 'report_feedback_tracker\external\save_summative_state',
         'description'       => 'Update the summative state via ajax',
         'type'              => 'write',
         'readonlysession'   => true,
@@ -38,9 +36,7 @@ $functions = [
     ],
 
     'report_feedback_tracker_save_cohort_state' => [
-        'classname'         => 'report_feedback_tracker_external',
-        'methodname'        => 'save_cohort_state',
-        'classpath'         => 'report/feedback_tracker/externallib.php',
+        'classname'         => 'report_feedback_tracker\external\save_cohort_state',
         'description'       => 'Update the cohort state via ajax',
         'type'              => 'write',
         'readonlysession'   => true,
@@ -49,9 +45,7 @@ $functions = [
     ],
 
     'report_feedback_tracker_save_hiding_state' => [
-        'classname'         => 'report_feedback_tracker_external',
-        'methodname'        => 'save_hiding_state',
-        'classpath'         => 'report/feedback_tracker/externallib.php',
+        'classname'         => 'report_feedback_tracker\external\save_hiding_state',
         'description'       => 'Update the hiding state via ajax',
         'type'              => 'write',
         'readonlysession'   => true,
@@ -60,9 +54,7 @@ $functions = [
     ],
 
     'report_feedback_tracker_save_feedback_duedate' => [
-        'classname'         => 'report_feedback_tracker_external',
-        'methodname'        => 'save_feedback_duedate',
-        'classpath'         => 'report/feedback_tracker/externallib.php',
+        'classname'         => 'report_feedback_tracker\external\save_feedback_duedate',
         'description'       => 'Update the custom feedback due date via ajax',
         'type'              => 'write',
         'readonlysession'   => true,
@@ -71,9 +63,7 @@ $functions = [
     ],
 
     'report_feedback_tracker_delete_feedback_duedate' => [
-        'classname'         => 'report_feedback_tracker_external',
-        'methodname'        => 'delete_feedback_duedate',
-        'classpath'         => 'report/feedback_tracker/externallib.php',
+        'classname'         => 'report_feedback_tracker\external\delete_feedback_duedate',
         'description'       => 'Delete the custom feedback due date via ajax',
         'type'              => 'write',
         'readonlysession'   => true,
@@ -82,9 +72,7 @@ $functions = [
     ],
 
     'report_feedback_tracker_update_general_feedback' => [
-        'classname'         => 'report_feedback_tracker_external',
-        'methodname'        => 'update_general_feedback',
-        'classpath'         => 'report/feedback_tracker/externallib.php',
+        'classname'         => 'report_feedback_tracker\external\update_general_feedback',
         'description'       => 'Update the general feedback via ajax',
         'type'              => 'write',
         'readonlysession'   => true,
@@ -93,9 +81,7 @@ $functions = [
     ],
 
     'report_feedback_tracker_render_student_feedback' => [
-        'classname'         => 'report_feedback_tracker_external',
-        'methodname'        => 'render_student_feedback',
-        'classpath'         => 'report/feedback_tracker/externallib.php',
+        'classname'         => 'report_feedback_tracker\external\render_student_feedback',
         'description'       => 'Render the feedback table for a student',
         'type'              => 'write',
         'readonlysession'   => true,
