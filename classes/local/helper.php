@@ -903,7 +903,9 @@ class helper {
         $assesstypegradeitems = [];
 
         // Get all summative assessment type records from the assess type plugin.
-        $assesstyperecords = assess_type::get_assess_type_records_by_courseid($courseid, assess_type::ASSESS_TYPE_SUMMATIVE);
+        $assesstyperecords = file_exists($CFG->dirroot.'/local/assess_type/version.php') ?
+            assess_type::get_assess_type_records_by_courseid($courseid, assess_type::ASSESS_TYPE_SUMMATIVE) :
+        [];
 
         // No assess type records found.
         if (empty($assesstyperecords)) {
