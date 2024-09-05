@@ -67,10 +67,7 @@ class delete_feedback_duedate extends external_api {
             }
             return false;
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
+            throw($e);
         }
     }
 }

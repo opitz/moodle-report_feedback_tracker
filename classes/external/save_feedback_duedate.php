@@ -87,10 +87,7 @@ class save_feedback_duedate extends external_api {
 
             return get_string('feedbackduedate:updated', 'report_feedback_tracker');
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
+            throw($e);
         }
     }
 }

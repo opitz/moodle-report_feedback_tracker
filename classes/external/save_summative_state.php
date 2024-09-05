@@ -49,7 +49,7 @@ class save_summative_state extends external_api {
      * @return \external_value
      */
     public static function execute_returns() {
-        return new external_value(PARAM_BOOL, 'Success');
+        return new external_value(PARAM_RAW, 'Success');
     }
 
     /**
@@ -59,7 +59,7 @@ class save_summative_state extends external_api {
      * @param bool $summativestate
      * @return bool|array
      */
-    public static function execute(int $itemid, bool $summativestate): bool {
+    public static function execute(int $itemid, bool $summativestate): bool|array {
         try {
             global $DB;
 
@@ -82,10 +82,7 @@ class save_summative_state extends external_api {
 
             return $summativestate;
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
+            throw($e);
         }
     }
 }

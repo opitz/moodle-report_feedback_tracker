@@ -77,10 +77,7 @@ class update_general_feedback extends external_api {
             }
             return get_string('generalfeedback:updated', 'report_feedback_tracker');
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
+            throw($e);
         }
     }
 }

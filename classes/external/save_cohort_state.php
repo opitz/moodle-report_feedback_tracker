@@ -75,10 +75,7 @@ class save_cohort_state extends external_api {
 
             return $cohortstate;
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
+            throw($e);
         }
     }
 }

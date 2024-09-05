@@ -72,10 +72,7 @@ class render_student_feedback extends external_api {
             }
             return $renderer->render_feedback_tracker_user_table($studentid, $courseid);
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage(),
-            ];
+            throw($e);
         }
     }
 }
