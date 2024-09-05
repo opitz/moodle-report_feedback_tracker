@@ -2005,7 +2005,7 @@ class helper {
      * @return void
      * @throws dml_exception
      */
-    protected static function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, &$data) {
+    protected static function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, &$data, &$courseobject) {
         // Get the parts.
         $tttparts = self::get_tttparts($gradeitem);
 
@@ -2023,7 +2023,9 @@ class helper {
                 $gradeitem->gfdate = $tttpart->gfdate;
                 $gradeitem->partname = $tttpart->partname;
 
-                $data->records[] = self::compile_user_record($course, $userid, $gradeitem, $summativeids);
+                $record = self::compile_user_record($course, $userid, $gradeitem, $summativeids);
+                $data->records[] = $record;
+                $courseobject->records[] = $record;
             }
         }
     }
