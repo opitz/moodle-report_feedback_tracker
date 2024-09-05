@@ -148,7 +148,7 @@ function get_admin_course_gradings($course, &$data) {
  * @return stdClass
  * @throws dml_exception
  */
-function get_admin_feedback_record($course, $gradeitem, $summativeids) {
+function get_admin_feedback_record1($course, $gradeitem, $summativeids) {
     $gradeitem->partname = $gradeitem->partname ? $gradeitem->partname : null; // Only turnitintooltwo assessments may have parts.
     return compile_admin_record($course, $gradeitem, $summativeids);
 }
@@ -163,7 +163,7 @@ function get_admin_feedback_record($course, $gradeitem, $summativeids) {
  * @return void
  * @throws dml_exception
  */
-function get_admin_turnitin_records($course, $gradeitem, $summativeids, &$data) {
+function get_admin_turnitin_records0($course, $gradeitem, $summativeids, &$data) {
     global $PAGE;
 
     // Get the parts.
@@ -199,7 +199,7 @@ function get_admin_turnitin_records($course, $gradeitem, $summativeids, &$data) 
  * @throws coding_exception
  * @throws dml_exception
  */
-function compile_admin_record($course, $gradeitem, $summativeids) {
+function compile_admin_record0($course, $gradeitem, $summativeids) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
     $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
@@ -236,7 +236,7 @@ function compile_admin_record($course, $gradeitem, $summativeids) {
  * @param stdClass $gradeitem
  * @return string
  */
-function get_admin_cohortfeedback($gradeitem) {
+function get_admin_cohortfeedback0($gradeitem) {
     global $PAGE;
 
     if ($PAGE->user_is_editing()) {
@@ -273,7 +273,7 @@ function get_admin_cohortfeedback($gradeitem) {
  * @param stdClass $data
  * @return void
  */
-function get_admin_filter_options(&$data) {
+function get_admin_filter_options0(&$data) {
     // The filter options.
     $data->academicyearoptions = [];
     $data->courseoptions = [];
@@ -343,7 +343,7 @@ function get_admin_filter_options(&$data) {
  * @param stdClass $gradeitem
  * @return string
  */
-function get_admin_generalfeedback($gradeitem) {
+function get_admin_generalfeedback0($gradeitem) {
     global $PAGE;
 
     $o = html_writer::start_div('generalfeedback align-items-center');
@@ -383,7 +383,7 @@ function get_admin_generalfeedback($gradeitem) {
  * @param array $summativeids an array with summative item ids from sitsgradepush
  * @return string
  */
-function  get_admin_summative($gradeitem, $summativeids) {
+function  get_admin_summative0($gradeitem, $summativeids) {
     global $PAGE;
 
     // Check if an item is declared summative by SITS.
@@ -428,7 +428,7 @@ function  get_admin_summative($gradeitem, $summativeids) {
  * @throws coding_exception
  * @throws dml_exception
  */
-function get_user_course_gradings($course, $userid, stdClass &$data) {
+function get_user_course_gradings0($course, $userid, stdClass &$data) {
     global $DB;
 
     $sql = "
@@ -537,7 +537,7 @@ function get_user_course_gradings($course, $userid, stdClass &$data) {
  * @return stdClass
  * @throws dml_exception
  */
-function get_user_feedback_record($course, $userid, $gradeitem, $summativeids) {
+function get_user_feedback_record0($course, $userid, $gradeitem, $summativeids) {
     $gradeitem->partname = null; // Only turnitintooltwo assessments may have parts.
 
     return compile_user_record($course, $userid, $gradeitem, $summativeids);
@@ -554,7 +554,7 @@ function get_user_feedback_record($course, $userid, $gradeitem, $summativeids) {
  * @return void
  * @throws dml_exception
  */
-function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, &$data) {
+function get_user_turnitin_records0($course, $gradeitem, $userid, $summativeids, &$data) {
     // Get the parts.
     $tttparts = get_tttparts($gradeitem);
 
@@ -588,7 +588,7 @@ function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, 
  * @throws coding_exception
  * @throws dml_exception
  */
-function compile_user_record($course, $userid, $gradeitem, $summativeids) {
+function compile_user_record0($course, $userid, $gradeitem, $summativeids) {
 
     $oneday = 24 * 60 * 60; // Number of seconds in a day.
 
@@ -639,7 +639,7 @@ function compile_user_record($course, $userid, $gradeitem, $summativeids) {
  * @param stdClass $data
  * @return void
  */
-function get_user_filter_options(&$data) {
+function get_user_filter_options0(&$data) {
     // The filter options.
     $data->academicyearoptions = [];
     $data->courseoptions = [];
@@ -719,7 +719,7 @@ function get_user_filter_options(&$data) {
  * @param stdClass $gradeitem
  * @return string
  */
-function get_user_generalfeedback($gradeitem) {
+function get_user_generalfeedback0($gradeitem) {
 
     $o = html_writer::start_div('generalfeedback');
     $o .= html_writer::div($gradeitem->generalfeedback, 'generalfeedbacktext',
@@ -740,7 +740,7 @@ function get_user_generalfeedback($gradeitem) {
  * @return lang_string|string
  * @throws coding_exception
  */
-function get_user_summative($gradeitem, $summativeids) {
+function get_user_summative0($gradeitem, $summativeids) {
     return $gradeitem->summative || in_array($gradeitem->itemid, $summativeids) ?
         get_string('summative', 'report_feedback_tracker') : "";
 }
@@ -752,7 +752,7 @@ function get_user_summative($gradeitem, $summativeids) {
  *
  * @param int $courseid
  */
-function get_academic_year(int $courseid): ?string {
+function get_academic_year0(int $courseid): ?string {
     $academicyear = null;
     $handler = \core_course\customfield\course_handler::create();
     $data = $handler->get_instance_data($courseid, true);
@@ -776,7 +776,7 @@ function get_academic_year(int $courseid): ?string {
  * @return false|mixed
  * @throws dml_exception
  */
-function get_duedate_extension($gradeitem, $userid) {
+function get_duedate_extension0($gradeitem, $userid) {
     global $DB;
 
     switch ($gradeitem->itemmodule) {
@@ -812,7 +812,7 @@ function get_duedate_extension($gradeitem, $userid) {
  * @return string
  * @throws dml_exception
  */
-function get_feedbacks($gradeitem) {
+function get_feedbacks0($gradeitem) {
     return $gradeitem->cmid ? html_writer::div("$gradeitem->feedbacks of $gradeitem->submissions") : '';
 }
 
@@ -826,7 +826,7 @@ function get_feedbacks($gradeitem) {
  * @return string
  * @throws coding_exception
  */
-function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate) {
+function get_feedback_badge0($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate) {
 
     // If there is no general feedback date and no submission there is no feedback.
     if (!isset($gradeitem->gfdate) && $submissiondate == 0) {
@@ -870,7 +870,7 @@ function get_feedback_badge($gradeitem, $feedbackduedate, $feedbackextendperiod,
  * @return string
  * @throws coding_exception
  */
-function get_feedback_method($gradeitem) {
+function get_feedback_method0($gradeitem) {
     global $OUTPUT, $PAGE;
 
     if ($PAGE->user_is_editing()) {
@@ -897,7 +897,7 @@ function get_feedback_method($gradeitem) {
  * @return string
  * @throws coding_exception
  */
-function get_feedback_responsibility($gradeitem) {
+function get_feedback_responsibility0($gradeitem) {
     global $OUTPUT, $PAGE;
 
     if ($PAGE->user_is_editing()) {
@@ -925,7 +925,7 @@ function get_feedback_responsibility($gradeitem) {
  * @return lang_string|string
  * @throws coding_exception
  */
-function get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate) {
+function get_feedback_status0($gradeitem, $feedbackduedate, $feedbackextendperiod, $submissiondate) {
 
     // If there is no general feedback date and no submission there is no feedback(?).
     if (!isset($gradeitem->gfdate) && $submissiondate == 0) {
@@ -962,7 +962,7 @@ function get_feedback_status($gradeitem, $feedbackduedate, $feedbackextendperiod
  * @param stdClass $gradeitem
  * @return string
  */
-function get_hidden_state($gradeitem) {
+function get_hidden_state0($gradeitem) {
     global $PAGE;
 
     if ($PAGE->user_is_editing()) {
@@ -999,7 +999,7 @@ function get_hidden_state($gradeitem) {
  * @param stdClass $gradeitem
  * @return mixed|string
  */
-function get_item_link($gradeitem) {
+function get_item_link0($gradeitem) {
     global $CFG, $USER;
 
     if (!isset($gradeitem->cmid)) {
@@ -1018,7 +1018,7 @@ function get_item_link($gradeitem) {
  * @param stdClass $gradeitem
  * @return mixed|string
  */
-function get_item_type($gradeitem) {
+function get_item_type0($gradeitem) {
 
     // If there is no itemmodule it is manual feedback.
     if (!$gradeitem->itemmodule) {
@@ -1061,7 +1061,7 @@ function get_item_type($gradeitem) {
  * @return lang_string|string
  * @throws coding_exception
  */
-function get_item_module($gradeitem) {
+function get_item_module0($gradeitem) {
     switch ($gradeitem->itemmodule) {
         case 'assign':
             return get_string('pluginname', 'mod_assign');
@@ -1088,7 +1088,7 @@ function get_item_module($gradeitem) {
  * @return int // The submission date in seconds since 1.1.1970.
  * @throws dml_exception
  */
-function get_submissiondate($userid, $gradeitem) {
+function get_submissiondate0($userid, $gradeitem) {
     global $DB;
 
     $submissiondate = 0;
@@ -1185,7 +1185,7 @@ function get_submissiondate($userid, $gradeitem) {
  * @param int $warningperiod
  * @return string
  */
-function get_submission_status($submissiondate, $duedate, $warningperiod) {
+function get_submission_status0($submissiondate, $duedate, $warningperiod) {
 
     // Submission was in time.
     if ($submissiondate && $submissiondate <= $duedate) {
@@ -1221,7 +1221,7 @@ function get_submission_status($submissiondate, $duedate, $warningperiod) {
  * @param int $courseid
  * @return array
  */
-function get_summative_ids($courseid) {
+function get_summative_ids0($courseid) {
     global $CFG;
 
     $summativeids = [];
@@ -1247,7 +1247,7 @@ function get_summative_ids($courseid) {
  * @return array
  * @throws dml_exception
  */
-function get_tttparts($gradeitem) {
+function get_tttparts0($gradeitem) {
     global $DB;
 
 //    return $DB->get_records('turnitintooltwo_parts', ['turnitintooltwoid' => $gradeitem->iteminstance]);
@@ -1282,7 +1282,7 @@ function get_tttparts($gradeitem) {
  * @return bool
  * @throws coding_exception
  */
-function is_course_editor($courseid, $userid) {
+function is_course_editor0($courseid, $userid) {
     if (!isset($courseid)) {
         return false;
     }
@@ -1299,7 +1299,7 @@ function is_course_editor($courseid, $userid) {
  * @param stdClass $gradeitem
  * @return bool
  */
-function module_is_supported($gradeitem) {
+function module_is_supported0($gradeitem) {
     global $PAGE;
 
     // Course type is not supported.
@@ -1348,7 +1348,7 @@ function module_is_supported($gradeitem) {
  * @return string
  * @throws coding_exception
  */
-function render_feedbackduedate($gradeitem, $feedbackperiod = 0) {
+function render_feedbackduedate0($gradeitem, $feedbackperiod = 0) {
     global $PAGE;
 
     // Use a stored feedback due date if present, otherwise
@@ -1402,7 +1402,7 @@ function render_feedbackduedate($gradeitem, $feedbackperiod = 0) {
  * @return false|mixed|stdClass
  * @throws dml_exception
  */
-function get_feedback_module($gradeitem) {
+function get_feedback_module0($gradeitem) {
     global $DB, $USER;
 
     // Handle cases of module types here where needed.
