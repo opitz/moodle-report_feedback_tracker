@@ -20,6 +20,7 @@ use context_course;
 use dml_exception;
 use grade_item;
 use html_writer;
+use lang_string;
 use local_assess_type\assess_type;
 use stdClass;
 
@@ -30,14 +31,13 @@ use stdClass;
  * @copyright  2024 UCL <m.opitz@ucl.ac.uk>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 class helper {
     /**
      * Get a random academic year for test purposes only..
      *
      * @param int $courseid
      */
-    public static function get_academic_year(int $courseid): ?string {
+    public static function get_academic_year_dummy(int $courseid): ?string {
         // Return a random academic year from the array.
         $dummyacademicyears = ['2021-22', '2022-23', '2023-24', '2024-25'];
         return $dummyacademicyears[array_rand($dummyacademicyears)];
@@ -48,7 +48,7 @@ class helper {
      *
      * @param int $courseid
      */
-    protected static function get_academic_year0(int $courseid): ?string {
+    public static function get_academic_year(int $courseid): ?string {
         $academicyear = null;
         $handler = \core_course\customfield\course_handler::create();
         $data = $handler->get_instance_data($courseid, true);
@@ -80,7 +80,6 @@ class helper {
      *
      * @param stdClass $gradeitem
      * @param int $feedbackduedate
-     * @param int $feedbackextendperiod
      * @param int $submissiondate
      * @return string
      * @throws coding_exception
@@ -177,9 +176,9 @@ class helper {
 
     /**
      * Get a feedback status.
+     *
      * @param stdClass $gradeitem
      * @param int $feedbackduedate
-     * @param int $feedbackextendperiod
      * @param int $submissiondate
      * @return lang_string|string
      * @throws coding_exception
@@ -697,17 +696,12 @@ class helper {
      * Render a date picker when in edit mode, return the date otherwise.
      *
      * @param stdClass $gradeitem
-     * @param int $feedbackperiod days of feedback extend period (yellow status) in seconds.
+     * @param int $date the feedback due date in seconds since midnight 01.01.1970.
      * @return string
      * @throws coding_exception
      */
-    public static function render_feedbackduedate(stdClass $gradeitem, int $feedbackperiod = 0): string {
+    public static function render_feedbackduedate(stdClass $gradeitem, int $date = 0): string {
         global $PAGE;
-
-        // Use a stored feedback due date if present, otherwise
-        // calculate the feedback due date from the submission due date if there is one.
-        $date = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
-            ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
 
         $o = html_writer::start_div("d-flex align-items-center");
         if ($PAGE->user_is_editing()) { // Render a date picker.
@@ -838,6 +832,32 @@ class helper {
             }
         }
         return $feedbackmodule;
+    }
+
+    /**
+     * Get the feedback due date for a grade item.
+     *
+     * @param stdClass $gradeitem
+     * @return int
+     * @throws dml_exception
+     */
+    public static function get_feedbackduedate(stdClass $gradeitem): int {
+        // If there is a manually set feedback due date use it.
+        if ($gradeitem->feedbackduedate) {
+            return $gradeitem->feedbackduedate;
+        }
+
+        // If there is a due date compute the feedback due date.
+        if ($gradeitem->duedate) {
+            $oneday = 24 * 60 * 60; // Number of seconds in a day.
+            $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
+            // Calculate the period.
+            $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
+            return $gradeitem->duedate + $feedbackperiod;
+        }
+
+        // If there is no due date there is no feedback due date.
+        return 0;
     }
 
 }

@@ -101,7 +101,7 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024070100, 'report', 'feedback_tracker');
     }
 
-    if ($oldversion < 2024081300) {
+    if ($oldversion < 2024090901) {
         // Define table report_feedback_tracker.
         $table = new xmldb_table('report_feedback_tracker');
 
@@ -123,7 +123,7 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
         }
 
         // Savepoint reached.
-        upgrade_plugin_savepoint(true, 2024081300, 'report', 'feedback_tracker');
+        upgrade_plugin_savepoint(true, 2024090901, 'report', 'feedback_tracker');
     }
 
     return true;

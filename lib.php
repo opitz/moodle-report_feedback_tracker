@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-use report_feedback_tracker\local\helper;
+use core\output\inplace_editable;
 
 /**
  * This file contains public API of feedback_tracker report
@@ -154,13 +154,13 @@ function report_feedback_tracker_supports_logstore($instance) {
  * Callback to handle inplace editable items.
  *
  * @param string $itemtype
- * @param int $itemid
+ * @param string $idblob
  * @param string $newvalue
- * @return \core\output\inplace_editable
+ * @return inplace_editable
  * @throws coding_exception
  * @throws dml_exception
  */
-function report_feedback_tracker_inplace_editable($itemtype, $idblob, $newvalue): \core\output\inplace_editable {
+function report_feedback_tracker_inplace_editable(string $itemtype, string $idblob, string $newvalue): inplace_editable {
     global $DB, $PAGE;
 
     // Set the page context.
@@ -183,7 +183,7 @@ function report_feedback_tracker_inplace_editable($itemtype, $idblob, $newvalue)
         $DB->set_field('report_feedback_tracker', $itemtype, $newvalue, ['gradeitem' => $itemid, 'partname' => $partname]);
 
         // Return the result.
-        return new \core\output\inplace_editable(
+        return new inplace_editable(
             'report_feedback_tracker',
             $itemtype,
             $idblob,

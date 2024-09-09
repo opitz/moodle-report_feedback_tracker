@@ -24,13 +24,12 @@ use local_assess_type\assess_type;
 use stdClass;
 
 /**
- * This file contains helper functions used by the feedback tracker report.
+ * This file contains the admin functions used by the feedback tracker report.
  *
  * @package    report_feedback_tracker
  * @copyright  2024 UCL <m.opitz@ucl.ac.uk>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 class admin {
     /**
      * Get the Feedback Tracker data for all enrolled users of a given course.
@@ -232,15 +231,7 @@ class admin {
                 // Each ttt assessment part may have its own attributes.
                 $gradeitem->summative = $tttpart->summative;
                 $gradeitem->hidden = $tttpart->hidden;
-
-
-
-//                $gradeitem->feedbackduedate = $tttpart->feedbackduedate ? $tttpart->feedbackduedate : $gradeitem->feedbackduedate;
                 $gradeitem->feedbackduedate = $tttpart->feedbackduedate;
-
-
-
-
                 $gradeitem->duedate = $tttpart->dtdue;
                 $gradeitem->method = $tttpart->method;
                 $gradeitem->responsibility = $tttpart->responsibility;
@@ -266,10 +257,8 @@ class admin {
      */
     protected static function compile_admin_record($course, $gradeitem, $summativeids): stdClass {
 
-        $oneday = 24 * 60 * 60; // Number of seconds in a day.
-        $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
         $dateformat = get_config('report_feedback_tracker', 'dateformat');
-        $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
+        $feedbackduedate = helper::get_feedbackduedate($gradeitem);
 
         $record = new stdClass();
         $record->course = $course->fullname;
@@ -279,8 +268,12 @@ class admin {
         $record->assessment = helper::get_item_link($gradeitem);
         $record->type = helper::get_item_type($gradeitem);
         $record->module = helper::get_item_module($gradeitem);
-        $record->duedate = $gradeitem->duedate == 0 ? '--' : date($dateformat, $gradeitem->duedate);
-        $record->feedbackduedate = helper::render_feedbackduedate($gradeitem, $feedbackperiod);
+        $record->duedate = $gradeitem->duedate == 0 ?
+            get_string('datenotset', 'report_feedback_tracker') :
+            date($dateformat, $gradeitem->duedate);
+        $record->duedateraw = $gradeitem->duedate == 0 ? 9999999999 : $gradeitem->duedate;
+        $record->feedbackduedate = helper::render_feedbackduedate($gradeitem, $feedbackduedate);
+        $record->feedbackduedateraw = $feedbackduedate == 0 ? 9999999999 : $feedbackduedate;
         $record->feedbacks = helper::get_feedbacks($gradeitem);
         $record->method = helper::get_feedback_method($gradeitem);
         $record->responsibility = helper::get_feedback_responsibility($gradeitem);

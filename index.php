@@ -64,6 +64,3 @@ $renderer = $PAGE->get_renderer('report_feedback_tracker');
 echo $renderer->render_feedback_tracker_admin_wrapper($courseid);
 
 echo $OUTPUT->footer();
-
-
-

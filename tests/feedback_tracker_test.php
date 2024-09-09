@@ -18,7 +18,7 @@ namespace report_feedback_tracker;
 
 use advanced_testcase;
 use context_course;
-
+use report_feedback_tracker\local\user;
 
 /**
  * PHPUnit report_feedback_tracker tests
@@ -70,7 +70,7 @@ final class feedback_tracker_test extends advanced_testcase {
         $this->setup_dummy_data($course, $teacher, $student1, $student2);
 
         // Get the user data.
-        $userdata = get_feedback_tracker_user_data($student1->id, $course->id);
+        $userdata = user::get_feedback_tracker_user_data($student1->id, $course->id);
 
         $records = $userdata->records;
         $feedbackreleased = $records[0];
@@ -79,16 +79,17 @@ final class feedback_tracker_test extends advanced_testcase {
         $submissionlate = $records[3];
 
         $this->assertEquals($student1->username, $feedbackreleased->student, "Assert submission is by student 1");
-        $this->assertTrue(strstr($feedbackreleased->submissionstatus, 'Submission in time') > 0,
-            "Assert submission is in time");
+        $this->assertTrue(strstr($feedbackreleased->submissionstatus, get_string('submission:success',
+                'report_feedback_tracker')) > 0, "Assert submission is in time");
         $this->assertEquals('80/100', $feedbackreleased->grade, "Assert grade is shown correctly");
         $this->assertEquals('Released', $feedbackreleased->feedbackstatus, "Assert feedback is released");
 
-        $this->assertEquals('Feedback in extended period', $feedbackextended->feedbackstatus,
-            "Assert feedback in extended period");
-        $this->assertEquals('Late', $feedbacklate->feedbackstatus, "Assert late feedback");
-        $this->assertTrue(strstr($submissionlate->submissionstatus, 'Submission was late') > 0,
-            "Assert that submission was late");
+        $this->assertEquals(get_string('feedback:late', 'report_feedback_tracker'),
+            $feedbackextended->feedbackstatus, "Assert feedback is late");
+        $this->assertEquals(get_string('feedback:late', 'report_feedback_tracker'),
+            $feedbacklate->feedbackstatus, "Assert late feedback");
+        $this->assertTrue(strstr($submissionlate->submissionstatus,
+                get_string('submission:late', 'report_feedback_tracker')) > 0, "Assert late submission");
     }
 
     /**

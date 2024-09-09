@@ -54,10 +54,10 @@ class render_student_feedback extends external_api {
     /**
      * Saving the feedback due date and the reason for it for a grade item.
      *
-     * @param int $itemid
-     * @param int $duedate
-     * @param string $duedatereason
-     * @return bool|array
+     * @param int $studentid
+     * @param int $courseid
+     * @return string
+     * @throws \Exception
      */
     public static function execute(int $studentid, int $courseid): string {
         try {

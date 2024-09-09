@@ -21,13 +21,12 @@ use html_writer;
 use stdClass;
 
 /**
- * This file contains helper functions used by the feedback tracker report.
+ * This file contains the user related functions used by the feedback tracker report.
  *
  * @package    report_feedback_tracker
  * @copyright  2024 UCL <m.opitz@ucl.ac.uk>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 class user {
     /**
      * Get the Feedback tracker data for one or all courses of a given user.
@@ -198,7 +197,7 @@ class user {
     /**
      * Get the academic years a user is or has been enrolled into.
      *
-     * @param $data
+     * @param stdClass $data
      * @return void
      */
     protected static function get_user_academic_years(&$data): void {
@@ -336,14 +335,14 @@ class user {
 
         $o = '';
         if ($gradeitem->generalfeedback) {
-            $o .= html_writer::start_div('generalfeedback');
-            $o .= html_writer::div($gradeitem->generalfeedback, 'generalfeedbacktext',
+            $o .= html_writer::start_span('generalfeedback');
+            $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedbacktext',
                 ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
             $link = "<a href='$gradeitem->gfurl'>$gradeitem->gfurl</a>";
-            $o .= html_writer::div($link, 'gfurl',
+            $o .= html_writer::span($link, 'gfurl',
                 ['id' => 'gfurl_' . $gradeitem->itemid]);
 
-            $o .= html_writer::end_div();
+            $o .= html_writer::end_span();
         }
         return $o;
     }
@@ -383,6 +382,7 @@ class user {
                 $gradeitem->summative = $tttpart->summative;
                 $gradeitem->hidden = $tttpart->hidden;
                 $gradeitem->duedate = $tttpart->dtdue;
+                $gradeitem->feedbackduedate = $tttpart->feedbackduedate;
                 $gradeitem->method = $tttpart->method;
                 $gradeitem->responsibility = $tttpart->responsibility;
                 $gradeitem->generalfeedback = $tttpart->generalfeedback;
@@ -413,15 +413,11 @@ class user {
         $oneday = 24 * 60 * 60; // Number of seconds in a day.
 
         $warningdays = get_config('report_feedback_tracker', 'warningdays');
-        $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
-        $feedbackextenddays = get_config('report_feedback_tracker', 'feedbackextenddays');
         $warningperiod = $warningdays * $oneday; // Number of seconds in the warning period.
-        $feedbackperiod = $feedbackdeadlinedays * $oneday; // Number of seconds in the feedback period.
         $dateformat = get_config('report_feedback_tracker', 'dateformat');
 
         // If there is a manual feedback due date use it, otherwise calculate it from the submission due date where set.
-        $feedbackduedate = $gradeitem->feedbackduedate ? $gradeitem->feedbackduedate :
-            ($gradeitem->duedate ? $gradeitem->duedate + $feedbackperiod : 0);
+        $feedbackduedate = helper::get_feedbackduedate($gradeitem);
         // Get the submission date if any.
         $submissiondate = helper::get_submissiondate($userid, $gradeitem);
 
@@ -436,9 +432,16 @@ class user {
         $record->type = helper::get_item_type($gradeitem);
         $record->module = helper::get_item_module($gradeitem);
         $record->summative = self::get_user_summative($gradeitem, $summativeids);
-        $record->duedate = $gradeitem->duedate == 0 ? '--' : date($dateformat, $gradeitem->duedate);
-        $record->feedbackduedate = $feedbackduedate == 0 ? '--' : date($dateformat, $feedbackduedate);
-        $record->grade = ($gradeitem->finalgrade ? (int)$gradeitem->finalgrade : '--') . '/' . (int)$gradeitem->grademax;
+        $record->duedate = $gradeitem->duedate == 0 ?
+            get_string('datenotset', 'report_feedback_tracker') :
+            date($dateformat, $gradeitem->duedate);
+        $record->duedateraw = $gradeitem->duedate == 0 ? 9999999999 : $gradeitem->duedate;
+        $record->feedbackduedate = $feedbackduedate == 0 ?
+            get_string('datenotset', 'report_feedback_tracker') :
+            date($dateformat, $feedbackduedate);
+        $record->feedbackduedateraw = $feedbackduedate == 0 ? 9999999999 : $feedbackduedate;
+        $record->grade = ($gradeitem->finalgrade ?
+            (int)$gradeitem->finalgrade . '/' . (int)$gradeitem->grademax : false);
         $record->student = $gradeitem->student;
         $record->grader = $gradeitem->grader;
         $record->feedbackdate = $gradeitem->feedbackdate ? $gradeitem->feedbackdate : $gradeitem->gfdate;
@@ -448,6 +451,8 @@ class user {
         $record->responsibility = html_writer::div($gradeitem->responsibility);
         $record->generalfeedback = self::get_user_generalfeedback($gradeitem);
         $record->gfurl = $gradeitem->gfurl;
+        $record->contact = $gradeitem->responsibility;
+        $record->additionaldata = $record->generalfeedback || $record->method || $record->contact;
 
         return $record;
     }
