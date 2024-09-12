@@ -380,6 +380,7 @@ class helper {
                         'date' => 'timefinish',
                         'status' => 'state',
                     ];
+                    $validstatus = 'finished'; // Only get dates from submissions with a valid status.
                     break;
                 case 'turnitintooltwo':
                     $details = [
@@ -409,7 +410,7 @@ class helper {
         // Compute details.
         if (isset($details)) {
             if ($details['status'] != '' && $validstatus != '') {
-                $submissionrecord = $DB->get_record($details['table'],
+                $submissionrecords = $DB->get_records($details['table'],
                     [
                         $details['user'] => $userid,
                         $details['index'] => $gradeitem->iteminstance,
@@ -417,7 +418,7 @@ class helper {
                     ]
                 );
             } else {
-                $submissionrecord = $DB->get_record($details['table'],
+                $submissionrecords = $DB->get_records($details['table'],
                     [
                         $details['user'] => $userid,
                         $details['index'] => $gradeitem->iteminstance,
@@ -425,7 +426,12 @@ class helper {
                 );
             }
 
-            if ($submissionrecord) {
+            if ($submissionrecords) {
+                // Get the latest valid submission only.
+                usort($submissionrecords, function($a, $b) use ($details) {
+                    return $b->{$details['date']} <=> $a->{$details['date']}; // Sorts in descending order.
+                });
+                $submissionrecord = $submissionrecords[0];
                 $datefield = $details['date'];
                 $submissiondate = $submissionrecord->$datefield;
             }
@@ -896,6 +902,12 @@ class helper {
 
     }
 
+    /**
+     * Get the bank holidays and university closure days.
+     *
+     * @return array
+     * @throws dml_exception
+     */
     protected static function get_closuredays() {
 
         $closuredays = [];
@@ -933,7 +945,6 @@ class helper {
             self::get_year_closuredays($closuredays, $xstart, $xend, $estart, $eend);
         }
 
-        sort($closuredays);
         return $closuredays;
     }
 
