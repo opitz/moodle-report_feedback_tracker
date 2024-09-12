@@ -22,6 +22,7 @@ use grade_item;
 use html_writer;
 use lang_string;
 use local_assess_type\assess_type;
+use moodle_url;
 use stdClass;
 
 /**
@@ -981,5 +982,16 @@ class helper {
                 $closuredays[] = $date;
             }
         }
+    }
+
+    /**
+     * Return the Moodle URL of the course.
+     *
+     * @param int $courseid
+     * @return moodle_url
+     * @throws \moodle_exception
+     */
+    public static function get_course_url(int $courseid) {
+        return new moodle_url('/course/view.php', ['id' => $courseid]);
     }
 }

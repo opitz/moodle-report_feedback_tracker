@@ -146,6 +146,7 @@ class user {
 
         $courseobject = new stdClass();
         $courseobject->courseid = $course->id;
+        $courseobject->url = helper::get_course_url($course->id);
         $courseobject->shortname = $course->shortname;
         $courseobject->fullname = $course->fullname;
         $courseobject->academicyear = helper::get_academic_year($course->id);
