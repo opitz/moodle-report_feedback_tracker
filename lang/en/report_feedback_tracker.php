@@ -63,7 +63,8 @@ $string['feedback_tracker:view'] = 'View feedback tracker';
 $string['feedback_tracker:viewuserreport'] = 'View feedback tracker user report';
 $string['feedbackduedate'] = 'Feedback due';
 $string['feedbackduedate:custom'] = 'Feedback due date set manually';
-$string['feedbackduedate:reason'] = 'Please give a reason for a manual feedback due date:';
+$string['feedbackduedate:reason'] = 'Please give a reason for the change in feedback due date.';
+$string['feedbackduedate:reason_notshown'] = 'This reason is for reporting only and is not shown to students.';
 $string['feedbackduedate:removedmessage'] = 'Custom feedback due date removed.
 Feedback due date now again calculated from assessment due date where available.';
 $string['feedbackduedate:updated'] = 'Feedback due date updated';
