@@ -17,6 +17,7 @@
 namespace report_feedback_tracker\local;
 use coding_exception;
 use context_course;
+use core_course\customfield\course_handler;
 use dml_exception;
 use grade_item;
 use html_writer;
@@ -34,7 +35,7 @@ use stdClass;
  */
 class helper {
     /**
-     * Get a random academic year for test purposes only..
+     * Get a random academic year for testing purposes only.
      *
      * @param int $courseid
      */
@@ -51,7 +52,7 @@ class helper {
      */
     public static function get_academic_year(int $courseid): ?string {
         $academicyear = null;
-        $handler = \core_course\customfield\course_handler::create();
+        $handler = course_handler::create();
         $data = $handler->get_instance_data($courseid, true);
         foreach ($data as $dta) {
             if ($dta->get_field()->get('shortname') === "course_year") {
@@ -854,8 +855,16 @@ class helper {
             return $gradeitem->feedbackduedate;
         }
 
-        // If there is a due date compute the feedback due date.
+        // If there is a submission due date calculate the feedback due date.
         if ($gradeitem->duedate) {
+            $academicyear = self::get_academic_year($gradeitem->courseid);
+
+            // For assessments before academic year 2024-25 the feedback due date period was 1 calendar month.
+            // From academic year 2024-25 on the feedback due date period is 20 working days.
+            if ($academicyear < "2024-25") {
+                return strtotime(date('Y-m-d', $gradeitem->duedate) . '+ 1 month');
+            }
+
             // Compute the due date.
             return self::compute_feedbackduedate($gradeitem->duedate);
         }
