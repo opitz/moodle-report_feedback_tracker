@@ -153,6 +153,7 @@ class user {
         $courseobject->image = \core_course\external\course_summary_exporter::get_course_image($course);
         $courseobject->records = [];
         $itemlist = [];
+        $modinfo = get_fast_modinfo($course->id, $userid);
         foreach ($gradeitems as $gradeitem) {
             // Check if the gradeitem module is supported
             // and make sure only one (turnitintooltwo) assessment record is listed even if there are multiple parts.
@@ -161,10 +162,9 @@ class user {
             }
 
             // If item is a module (e.g. not manual) check if a user is allowed to access it.
-            if ($userid && $gradeitem->itemmodule) {
-                if (!\core_availability\info_module::is_user_visible($gradeitem->cmid, $userid, false)) {
-                    continue;
-                }
+            if ($gradeitem->itemmodule
+                    && !$modinfo->get_cm($gradeitem->cmid)->uservisible) {
+                continue;
             }
 
             // All good - now get and store the feedback record.
