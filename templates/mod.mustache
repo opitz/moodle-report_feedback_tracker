@@ -74,7 +74,7 @@
                 </small>
                 {{#feedback}}
                 <br>
-                {{{feedback}}}
+                    {{{feedback}}}
                 {{/feedback}}
             </div>
 
@@ -85,7 +85,7 @@
                 {{^grade}} <small> {{#str}}feedback:notreleased, report_feedback_tracker{{/str}} </small> {{/grade}}
                 <br>
                 {{#summative}}
-                    <span data-toggle="tooltip"
+                    <span data-toggle="tooltip" data-placement="bottom"
                           title="{{#str}}summative:tooltip, report_feedback_tracker{{/str}}"
                           class="badge badge-primary">
                         {{#str}}summative, report_feedback_tracker{{/str}}
@@ -107,30 +107,30 @@
     </div>
 </div>
 
-<div class="row">
-    <!-- Free text fields. -->
 
-    {{#additionaldata}}
-        <div class="col mb-2 bg-light small">
-            {{#contact}}
-                <span class="text-muted">{{#str}}contact, report_feedback_tracker{{/str}}:</span>
-                {{.}}
-                <br>
-            {{/contact}}
 
-            {{#method}}
-                <span class="text-muted">{{#str}}method, report_feedback_tracker{{/str}}:</span>
-                {{.}}
-                <br>
-            {{/method}}
-
-            {{#generalfeedback}}
-                <span class="text-muted">{{#str}}additionalinformation, report_feedback_tracker{{/str}}:</span>
-                {{{.}}}
-                <br>
-            {{/generalfeedback}}
-
-        </div>
-    {{/additionaldata}}
+{{#additionaldata}}
+<!-- Free text fields. -->
+<div class="row p-3 bg-light small mb-2">
+    <div class="col">
+        {{#contact}}
+            <span class="text-muted">{{#str}}contact, report_feedback_tracker{{/str}}:</span>
+            {{.}}
+            <br>
+        {{/contact}}
+    
+        {{#method}}
+            <span class="text-muted">{{#str}}method, report_feedback_tracker{{/str}}:</span>
+            {{.}}
+            <br>
+        {{/method}}
+    
+        {{#generalfeedback}}
+            <span class="text-muted">{{#str}}additionalinformation, report_feedback_tracker{{/str}}:</span>
+            {{{.}}}
+            <br>
+        {{/generalfeedback}}
+    </div>
 </div>
+{{/additionaldata}}
 <hr>
