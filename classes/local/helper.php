@@ -474,8 +474,8 @@ class helper {
                 ]);
         }
 
-        // NO submission but approaching due date within warning period.
-        if (!$submissiondate && time() <= $duedate && time() >= $duedate - $warningperiod) {
+        // NO submission but approaching due date within warning period. Unused for now.
+        if (!$submissiondate && time() <= $duedate && time() >= $duedate - $warningperiod && false) {
             return html_writer::span(get_string('submission:warning', 'report_feedback_tracker'),
                 "badge badge-warning");
         }
