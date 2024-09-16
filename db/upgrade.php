@@ -148,6 +148,5 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024091100.01, 'report', 'feedback_tracker');
     }
 
-
     return true;
 }

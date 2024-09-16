@@ -82,12 +82,6 @@ if ($ADMIN->fulltree) {
         get_string('settings:feedbackdeadlinedays', 'report_feedback_tracker'),
         get_string('settings:feedbackdeadlinedaysinfo', 'report_feedback_tracker'),
         $feedbackdeadlinedaysdefault, PARAM_RAW, 5));
-/*
-    $settings->add(new admin_setting_configtext('report_feedback_tracker/feedbackextenddays',
-        get_string('settings:feedbackextenddays', 'report_feedback_tracker'),
-        get_string('settings:feedbackextenddaysinfo', 'report_feedback_tracker'),
-        $feedbackextenddaysdefault, PARAM_RAW, 5));
-*/
 
     // The closure dates.
     // Current year.

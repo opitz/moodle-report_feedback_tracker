@@ -24,7 +24,7 @@
 
 use core\report_helper;
 
-require('../../config.php');
+require_once(__DIR__ . '/../../config.php');
 
 $userid = $USER->id;
 $courseid = optional_param('id', null, PARAM_INT); // The optional course ID.

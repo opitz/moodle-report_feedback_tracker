@@ -374,7 +374,15 @@ class user {
      * @throws dml_exception
      * @throws coding_exception
      */
-    protected static function get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, $tttparts, &$data, &$courseobject): void {
+    protected static function get_user_turnitin_records(
+      $course,
+      $gradeitem,
+      $userid,
+      $summativeids,
+      $tttparts,
+      &$data,
+      &$courseobject
+    ): void {
         foreach ($tttparts[$gradeitem->itemid] as $tttpart) {
             if (!$tttpart->hidden) {
                 // Each ttt assessment may have its own attributes.

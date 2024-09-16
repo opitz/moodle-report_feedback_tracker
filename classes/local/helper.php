@@ -618,7 +618,7 @@ class helper {
     public static function get_turnitin_records(int $courseid): array {
         $tttparts = [];
 
-        foreach (helper::get_tttparts($courseid) as $tttpart) {
+        foreach (self::get_tttparts($courseid) as $tttpart) {
             $tttparts[$tttpart->gradeitemid][] = $tttpart;
         }
 
