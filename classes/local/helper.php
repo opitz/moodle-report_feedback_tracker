@@ -914,13 +914,7 @@ class helper {
      */
     protected static function compute_feedbackduedate(int $duedate): int {
         $feedbackdeadlinedays = get_config('report_feedback_tracker', 'feedbackdeadlinedays');
-        static $closuredays = null;
-
-        if ($closuredays === null) {
-            // Get the closure days including bank holidays for England and
-            // Wales.  These are obtained from a URL so only do this once.
-            $closuredays = self::get_closuredays();
-        }
+        $closuredays = self::get_closuredays();
 
         // Initialize the start date.
         $currentdate = date('Y-m-d', $duedate);
@@ -952,18 +946,27 @@ class helper {
      */
     protected static function get_closuredays() {
 
-        $closuredays = [];
+        $cache = \cache::make('report_feedback_tracker', 'publicholidays');
+        $closuredays = $cache->get('england-and-wales');
+        $timestamp = $cache->get('timestamp');
 
-        // Get the official Bank holidays for England and Wales.
-        // Fetch data from the API and decode it into an array.
-        $jsondata = file_get_contents('https://www.gov.uk/bank-holidays.json');
-        $bankholidays = json_decode($jsondata, true);
-        // Accessing bank holidays for England and Wales.
-        $englandwalesholidays = $bankholidays['england-and-wales']['events'];
+        if (!$closuredays || !$timestamp || ($timestamp < time() - DAYSECS)) {
+            $closuredays = [];
 
-        // We only need the dates.
-        foreach ($englandwalesholidays as $holiday) {
-            $closuredays[] = $holiday['date'];
+            // Get the official Bank holidays for England and Wales.
+            // Fetch data from the API and decode it into an array.
+            $jsondata = file_get_contents('https://www.gov.uk/bank-holidays.json');
+            $bankholidays = json_decode($jsondata, true);
+            // Accessing bank holidays for England and Wales.
+            $englandwalesholidays = $bankholidays['england-and-wales']['events'];
+
+            // We only need the dates.
+            foreach ($englandwalesholidays as $holiday) {
+                $closuredays[] = $holiday['date'];
+            }
+
+            $cache->set('england-and-wales', $closuredays);
+            $cache->set('timestamp', time());
         }
 
         // Now add the university closure days when not already covered.

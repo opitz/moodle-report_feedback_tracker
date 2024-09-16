@@ -24,6 +24,7 @@
 
 $string['additionalinformation'] = 'Additional information';
 $string['assessment'] = 'Assessment';
+$string['cachedef_publicholidays'] = 'Public holiday dates';
 $string['classification'] = 'Classification';
 $string['closure:currentyear'] = 'Closure dates current year';
 $string['closure:currentyear-1'] = 'Closure dates last year';
