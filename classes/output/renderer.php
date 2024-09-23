@@ -44,6 +44,24 @@ class renderer extends plugin_renderer_base {
     public function render_feedback_tracker_user_table($userid, $courseid = 0): string {
         // Get the table data.
         $feedbacktrackerdata = user::get_feedback_tracker_user_data($userid, $courseid);
+
+        // If no courseid is provided, then this is called from user.php (student view).
+        // When there are more than one courses, remove the ones without assessments.
+        // Otherwise, show the only course without assessments.
+        if (count($feedbacktrackerdata->courses) !== 1 && $courseid === 0) {
+            $coursesremoved = false;
+            foreach ($feedbacktrackerdata->courses as $key => $course) {
+                if (empty($course->records)) {
+                    unset($feedbacktrackerdata->courses[$key]);
+                    $coursesremoved = true;
+                }
+            }
+            // If we removed any courses, reindex the array.
+            if ($coursesremoved) {
+                $feedbacktrackerdata->courses = array_values($feedbacktrackerdata->courses);
+            }
+        }
+
         // Render the table data.
         return $this->output->render_from_template('report_feedback_tracker/courses', $feedbacktrackerdata);
     }
