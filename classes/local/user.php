@@ -67,8 +67,8 @@ class user {
      * @return int|string
      */
     protected static function get_year_to_show(array $academicyears) {
-        if ($academicyears && false) {
-            return max($academicyears)->key;
+        if ($academicyears) {
+            return max($academicyears)->key; // Return the last academic year the user has been enrolled into a course.
         } else {
             // The user has not been enrolled into any course yet so use the current academic year.
             $currentyear = date('Y');
