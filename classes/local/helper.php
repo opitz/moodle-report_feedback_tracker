@@ -994,23 +994,21 @@ class helper {
         // Do the Xmas closure 1st.
         $date = date('Y-m-d', ($xstart == '' ? 0 : strtotime($xstart)));
         $enddate = date('Y-m-d', ($xend == '' ? 0 : strtotime($xend)));
-        while ($date < $enddate) {
-            $date = date('Y-m-d', strtotime($date . ' +1 day'));
-
+        while ($date <= $enddate) {
             if (!in_array($date, $closuredays)) {
                 $closuredays[] = $date;
             }
+            $date = date('Y-m-d', strtotime($date . ' +1 day'));
         }
 
         // Then do the Easter closure.
         $date = date('Y-m-d', ($estart == '' ? 0 : strtotime($estart)));
         $enddate = date('Y-m-d', ($eend == '' ? 0 : strtotime($eend)));
-        while ($date < $enddate) {
-            $date = date('Y-m-d', strtotime($date . ' +1 day'));
-
+        while ($date <= $enddate) {
             if (!in_array($date, $closuredays)) {
                 $closuredays[] = $date;
             }
+            $date = date('Y-m-d', strtotime($date . ' +1 day'));
         }
     }
 
