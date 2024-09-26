@@ -9,7 +9,7 @@ export const init = () => {
 export function tableFilters() {
     window.console.log('tablefilters.js initialised');
 
-    const dataTable = document.getElementById('feedback_table');
+    const dataTable = document.getElementById('feedback-table');
     const rows = dataTable ? dataTable.getElementsByTagName('tr') : [];
 
     const filterAcademicYear = document.getElementById('filteracademicyear');
@@ -31,12 +31,12 @@ export function tableFilters() {
     });
 
     const rowMatchesFilters = (row, filterValues) => {
-        const academicyearColumn = row.querySelector('.col_academicyear');
-        const courseColumn = row.querySelector('.col_course');
-        const typeColumn = row.querySelector('.col_assessment');
-        const feedbackColumn = row.querySelector('.col_feedback');
-        const methodColumn = row.querySelector('.col_method');
-        const summativeColumn = row.querySelector('.col_summative');
+        const academicyearColumn = row.querySelector('.col-academicyear');
+        const courseColumn = row.querySelector('.col-course');
+        const typeColumn = row.querySelector('.col-assessment');
+        const feedbackColumn = row.querySelector('.col-feedback');
+        const methodColumn = row.querySelector('.col-method');
+        const summativeColumn = row.querySelector('.col-summative');
 
         return (
             (!academicyearColumn || academicyearColumn.getAttribute('data-filter-academicyear') ===
@@ -94,7 +94,7 @@ export function tableFilters() {
  * Initialise the text filter.
  */
 export function initialiseTextFilters() {
-    const dataTable = document.getElementById('feedback_table');
+    const dataTable = document.getElementById('feedback-table');
     const filterResponsibilityInputs = dataTable ? dataTable.querySelectorAll('.filterresponsibility-input') : [];
     const filterGeneralFeedbackInputs = dataTable ? dataTable.querySelectorAll('.filtergeneralfeedback-input') : [];
 
@@ -129,7 +129,7 @@ function filterResponsibilityTableByColumn(dataTable, columnIndex, filterValue) 
     const rows = tbody.querySelectorAll('tr');
 
     rows.forEach(row => {
-        const cell = row.querySelector('.col_responsibility');
+        const cell = row.querySelector('.col-responsibility');
         const cellText = cell ? cell.textContent.toLowerCase() : '';
         if (cellText.includes(filterValue)) {
             row.style.display = '';
@@ -151,7 +151,7 @@ function filterGeneralFeedbackTableByColumn(dataTable, columnIndex, filterValue)
     const rows = tbody.querySelectorAll('tr');
 
     rows.forEach(row => {
-        const cell = row.querySelector('.col_generalfeedback');
+        const cell = row.querySelector('.col-generalfeedback');
         const cellText = cell ? cell.textContent.toLowerCase() : '';
         if (cellText.includes(filterValue)) {
             row.style.display = '';

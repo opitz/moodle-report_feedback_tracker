@@ -14,9 +14,9 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template report_feedback_tracker/modheder
+    @template report_feedback_tracker/assess_type
 
-    Template for displaying a header for modules listed in a course.
+    Template for displaying the assessment type dropdown in edit mode.
 
     Classes required for JS:
     * none
@@ -33,13 +33,17 @@
 
 }}
 
-<div class="row d-none d-md-flex small p-2 bg-light">
-    <div class="col-5">{{#str}} header:assessment, report_feedback_tracker {{/str}}</div>
-    <div class="col-7">
-        <div class="row">
-            <div class="col-4">{{#str}} header:duedate, report_feedback_tracker {{/str}}</div>
-            <div class="col-4">{{#str}} feedback:due, report_feedback_tracker {{/str}}</div>
-            <div class="col-4 text-right">{{#str}} header:mark, report_feedback_tracker {{/str}}</div>
-        </div>
-    </div>
-</div>
+{{#locked}}
+    {{{assesstypelabel}}}
+{{/locked}}
+{{^locked}}
+    <label for="report-feedback-tracker-assesstypes" class="sr-only">{{#str}} header:assessmenttype, report_feedback_tracker {{/str}}</label>
+    <select id="report-feedback-tracker-assesstypes" data-cmid="{{cmid}}" data-action="report_feedback_tracker/assesstype_select">
+        {{#notset}}
+            <option class="assesstype-notset">{{#str}} assesstype:notset, report_feedback_tracker {{/str}}</option>
+        {{/notset}}
+        {{#assesstypes}}
+            <option value="{{value}}" {{#isselected}}selected{{/isselected}}>{{label}}</option>
+        {{/assesstypes}}
+    </select>
+{{/locked}}

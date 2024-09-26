@@ -112,5 +112,5 @@ Feature: As an admin I want to be able to hide a grade item from the report, I w
     Then I should see "Test assignment"
     And I should see "Test quiz"
     When I select "Quiz" from the "filtertype" dropdown
-    Then I should not see "Test assignment" in the "#feedback_table" "css_element"
-    And I should see "Test quiz" in the "#feedback_table" "css_element"
+    Then I should not see "Test assignment" in the "#feedback-table" "css_element"
+    And I should see "Test quiz" in the "#feedback-table" "css_element"

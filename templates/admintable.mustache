@@ -47,19 +47,19 @@
 }}
 <div class="full-width">
     <div class="table-responsive p-5">
-        <table id="feedback_table" class="table">
+        <table id="feedback-table" class="table">
             <thead class="small bg-light">
             <tr>
-                <th scope="col" class="align-top" style="min-width: 300px; width: 300px;">{{#str}} assessment, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-                <th scope="col" class="align-top">{{#str}} duedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-                <th scope="col" class="align-top">{{#str}} feedbacks, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-                <th scope="col" class="align-top" data-toggle="tooltip" title="{{#str}} method:tooltip, report_feedback_tracker {{/str}}">{{#str}} method, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-                <th scope="col" class="align-top">{{#str}} contact, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-                <th scope="col" class="align-top">{{#str}} generalfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-                <th scope="col" class="align-top">{{#str}} cohortfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
-                <th scope="col" class="align-top">{{#str}} summative, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top" style="min-width: 300px; width: 300px;">{{#str}} header:assessment, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} header:duedate, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} header:feedbacks, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top" data-toggle="tooltip" title="{{#str}} method:tooltip, report_feedback_tracker {{/str}}">{{#str}} header:method, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} header:contact, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} header:generalfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} header:cohortfeedback, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
+                <th scope="col" class="align-top">{{#str}} header:assessmenttype, report_feedback_tracker {{/str}} <span class="indicator"></span></th>
             </tr>
-            <tr id="feedback_table_filterrow">
+            <tr id="feedback-table-filterrow">
                 <td>
                     <label for="filtertype" class="sr-only">{{#str}}filter:type, report_feedback_tracker{{/str}}</label>
                     <select id="filtertype" class="custom-select custom-select-sm w-100">
@@ -96,9 +96,9 @@
                     <label for="filtersummative" class="sr-only">{{#str}}filter:summative, report_feedback_tracker{{/str}}</label>
                     <select id="filtersummative" class="custom-select custom-select-sm w-100">
                         <option value="">{{#str}}filter:summative, report_feedback_tracker{{/str}}</option>
-                        {{#summativeoptions}}
+                        {{#assesstypeoptions}}
                             <option value="{{key}}">{{value}}</option>
-                        {{/summativeoptions}}
+                        {{/assesstypeoptions}}
                     </select>
                 </td>
             </tr>
@@ -106,19 +106,19 @@
             <tbody>
             {{#records}}
                 <tr>
-                    <td class="col_assessment" data-filter="{{module}}" data-filter-assessment="{{module}}">
+                    <td class="col-assessment" data-filter="{{module}}" data-filter-assessment="{{module}}">
                         <div class="small w-100">
                             {{{course}}}{{#academicyear}} ({{academicyear}}){{/academicyear}}
                         </div>
                         <div class="w-100 sort-this">
-                            {{{type}}} {{{assessment}}}
+                            {{{moduletypeicon}}} {{{assessment}}}
                         </div>
                     </td>
-                    <td class="col_duedate text-nowrap small">
+                    <td class="col-duedate text-nowrap small">
                         <div class="sort-this hidden">{{duedateraw}}</div>
                         <div>{{duedate}}</div>
                     </td>
-                    <td class="col_feedbacks">
+                    <td class="col-feedbacks">
                         <div class="sort-this hidden">{{feedbackduedateraw}}</div>
                         <div class="small w-100 text-nowrap">
                             {{{feedbackduedate}}}
@@ -127,20 +127,20 @@
                             {{{feedbacks}}}
                         </div>
                     </td>
-                    <td class="col_method" data-filter="{{method}}">
+                    <td class="col-method" data-filter="{{method}}">
                         <div class="sort-this">{{{method}}}</div>
                     </td>
-                    <td class="col_responsibility textsearchable">
+                    <td class="col-responsibility textsearchable">
                         <div class="sort-this">{{{responsibility}}}</div>
                     </td>
-                    <td class="col_generalfeedback textsearchable">
+                    <td class="col-generalfeedback textsearchable">
                         <div class="sort-this">{{{generalfeedback}}}</div>
                     </td>
-                    <td class="col_cohortfeedback textsearchable">
+                    <td class="col-cohortfeedback textsearchable">
                         <div class="sort-this">{{{cohortfeedback}}}</div>
                     </td>
-                    <td class="col_summative text-center" data-filter="{{summativetext}}">
-                        <div class="sort-this">{{{summative}}}</div>
+                    <td class="col-summative text-center" data-filter="{{assesstypelabel}}">
+                        <div class="sort-this">{{{assesstypelabel}}}</div>
                     </td>
                 </tr>
             {{/records}}

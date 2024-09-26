@@ -1,4 +1,4 @@
-import {updateSummativeState} from './repository';
+import {updateAssessmentType} from './repository';
 import {updateCohortState} from './repository';
 import {updateHidingState} from './repository';
 import {updateFeedbackDuedate} from './repository';
@@ -11,7 +11,7 @@ import Templates from 'core/templates';
 
 const Selectors = {
     actions: {
-        toggleSummativeState: '[data-action="report_feedback_tracker/summative_checkbox"]',
+        stateSelector: '[data-action="report_feedback_tracker/assesstype_select"]',
         toggleCohortState: '[data-action="report_feedback_tracker/cohort_checkbox"]',
         toggleHideState: '[data-action="report_feedback_tracker/hiding_checkbox"]',
         datePicker: '[data-action="report_feedback_tracker/datepicker"]',
@@ -23,21 +23,20 @@ const Selectors = {
 export const init = () => {
     window.console.log('adminedit.js initialised');
 
-    document.addEventListener('click', async e => {
-        if (e.target.closest(Selectors.actions.toggleSummativeState)) {
+    document.addEventListener('change', async e => {
+        if (e.target.closest(Selectors.actions.stateSelector)) {
             const target = e.target;
-            const itemid = target.getAttribute('cmid');
+            const itemid = target.getAttribute('data-cmid');
             const partname = target.getAttribute('partname') !== '' ? target.getAttribute('partname') : null;
+            const value = target.value;
 
-            let summativestate = '1';
-            if (target.checked === true) {
-                summativestate = '1';
+            if (value !== await getString('assesstype:notset', 'report_feedback_tracker')) {
+                await updateAssessmentType(itemid, partname, value);
             } else {
-                summativestate = '0';
+                window.console.log("Not a valid option, ignoring!");
             }
-            const response = await updateSummativeState(itemid, partname, summativestate);
-            window.console.log(response);
         }
+
     });
 
     document.addEventListener('click', async e => {
@@ -84,7 +83,7 @@ export const init = () => {
                 const deadlinedays = target.getAttribute('data-deadlinedays');
                 const duedate = target.parentElement.parentElement.parentElement.parentElement.
 
-                querySelector('.col_duedate').innerHTML;
+                querySelector('.col-duedate').innerHTML;
 
                 let response = '';
                 if (!date) { // Delete custom date.

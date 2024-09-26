@@ -1,15 +1,15 @@
 import {call as ajax} from 'core/ajax';
 
-export const updateSummativeState = (
+export const updateAssessmentType = (
     itemid,
     partname,
-    summativestate,
+    assessmenttype,
 ) => ajax([{
-    methodname: 'report_feedback_tracker_save_summative_state',
+    methodname: 'report_feedback_tracker_save_assessment_type',
     args: {
         itemid: itemid,
         partname: partname,
-        summativestate: summativestate
+        assessmenttype: assessmenttype
     },
 }])[0];
 

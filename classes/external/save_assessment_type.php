@@ -30,7 +30,7 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author     Matthias Opitz <m.opitz@ucl.ac.uk>
  */
-class save_summative_state extends external_api {
+class save_assessment_type extends external_api {
     /**
      * Returns description of method parameters.
      *
@@ -40,7 +40,7 @@ class save_summative_state extends external_api {
         return new external_function_parameters([
             'itemid' => new external_value(PARAM_INT, 'The ID of the grade item'),
             'partname' => new external_value(PARAM_TEXT, 'The optional part name used by turnitintooltwo only'),
-            'summativestate' => new external_value(PARAM_BOOL, 'The summative state (0 or 1)'),
+            'assessmenttype' => new external_value(PARAM_INT, 'The ID of the assessment type'),
         ]);
     }
 
@@ -50,7 +50,7 @@ class save_summative_state extends external_api {
      * @return \external_value
      */
     public static function execute_returns() {
-        return new external_value(PARAM_BOOL, 'Success');
+        return new external_value(PARAM_INT, 'Success');
     }
 
     /**
@@ -58,16 +58,16 @@ class save_summative_state extends external_api {
      *
      * @param int $itemid
      * @param string|null $partname optional partname for turnitintooltwo assessments only.
-     * @param bool $summativestate
-     * @return bool
+     * @param int $assessmenttype
+     * @return int
      * @throws \Exception
      */
-    public static function execute(int $itemid, string|null $partname, bool $summativestate): bool {
+    public static function execute(int $itemid, string|null $partname, int $assessmenttype): int {
         try {
             global $DB;
 
             // Prepare the type value for the local_assess_type table.
-            $type = $summativestate ? assess_type::ASSESS_TYPE_SUMMATIVE : assess_type::ASSESS_TYPE_FORMATIVE;
+            $type = $assessmenttype;
 
             // Update summative state in local_assess_type table.
             $gradeitem = $DB->get_record('grade_items', ['id' => $itemid]);
@@ -83,7 +83,7 @@ class save_summative_state extends external_api {
                 }
             }
 
-            return $summativestate;
+            return $assessmenttype;
         } catch (\Exception $e) {
             throw($e);
         }

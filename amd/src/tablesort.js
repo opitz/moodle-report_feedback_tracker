@@ -8,7 +8,7 @@ export const init = () => {
 export function tableSort() {
     window.console.log('tablesort.js initialised');
 
-    const dataTable = document.getElementById('feedback_table');
+    const dataTable = document.getElementById('feedback-table');
     const headers = dataTable ? dataTable.querySelectorAll('th') : [];
     const directions = Array.from(headers).map(() => 1); // Initial sort directions
     const indicators = dataTable ? dataTable.querySelectorAll('.indicator') : [];

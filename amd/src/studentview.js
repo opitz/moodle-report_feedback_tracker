@@ -5,7 +5,7 @@ import {tableSort} from './tablesort';
 export const init = () => {
     window.console.log('studentview.js initialised');
 
-    document.getElementById('report_feedback_tracker_studentdd').addEventListener('change', async function() {
+    document.getElementById('report-feedback-tracker-studentdd').addEventListener('change', async function() {
         var courseId = document.getElementById('feedback_tracker_studentdd').getAttribute('data-value');
         var studentId = this.value;
         if (studentId) {

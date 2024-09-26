@@ -18,7 +18,7 @@ namespace report_feedback_tracker\local;
 use coding_exception;
 use dml_exception;
 use html_writer;
-use moodle_url;
+use local_assess_type\assess_type;
 use stdClass;
 
 /**
@@ -216,7 +216,15 @@ class user {
         $params['userid'] = $userid;
         $gradeitems = $DB->get_records_sql($sql, $params);
 
-        $summativeids = helper::get_summative_ids($course->id);
+        $assessmentids = helper::get_assessment_ids($course->id);
+
+        $assessmenttypes = [];
+        foreach ($assessmentids as $aid) {
+            $object = new stdClass();
+            $object->type = $aid->type;
+            $object->locked = $aid->locked;
+            $assessmenttypes[$aid->cmid] = $object;
+        }
 
         $courseobject = new stdClass();
         $courseobject->courseid = $course->id;
@@ -241,16 +249,28 @@ class user {
                 continue;
             }
 
+            // Add the assessment type information where available.
+            if (isset($assessmenttypes[$gradeitem->cmid])) {
+                $gradeitem->assessmenttype = $assessmenttypes[$gradeitem->cmid]->type;
+                $gradeitem->locked = $assessmenttypes[$gradeitem->cmid]->locked;
+            }
+
+            // Exclude assessments of type DUMMY.
+            if (isset($gradeitem->assessmenttype) && (int) $gradeitem->assessmenttype === assess_type::ASSESS_TYPE_DUMMY) {
+                continue;
+            }
+
             // All good - now get and store the feedback record.
             // Check for due date extensions.
             if ($extension = helper::get_duedate_extension($gradeitem, $userid)) {
                 $gradeitem->duedate = $extension;
             }
+
             // TurnitinToolTwo special treatment as one grading item may have several parts.
             if ($gradeitem->itemmodule == 'turnitintooltwo') {
-                self::get_user_turnitin_records($course, $gradeitem, $userid, $summativeids, $tttparts, $data, $courseobject);
+                self::get_user_turnitin_records($course, $gradeitem, $userid, $tttparts, $data, $courseobject);
             } else {
-                $record = self::get_user_feedback_record($course, $userid, $gradeitem, $summativeids);
+                $record = self::get_user_feedback_record($course, $userid, $gradeitem);
                 $data->records[] = $record;
                 $courseobject->records[] = $record;
             }
@@ -273,15 +293,14 @@ class user {
      * @param stdClass $course
      * @param int $userid
      * @param stdClass $gradeitem
-     * @param array $summativeids
      * @return stdClass
      * @throws dml_exception
      * @throws coding_exception
      */
-    protected static function get_user_feedback_record($course, $userid, $gradeitem, $summativeids): stdClass {
+    protected static function get_user_feedback_record($course, $userid, $gradeitem): stdClass {
         $gradeitem->partname = null; // Only turnitintooltwo assessments may have parts.
 
-        return self::compile_user_record($course, $userid, $gradeitem, $summativeids);
+        return self::compile_user_record($course, $userid, $gradeitem);
     }
 
     /**
@@ -294,7 +313,7 @@ class user {
         // The filter options.
         $data->courseoptions = [];
         $data->typeoptions = [];
-        $data->summativeoptions = [];
+        $data->assesstypeoptions = [];
         $data->feedbackoptions = [];
         $data->methodoptions = [];
 
@@ -335,8 +354,8 @@ class user {
                 $option = new stdClass();
                 $option->key = $record->summative;
                 $option->value = $record->summative;
-                if (!in_array($option, $data->summativeoptions)) {
-                    $data->summativeoptions[] = $option;
+                if (!in_array($option, $data->assesstypeoptions)) {
+                    $data->assesstypeoptions[] = $option;
                 }
             }
 
@@ -375,23 +394,11 @@ class user {
     }
 
     /**
-     * Show a summative text for a summative grade item in students/users report.
-     *
-     * @param stdClass $gradeitem
-     * @param array $summativeids
-     * @return bool
-     */
-    public static function get_user_summative($gradeitem, $summativeids): bool {
-        return $gradeitem->summative || array_key_exists($gradeitem->itemid, $summativeids);
-    }
-
-    /**
      * Get the parts of a turnitintooltwo grading item and list them as separate items.
      *
      * @param stdClass $course
      * @param stdClass $gradeitem
      * @param int $userid
-     * @param array $summativeids
      * @param array $tttparts
      * @param stdClass $data
      * @param stdClass $courseobject
@@ -403,7 +410,6 @@ class user {
       $course,
       $gradeitem,
       $userid,
-      $summativeids,
       $tttparts,
       &$data,
       &$courseobject
@@ -422,7 +428,7 @@ class user {
                 $gradeitem->gfdate = $tttpart->gfdate;
                 $gradeitem->partname = $tttpart->partname;
 
-                $record = self::compile_user_record($course, $userid, $gradeitem, $summativeids);
+                $record = self::compile_user_record($course, $userid, $gradeitem);
                 $data->records[] = $record;
                 $courseobject->records[] = $record;
             }
@@ -435,12 +441,11 @@ class user {
      * @param stdClass $course
      * @param int $userid
      * @param stdClass $gradeitem
-     * @param array $summativeids
      * @return stdClass
      * @throws coding_exception
      * @throws dml_exception
      */
-    protected static function compile_user_record($course, $userid, $gradeitem, $summativeids): stdClass {
+    protected static function compile_user_record($course, $userid, $gradeitem): stdClass {
 
         $warningdays = get_config('report_feedback_tracker', 'warningdays');
         $warningperiod = $warningdays * DAYSECS; // Number of seconds in the warning period.
@@ -457,10 +462,16 @@ class user {
         $record->course = $course->fullname;
         $record->courseid = $course->id;
         $record->coursename = $course->fullname;
+        $record->cmid = $gradeitem->itemid;
         $record->assessment = helper::get_item_link($gradeitem);
-        $record->type = helper::get_item_type($gradeitem);
+        $record->assessmenttype = isset($gradeitem->assessmenttype) ? (int) $gradeitem->assessmenttype : null;
+        $record->moduletypeicon = helper::get_module_type_icon($gradeitem);
         $record->module = helper::get_item_module($gradeitem);
-        $record->summative = self::get_user_summative($gradeitem, $summativeids);
+        $record->formative = isset($record->assessmenttype) &&
+            $record->assessmenttype === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
+        $record->summative = isset($record->assessmenttype) &&
+            $record->assessmenttype === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
+        $record->assesstypelabel = helper::get_assesstype_label($record->assessmenttype);
         $record->duedate = $gradeitem->duedate == 0 ?
             get_string('datenotset', 'report_feedback_tracker') :
             date($dateformat, $gradeitem->duedate);
@@ -482,6 +493,7 @@ class user {
         $record->gfurl = $gradeitem->gfurl;
         $record->contact = $gradeitem->responsibility;
         $record->additionaldata = $record->generalfeedback || $record->method || $record->contact;
+        $record->isdummy = isset($record->assessmenttype) && $record->assessmenttype == assess_type::ASSESS_TYPE_DUMMY;
 
         return $record;
     }

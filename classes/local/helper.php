@@ -19,7 +19,6 @@ use coding_exception;
 use context_course;
 use core_course\customfield\course_handler;
 use dml_exception;
-use grade_item;
 use html_writer;
 use lang_string;
 use local_assess_type\assess_type;
@@ -263,7 +262,7 @@ class helper {
      * @param stdClass $gradeitem
      * @return mixed|string
      */
-    public static function get_item_type(stdClass $gradeitem): mixed {
+    public static function get_module_type_icon(stdClass $gradeitem): mixed {
 
         // If there is no itemmodule it is manual feedback.
         if (!$gradeitem->itemmodule) {
@@ -478,54 +477,18 @@ class helper {
     }
 
     /**
-     * Return an array of IDs of summative assessments for a given course
+     * Return an array of assessment types for a given course.
      *
      * @param int $courseid
      * @return array
+     * @throws dml_exception
      */
-    public static function get_summative_ids(int $courseid): array {
+    public static function get_assessment_ids(int $courseid): array {
         global $CFG;
 
         require_once($CFG->dirroot . '/grade/lib.php');
-        $assesstypegradeitems = [];
-
         // Get all summative assessment type records from the assess type plugin.
-        $assesstyperecords = file_exists($CFG->dirroot.'/local/assess_type/version.php') ?
-            assess_type::get_assess_type_records_by_courseid($courseid, assess_type::ASSESS_TYPE_SUMMATIVE) :
-        [];
-
-        // No assess type records found.
-        if (empty($assesstyperecords)) {
-            return [];
-        }
-
-        foreach ($assesstyperecords as $assesstype) {
-            // Grade item id found. Return the assess type record and process the next record.
-            if ($assesstype->gradeitemid) {
-                $assesstypegradeitems[$assesstype->gradeitemid] = $assesstype->locked;
-                continue;
-            }
-
-            // Course module id found.
-            // Find the grade items of this course module and return their assess type records.
-            if ($assesstype->cmid) {
-                $cm = get_coursemodule_from_id('', $assesstype->cmid, $assesstype->courseid);
-                if (empty($cm)) {
-                    continue;
-                }
-                $gradeitems = grade_item::fetch_all(
-                  ['itemtype' => 'mod', 'iteminstance' => $cm->instance, 'itemmodule' => $cm->modname]
-                );
-                if (empty($gradeitems)) {
-                    continue;
-                }
-                foreach ($gradeitems as $gradeitem) {
-                    $assesstypegradeitems[$gradeitem->id] = $assesstype->locked;
-                }
-            }
-        }
-
-        return $assesstypegradeitems;
+        return assess_type::get_assess_type_records_by_courseid($courseid);
     }
 
     /**
@@ -1022,4 +985,65 @@ class helper {
     public static function get_course_url(int $courseid) {
         return new moodle_url('/course/view.php', ['id' => $courseid]);
     }
+
+    /**
+     * Get the assessment types.
+     *
+     * @param int|null $selection
+     * @return array|object[]
+     * @throws coding_exception
+     */
+    public static function get_assess_types($selection) {
+
+        $options = self::get_assesstype_options();
+
+        // Prepare the options with selection logic.
+        return array_map(function($option) use ($selection) {
+            // Check if the current option value matches the selected value.
+            $option->isselected = ($option->value === $selection);
+            return $option;
+        }, $options);
+    }
+
+    /**
+     * Get the assessment type options.
+     *
+     * @return object[]
+     * @throws coding_exception
+     */
+    private static function get_assesstype_options() {
+        return [
+            (object)['value' => assess_type::ASSESS_TYPE_FORMATIVE,
+                'label' => get_string('formativeoption', 'local_assess_type')],
+            (object)['value' => assess_type::ASSESS_TYPE_SUMMATIVE,
+                'label' => get_string('summativeoption', 'local_assess_type')],
+            (object)['value' => assess_type::ASSESS_TYPE_DUMMY,
+                'label' => get_string('dummyoption', 'local_assess_type')],
+        ];
+    }
+
+    /**
+     * Get the assessment type label of a given value.
+     *
+     * @param int|null $value
+     * @return string
+     * @throws coding_exception
+     */
+    public static function get_assesstype_label(int|null $value): string {
+        $notfoundlabel = get_string('assesstype:notset', 'report_feedback_tracker');
+
+        if ($value === null) {
+            return $notfoundlabel;
+        }
+
+        $options = self::get_assesstype_options();
+        foreach ($options as $option) {
+            if ($option->value === $value) {
+                return $option->label;
+            }
+        }
+
+        return $notfoundlabel;
+    }
 }
+

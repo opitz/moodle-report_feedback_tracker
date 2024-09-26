@@ -16,11 +16,8 @@
 
 namespace report_feedback_tracker\local;
 use coding_exception;
-use context_course;
 use dml_exception;
-use grade_item;
 use html_writer;
-use local_assess_type\assess_type;
 use stdClass;
 
 /**
@@ -165,7 +162,16 @@ class admin {
 ";
         $params['courseid'] = $course->id;
         $gradeitems = $DB->get_records_sql($sql, $params);
-        $summativeids = helper::get_summative_ids($course->id);
+        $assessmentids = helper::get_assessment_ids($course->id);
+
+        $assessmenttypes = [];
+        foreach ($assessmentids as $aid) {
+            $object = new stdClass();
+            $object->type = $aid->type;
+            $object->locked = $aid->locked;
+            $assessmenttypes[$aid->cmid] = $object;
+        }
+
         $tttparts = helper::get_turnitin_records($course->id);
 
         $itemlist = [];
@@ -177,12 +183,18 @@ class admin {
             }
 
             // All good - now get and store the feedback record.
+            // Add the assessment type information where available.
+            if (isset($assessmenttypes[$gradeitem->cmid])) {
+                $gradeitem->assessmenttype = $assessmenttypes[$gradeitem->cmid]->type;
+                $gradeitem->locked = $assessmenttypes[$gradeitem->cmid]->locked;
+            }
+
             // TurnitinToolTwo special treatment as one grading item may have several parts.
             if ($gradeitem->itemmodule == 'turnitintooltwo') {
-                self::get_admin_turnitin_records($course, $gradeitem, $summativeids, $tttparts, $data);
+                self::get_admin_turnitin_records($course, $gradeitem, $tttparts, $data);
             } else {
                 if (!$gradeitem->hidden || $PAGE->user_is_editing()) {
-                    $record = self::get_admin_feedback_record($course, $gradeitem, $summativeids);
+                    $record = self::get_admin_feedback_record($course, $gradeitem);
                     $data->records[] = $record;
                 }
             }
@@ -198,15 +210,14 @@ class admin {
      *
      * @param stdClass $course
      * @param stdClass $gradeitem
-     * @param array $summativeids
      * @return stdClass
      * @throws dml_exception
      * @throws coding_exception
      */
-    protected static function get_admin_feedback_record($course, $gradeitem, $summativeids): stdClass {
+    protected static function get_admin_feedback_record($course, $gradeitem): stdClass {
         // Only turnitintooltwo assessments may have parts.
         $gradeitem->partname = $gradeitem->partname ? $gradeitem->partname : null;
-        return self::compile_admin_record($course, $gradeitem, $summativeids);
+        return self::compile_admin_record($course, $gradeitem);
     }
 
     /**
@@ -214,14 +225,13 @@ class admin {
      *
      * @param stdClass $course
      * @param stdClass $gradeitem
-     * @param array $summativeids
      * @param array $tttparts
      * @param stdClass $data
      * @return void
      * @throws dml_exception
      * @throws coding_exception
      */
-    protected static function get_admin_turnitin_records($course, $gradeitem, $summativeids, $tttparts, &$data): void {
+    protected static function get_admin_turnitin_records($course, $gradeitem, $tttparts, &$data): void {
         global $PAGE;
 
         // Make each part a record and store it in the data.
@@ -239,7 +249,7 @@ class admin {
                 $gradeitem->gfdate = $tttpart->gfdate;
                 $gradeitem->partname = $tttpart->partname;
 
-                $data->records[] = self::compile_admin_record($course, $gradeitem, $summativeids);
+                $data->records[] = self::compile_admin_record($course, $gradeitem);
             }
         }
     }
@@ -249,12 +259,11 @@ class admin {
      *
      * @param stdClass $course
      * @param stdClass $gradeitem
-     * @param array $summativeids
      * @return stdClass
      * @throws coding_exception
      * @throws dml_exception
      */
-    protected static function compile_admin_record($course, $gradeitem, $summativeids): stdClass {
+    protected static function compile_admin_record($course, $gradeitem): stdClass {
 
         $dateformat = get_config('report_feedback_tracker', 'dateformat');
         $feedbackduedate = helper::get_feedbackduedate($gradeitem);
@@ -263,8 +272,11 @@ class admin {
         $record->course = $course->fullname;
         $record->courseid = $course->id;
         $record->coursename = $course->fullname;
+        $record->cmid = $gradeitem->itemid;
         $record->assessment = helper::get_item_link($gradeitem);
-        $record->type = helper::get_item_type($gradeitem);
+        $record->assessmenttype = isset($gradeitem->assessmenttype) ? (int) $gradeitem->assessmenttype : null;
+        $record->locked = isset($gradeitem->locked) ? $gradeitem->locked : null;
+        $record->moduletypeicon = helper::get_module_type_icon($gradeitem);
         $record->module = helper::get_item_module($gradeitem);
         $record->duedate = $gradeitem->duedate == 0 ?
             get_string('datenotset', 'report_feedback_tracker') :
@@ -278,11 +290,13 @@ class admin {
         $record->generalfeedback = self::get_admin_generalfeedback($gradeitem);
         $record->cohortfeedback = self::get_admin_cohortfeedback($gradeitem);
         $record->gfurl = $gradeitem->gfurl;
-        $record->summative = self::get_admin_summative($gradeitem, $summativeids);
-        $record->summativetext = $gradeitem->summative ? get_string('summative', 'report_feedback_tracker') : "";
+        $record->assesstypelabel = helper::get_assesstype_label($record->assessmenttype);
         $record->hidden = helper::get_hidden_state($gradeitem);
         $record->partname = $gradeitem->partname;
 
+        // Get the assessment types with the current selection.
+        $record->assesstypes = helper::get_assess_types(isset($record->assessmenttype) ? $record->assessmenttype : null);
+        $record->notset = isset($record->assessmenttype) ? false : true;
         return $record;
     }
 
@@ -335,7 +349,7 @@ class admin {
         // The filter options.
         $data->courseoptions = [];
         $data->typeoptions = [];
-        $data->summativeoptions = [];
+        $data->assesstypeoptions = [];
         $data->feedbackoptions = [];
         $data->methodoptions = [];
 
@@ -361,14 +375,19 @@ class admin {
                 }
             }
 
-            // Summative / formative options.
-            if ($record->summative) {
+            // Assessment type options.
+            if (isset($record->assessmenttype)) {
                 $option = new stdClass();
-                $option->key = $record->summativetext;
-                $option->value = $record->summativetext;
-                if (!in_array($option, $data->summativeoptions)) {
-                    $data->summativeoptions[] = $option;
-                }
+                $option->key = $record->assesstypelabel;
+                $option->value = $record->assesstypelabel;
+            } else {
+
+                $option = new stdClass();
+                $option->key = get_string('assesstype:notset', 'report_feedback_tracker');
+                $option->value = get_string('assesstype:notset', 'report_feedback_tracker');
+            }
+            if (!in_array($option, $data->assesstypeoptions)) {
+                $data->assesstypeoptions[] = $option;
             }
 
             // Type (module) options.
@@ -380,50 +399,6 @@ class admin {
                     $data->typeoptions[] = $option;
                 }
             }
-        }
-    }
-
-    /**
-     * Show / edit the summative state of a grading item.
-     *
-     * @param stdClass $gradeitem
-     * @param array $summativeids an array with summative item ids from sitsgradepush
-     * @return string
-     */
-    protected static function get_admin_summative($gradeitem, $summativeids): string {
-        global $PAGE;
-
-        // Check if an item is declared summative in assess type plugin.
-        if (array_key_exists($gradeitem->itemid, $summativeids)) {
-            // This is a summative item and locked.
-            if ($summativeids[$gradeitem->itemid] == 1) {
-                $gradeitem->summative = 2;
-                // This is a summative item and unlocked.
-            } else if ($summativeids[$gradeitem->itemid] == 0) {
-                $gradeitem->summative = 1;
-            }
-        }
-
-        // If not set in assess type plugin one may still declare summative manually.
-        if ($PAGE->user_is_editing() && $gradeitem->summative < 2) {
-            if ($gradeitem->summative) {
-                return "<input
-                data-action='report_feedback_tracker/summative_checkbox'
-                type='checkbox'
-                class='form-check-input summative_checkbox'
-                cmid='$gradeitem->itemid'
-                checked='checked'
-            >";
-            } else {
-                return "<input
-                data-action='report_feedback_tracker/summative_checkbox'
-                type='checkbox'
-                class='form-check-input summative_checkbox'
-                cmid='$gradeitem->itemid'
-            >";
-            }
-        } else {
-            return $gradeitem->summative ? "<i class='fa fa-check'></i>" : '';
         }
     }
 

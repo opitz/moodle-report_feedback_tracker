@@ -26,8 +26,8 @@ defined('MOODLE_INTERNAL') || die();
 
 $functions = [
 
-    'report_feedback_tracker_save_summative_state' => [
-        'classname'         => 'report_feedback_tracker\external\save_summative_state',
+    'report_feedback_tracker_save_assessment_type' => [
+        'classname'         => 'report_feedback_tracker\external\save_assessment_type',
         'description'       => 'Update the summative state via ajax',
         'type'              => 'write',
         'readonlysession'   => true,
