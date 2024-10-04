@@ -216,15 +216,7 @@ class user {
         $params['userid'] = $userid;
         $gradeitems = $DB->get_records_sql($sql, $params);
 
-        $assessmentids = helper::get_assessment_ids($course->id);
-
-        $assessmenttypes = [];
-        foreach ($assessmentids as $aid) {
-            $object = new stdClass();
-            $object->type = $aid->type;
-            $object->locked = $aid->locked;
-            $assessmenttypes[$aid->cmid] = $object;
-        }
+        $assessmenttypes = helper::get_assessment_types($course->id);
 
         $courseobject = new stdClass();
         $courseobject->courseid = $course->id;
@@ -233,9 +225,10 @@ class user {
         $courseobject->fullname = $course->fullname;
         $courseobject->image = \core_course\external\course_summary_exporter::get_course_image($course);
         $courseobject->records = [];
-        $itemlist = [];
         $tttparts = helper::get_turnitin_records($course->id);
         $modinfo = get_fast_modinfo($course->id, $userid);
+
+        $itemlist = [];
         foreach ($gradeitems as $gradeitem) {
             // Check if the gradeitem module is supported
             // and make sure only one (turnitintooltwo) assessment record is listed even if there are multiple parts.
@@ -250,10 +243,7 @@ class user {
             }
 
             // Add the assessment type information where available.
-            if (isset($assessmenttypes[$gradeitem->cmid])) {
-                $gradeitem->assessmenttype = $assessmenttypes[$gradeitem->cmid]->type;
-                $gradeitem->locked = $assessmenttypes[$gradeitem->cmid]->locked;
-            }
+            helper::get_assessment_type($gradeitem, $assessmenttypes);
 
             // Exclude assessments of type DUMMY.
             if (isset($gradeitem->assessmenttype) && (int) $gradeitem->assessmenttype === assess_type::ASSESS_TYPE_DUMMY) {

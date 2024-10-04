@@ -162,15 +162,7 @@ class admin {
 ";
         $params['courseid'] = $course->id;
         $gradeitems = $DB->get_records_sql($sql, $params);
-        $assessmentids = helper::get_assessment_ids($course->id);
-
-        $assessmenttypes = [];
-        foreach ($assessmentids as $aid) {
-            $object = new stdClass();
-            $object->type = $aid->type;
-            $object->locked = $aid->locked;
-            $assessmenttypes[$aid->cmid] = $object;
-        }
+        $assessmenttypes = helper::get_assessment_types($course->id);
 
         $tttparts = helper::get_turnitin_records($course->id);
 
@@ -183,11 +175,8 @@ class admin {
             }
 
             // All good - now get and store the feedback record.
-            // Add the assessment type information where available.
-            if (isset($assessmenttypes[$gradeitem->cmid])) {
-                $gradeitem->assessmenttype = $assessmenttypes[$gradeitem->cmid]->type;
-                $gradeitem->locked = $assessmenttypes[$gradeitem->cmid]->locked;
-            }
+            // Set the assessment type of the grade item where available.
+            helper::get_assessment_type($gradeitem, $assessmenttypes);
 
             // TurnitinToolTwo special treatment as one grading item may have several parts.
             if ($gradeitem->itemmodule == 'turnitintooltwo') {

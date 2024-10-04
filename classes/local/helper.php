@@ -504,12 +504,8 @@ class helper {
      *
      * @param int $courseid
      * @return array
-     * @throws dml_exception
      */
-    public static function get_assessment_ids(int $courseid): array {
-        global $CFG;
-
-        require_once($CFG->dirroot . '/grade/lib.php');
+    public static function get_assessment_types(int $courseid): array {
         // Get all summative assessment type records from the assess type plugin.
         return assess_type::get_assess_type_records_by_courseid($courseid);
     }
@@ -1068,6 +1064,34 @@ class helper {
         }
 
         return $notfoundlabel;
+    }
+
+    /**
+     * Try to get the assessment type of the grade item and add it where found.
+     *
+     * @param stdClass $gradeitem
+     * @param array $assessmenttypes
+     * @return void
+     */
+    public static function get_assessment_type(stdClass &$gradeitem, array $assessmenttypes): void {
+        // If there is a course module ID use it to get the assessment type.
+        if (isset($gradeitem->cmid)) {
+            foreach ($assessmenttypes as $assessmenttype) {
+                if (isset($assessmenttype->cmid) && ($assessmenttype->cmid === $gradeitem->cmid)) {
+                    $gradeitem->assessmenttype = $assessmenttype->type;
+                    $gradeitem->locked = $assessmenttype->locked;
+                    break;
+                }
+            }
+        } else if (isset($gradeitem->itemid)) { // Otherwise use the grade item ID.
+            foreach ($assessmenttypes as $assessmenttype) {
+                if (isset($assessmenttype->gradeitemid) && ($assessmenttype->gradeitemid === $gradeitem->itemid)) {
+                    $gradeitem->assessmenttype = $assessmenttype->type;
+                    $gradeitem->locked = $assessmenttype->locked;
+                    break;
+                }
+            }
+        }
     }
 }
 
