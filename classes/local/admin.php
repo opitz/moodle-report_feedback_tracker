@@ -270,7 +270,6 @@ class admin {
         $feedbackduedate = helper::get_feedbackduedate($gradeitem);
 
         $record = new stdClass();
-        $record->course = $course->fullname;
         $record->courseid = $course->id;
         $record->coursename = $course->fullname;
         $record->cmid = $gradeitem->itemid;

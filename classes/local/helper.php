@@ -15,8 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace report_feedback_tracker\local;
+use assign;
 use coding_exception;
 use context_course;
+use context_module;
 use core_course\customfield\course_handler;
 use dml_exception;
 use html_writer;
@@ -24,6 +26,10 @@ use lang_string;
 use local_assess_type\assess_type;
 use moodle_url;
 use stdClass;
+
+defined('MOODLE_INTERNAL') || die;
+
+require_once($CFG->dirroot . '/mod/assign/locallib.php');
 
 /**
  * This file contains helper functions used by the feedback tracker report.
@@ -96,8 +102,12 @@ class helper {
      */
     public static function get_feedback_badge(stdClass $gradeitem, int $feedbackduedate, int $submissiondate): string {
 
-        // If there is no general feedback date and no submission there is no feedback.
-        if (!isset($gradeitem->gfdate) && $submissiondate == 0) {
+        // There is no feedback if there is no general feedback date and no submission - except when there is no
+        // enabled submission type available for an 'assign' grade item.
+        // Note: If there are assign submissiontypes they will always at least include one element "Submission comments".
+        // submissiontypes will be false for all other assessments than 'assign'.
+        if (!isset($gradeitem->gfdate) && ($submissiondate == 0) &&
+            $gradeitem->submissiontypes && (count($gradeitem->submissiontypes) > 1)) {
             return '';
         }
 
@@ -453,13 +463,21 @@ class helper {
     /**
      * Get a submission status icon.
      *
+     * @param stdClass $gradeitem
      * @param int $submissiondate
-     * @param int $duedate
      * @param int $warningperiod
      * @return string
      */
-    public static function get_submission_status(int $submissiondate, int $duedate, int $warningperiod): string {
+    public static function get_submission_status(stdClass $gradeitem, int $submissiondate, int $warningperiod): string {
+        // Check the submission types for course modules.
+        // If no submission type is available do not show any submission badges.
+        // Note: $submissiontypes will always contain at least one element "Submission comments".
+        if ($gradeitem->submissiontypes && (count($gradeitem->submissiontypes) < 2)) {
+            return '';
+        }
+
         $dateformat = get_config('report_feedback_tracker', 'dateformat');
+        $duedate = $gradeitem->duedate;
 
         // Submission was in time.
         if ($submissiondate && $submissiondate <= $duedate) {
@@ -1078,5 +1096,35 @@ class helper {
         return '';
     }
 
+    /**
+     * Get the enabled submission types for a given course module
+     *
+     * @param int $cmid The ID of the course module
+     * @return array
+     */
+    public static function get_assign_submission_plugins(int $cmid): array {
+        global $DB;
+
+        // Load the course module and assignment instance.
+        $cm = get_coursemodule_from_id('assign', $cmid, 0, false, MUST_EXIST);
+        $context = context_module::instance($cm->id);
+
+        $assign = new assign($context, $cm, $cm->course);
+
+        // Fetch the list of submission plugins and check their settings.
+        $submissionplugins = $assign->get_submission_plugins();
+
+        $enabledsubmissiontypes = [];
+
+        foreach ($submissionplugins as $plugin) {
+            // Check if the submission plugin is enabled and visible for this assignment.
+            if ($plugin->is_enabled() && $plugin->is_visible()) {
+                // Add the plugin's name to the enabled submission types.
+                $enabledsubmissiontypes[] = $plugin->get_name();
+            }
+        }
+
+        return $enabledsubmissiontypes;
+    }
 }
 

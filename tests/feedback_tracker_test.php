@@ -167,12 +167,14 @@ final class feedback_tracker_test extends advanced_testcase {
                             'course' => $course->id,
                             'name' => $dmodule['name'],
                             'duedate' => $dmodule['duedate'],
+                            'assignsubmission_onlinetext_enabled' => true,
                         ]);
                 } else {
                     $module = $this->getDataGenerator()->create_module($dmodule['modulename'],
                         [
                             'course' => $course->id,
                             'name' => $dmodule['name'],
+                            'assignsubmission_onlinetext_enabled' => true,
                         ]);
                 }
             }

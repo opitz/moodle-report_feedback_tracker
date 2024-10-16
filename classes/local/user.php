@@ -256,6 +256,11 @@ class user {
                 }
             }
 
+            // Get the enabled submission types for the assign grade item.
+            // Assignments may have NO submission type - we need to know that.
+            $gradeitem->submissiontypes = ($gradeitem->itemmodule == 'assign') ?
+                helper::get_assign_submission_plugins($gradeitem->cmid) : false;
+
             // All good - now get and store the feedback record.
             // TurnitinToolTwo special treatment as one grading item may have several parts.
             if ($gradeitem->itemmodule == 'turnitintooltwo') {
@@ -464,8 +469,7 @@ class user {
 
         $record = new stdClass();
         $record->submissiondate = $submissiondate == 0 ? '--' : date($dateformat, $submissiondate);
-        $record->submissionstatus = helper::get_submission_status($submissiondate, $gradeitem->duedate, $warningperiod);
-        $record->course = $course->fullname;
+        $record->submissionstatus = helper::get_submission_status($gradeitem, $submissiondate, $warningperiod);
         $record->courseid = $course->id;
         $record->coursename = $course->fullname;
         $record->cmid = $gradeitem->itemid;
