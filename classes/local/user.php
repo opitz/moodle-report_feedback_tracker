@@ -500,7 +500,7 @@ class user {
         $record->feedback = helper::get_feedback_badge($gradeitem, $feedbackduedate, $submissiondate);
         $record->method = $gradeitem->method;
         $record->responsibility = html_writer::div($gradeitem->responsibility);
-        $record->generalfeedback = self::get_user_generalfeedback($gradeitem);
+        $record->generalfeedback = helper::get_generalfeedback($gradeitem);
         $record->gfurl = $gradeitem->gfurl;
         $record->contact = $gradeitem->responsibility;
         $record->additionaldata = $record->generalfeedback || $record->method || $record->contact;

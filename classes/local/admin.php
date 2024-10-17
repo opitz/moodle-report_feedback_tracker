@@ -293,7 +293,7 @@ class admin {
         $record->feedbackduedate = helper::render_feedbackduedate($gradeitem, $feedbackduedate);
         $record->feedbackduedateraw = $feedbackduedate == 0 ? 9999999999 : $feedbackduedate;
         $record->feedbacks = helper::get_feedbacks($gradeitem);
-        $record->method = helper::get_feedback_method($gradeitem);
+//        $record->method = helper::get_feedback_method($gradeitem);
         $record->responsibility = helper::get_feedback_responsibility($gradeitem);
         $record->generalfeedback = self::get_admin_generalfeedback($gradeitem);
         $record->cohortfeedback = self::get_admin_cohortfeedback($gradeitem);
@@ -302,6 +302,14 @@ class admin {
         $record->hidden = helper::get_hidden_state($gradeitem);
         $record->partid = $gradeitem->partid;
         $record->partname = isset($gradeitem->partname) ? $gradeitem->partname : '';
+
+        $record->submissions = count(helper::get_submissions($gradeitem));
+        $record->requiredfeedbacks = $record->submissions - $gradeitem->feedbacks;
+        $record->feedbackpercentage = $record->submissions ? $gradeitem->feedbacks/$record->submissions * 100 : 0;
+        $record->method = $gradeitem->method;
+        $record->generalfeedback = helper::get_generalfeedback($gradeitem);
+        $record->contact = $gradeitem->responsibility;
+        $record->additionaldata = $record->generalfeedback || $record->method || $record->contact;
 
         // Get the assessment types with the current selection.
         $record->assesstypes = helper::get_assess_types(isset($record->assessmenttype) ? $record->assessmenttype : null);

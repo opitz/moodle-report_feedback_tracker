@@ -448,6 +448,97 @@ class helper {
     }
 
     /**
+     * Get all submissions of a course module.
+     *
+     * @param stdClass $gradeitem
+     * @return array
+     * @throws dml_exception
+     */
+    public static function get_submissions(stdClass $gradeitem): array {
+        global $DB;
+
+        $validstatus = '';
+
+        if ($gradeitem) {
+            switch ($gradeitem->itemmodule) {
+                case 'assign':
+                    $details = [
+                        'table' => 'assign_submission',
+                        'index' => 'assignment',
+                        'user' => 'userid',
+                        'date' => 'timemodified',
+                        'status' => 'status',
+                    ];
+                    $validstatus = 'submitted'; // Only get dates from submissions with a valid status.
+                    break;
+                case 'lesson':
+                    $details = [
+                        'table' => 'lesson_attempts',
+                        'index' => 'lessonid',
+                        'user' => 'userid',
+                        'date' => 'timeseen',
+                        'status' => 'correct',
+                    ];
+                    break;
+                case 'quiz':
+                    $details = [
+                        'table' => 'quiz_attempts',
+                        'index' => 'quiz',
+                        'user' => 'userid',
+                        'date' => 'timefinish',
+                        'status' => 'state',
+                    ];
+                    $validstatus = 'finished'; // Only get dates from submissions with a valid status.
+                    break;
+                case 'turnitintooltwo':
+                    $details = [
+                        'table' => 'turnitintooltwo_submissions',
+                        'index' => 'turnitintooltwoid',
+                        'user' => 'userid',
+                        'date' => 'submission_modified',
+                        'status' => '',
+                    ];
+                    break;
+                case 'scorm':
+                    break;
+                case 'workshop':
+                    $details = [
+                        'table' => 'workshop_submissions',
+                        'index' => 'workshopid',
+                        'user' => 'authorid',
+                        'date' => 'timemodified',
+                        'status' => '',
+                    ];
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Compute the data.
+        if (isset($details)) {
+            if ($details['status'] != '' && $validstatus != '') {
+                $submissionrecords = $DB->get_records($details['table'],
+                    [
+                        $details['index'] => $gradeitem->iteminstance,
+                        $details['status'] => $validstatus,
+                    ]
+                );
+            } else {
+                $submissionrecords = $DB->get_records($details['table'],
+                    [
+                        $details['index'] => $gradeitem->iteminstance,
+                    ]
+                );
+            }
+
+            return $submissionrecords;
+        }
+        return [];
+    }
+
+
+    /**
      * Get a submission status icon.
      *
      * @param stdClass $gradeitem
@@ -1113,5 +1204,28 @@ class helper {
 
         return count($enabledsubmissiontypes);
     }
+
+    /**
+     * Show the general feedback and the gf URL to students.
+     *
+     * @param stdClass $gradeitem
+     * @return string
+     */
+    public static function get_generalfeedback($gradeitem): string {
+
+        $o = '';
+        if ($gradeitem->generalfeedback) {
+            $o .= html_writer::start_span('generalfeedback');
+            $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedbacktext',
+                ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
+            $link = "<a href='$gradeitem->gfurl'>$gradeitem->gfurl</a>";
+            $o .= html_writer::span($link, 'gfurl',
+                ['id' => 'gfurl_' . $gradeitem->itemid]);
+
+            $o .= html_writer::end_span();
+        }
+        return $o;
+    }
+
 }
 

@@ -1,0 +1,109 @@
+{{!
+    This file is part the Feedback tracker report plugin for Moodle
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template report_feedback_tracker/usertable
+
+    Template for displaying the feedback records to users/students.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * none
+
+    Example context (json):
+    {
+        "records": [
+            {
+                "course": "",
+                "assessment": "",
+                "type": "",
+                "type": "",
+                "duedate": "",
+                "submissiondate": "",
+                "feedbackduedate": "",
+                "feedback": ""
+            }
+        ]
+    }
+
+}}
+
+<div class="row">
+    <div class="col-12 col-md-5 mb-3 mb-md-0">
+        {{{moduletypeicon}}} {{{assessment}}}
+        <br>
+        {{#summative}}
+            <div class="badge badge-dark">Summative</div>
+        {{/summative}}
+        {{#formative}}
+            <div class="badge badge-dark">Formative</div>
+        {{/formative}}
+        <div class="small">Due: {{duedate}}</div>
+    </div>
+    <div class="col-7">
+        <div class="row">
+            <div class="col-4 small">
+                {{{feedbackduedate}}}
+                <div class="badge badge-warning">12 users have extensions</div>
+            </div>
+            <div class="col-3">
+                {{submissions}}
+            </div>
+            <div class="col-3">
+                <a href="" class="small"><strong class="h6">{{requiredfeedbacks}}</strong><br>require marking</a>
+                <div>
+                    <small>{{feedbackpercentage}}%</small>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" aria-label="Progress" aria-valuenow="{{feedbackpercentage}}" style="width: {{feedbackpercentage}}%" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col text-right">
+                <a href="" data-toggle="modal" data-target="#exampleModal">Edit</a>
+            </div>
+        </div>
+    </div>
+
+    {{#additionaldata}}
+        <!-- Free text fields. -->
+        <div class="row">
+            <div class="col p-3 bg-light small mb-2 ml-4">
+                {{#contact}}
+                    <span class="text-muted">{{#str}}header:contact, report_feedback_tracker{{/str}}:</span>
+                    {{.}}
+                    <br>
+                {{/contact}}
+
+                {{#method}}
+                    <span class="text-muted">{{#str}}header:method, report_feedback_tracker{{/str}}:</span>
+                    {{.}}
+                    <br>
+                {{/method}}
+
+                {{#generalfeedback}}
+                    <span class="text-muted">{{#str}}header:additionalinformation, report_feedback_tracker{{/str}}:</span>
+                    {{{.}}}
+                    <br>
+                {{/generalfeedback}}
+            </div>
+        </div>
+    {{/additionaldata}}
+</div>
+<hr>
