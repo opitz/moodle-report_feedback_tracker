@@ -68,8 +68,10 @@ class admin {
 
         // Render the drop down menu for switching into student view.
         $data->studentdd = $OUTPUT->render_from_template('report_feedback_tracker/studentdropdown', $sdata);
+        $data->students = $sdata->students;
 
         // Check if the user is in edit mode.
+        $data->canedit = true;
         $data->editmode = $PAGE->user_is_editing();
 
         $course = get_course($courseid);
@@ -283,6 +285,8 @@ class admin {
         $record->coursename = $course->fullname;
         $record->cmid = $gradeitem->itemid;
         $record->assessment = helper::get_item_link($gradeitem);
+        $record->name = helper::get_item_name($gradeitem);
+        $record->url = helper::get_item_url($gradeitem);
         $record->assessmenttype = isset($gradeitem->assessmenttype) ? (int) $gradeitem->assessmenttype : null;
         $record->locked = isset($gradeitem->locked) ? $gradeitem->locked : null;
         $record->moduletypeicon = helper::get_module_type_icon($gradeitem);
@@ -320,6 +324,7 @@ class admin {
         $record->assesstypes = helper::get_assess_types(isset($record->assessmenttype) ? $record->assessmenttype : null);
         $record->notset = isset($record->assessmenttype) ? false : true;
         $record->overrides = self::get_overrides($gradeitem);
+        $record->staffdata = true;
         return $record;
     }
 
@@ -341,7 +346,7 @@ class admin {
                 $idfield = 'assignid';
                 break;
             case 'lesson':
-                $idfield = 'lesson';
+                $idfield = 'lessonid';
                 break;
             case 'quiz':
                 $idfield = 'quiz';

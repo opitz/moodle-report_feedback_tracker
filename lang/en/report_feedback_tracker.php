@@ -22,6 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['assesstype:dummy'] = 'Dummy';
 $string['assesstype:formative'] = 'Formative';
 $string['assesstype:notset'] = 'Not set';
 $string['assesstype:summative'] = 'Summative';

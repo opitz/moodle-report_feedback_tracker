@@ -265,6 +265,11 @@ class helper {
      * @return string
      */
     public static function get_item_link(stdClass $gradeitem): string {
+        $url = self::get_item_url($gradeitem);
+        $linktext = self::get_item_name($gradeitem);
+        return html_writer::link($url, $linktext);
+    }
+    public static function get_item_link0(stdClass $gradeitem): string {
         global $CFG, $USER;
 
         if (!isset($gradeitem->cmid)) {
@@ -275,6 +280,32 @@ class helper {
         $linktext = (isset($gradeitem->partname) && $gradeitem->partname) ?
             "$gradeitem->itemname - $gradeitem->partname" : $gradeitem->itemname;
         return html_writer::link($url, $linktext);
+    }
+
+    /**
+     * Return the name of the grade item combined with a part name where applicable.
+     *
+     * @param stdClass $gradeitem
+     * @return string
+     */
+    public static function get_item_name(stdClass $gradeitem): string {
+        return (isset($gradeitem->partname) && $gradeitem->partname) ?
+            "$gradeitem->itemname - $gradeitem->partname" : $gradeitem->itemname;
+    }
+
+    /**
+     * Return a URL to the module item where applicable or to the gradebook otherwise.
+     *
+     * @param stdClass $gradeitem
+     * @return string
+     */
+    public static function get_item_url(stdClass $gradeitem): string {
+        global $CFG, $USER;
+
+        if (!isset($gradeitem->cmid)) {
+            return "$CFG->wwwroot/grade/report/user/index.php?id=$gradeitem->courseid&userid=$USER->id";
+        }
+        return "$CFG->wwwroot/mod/$gradeitem->itemmodule/view.php?id=$gradeitem->cmid";
     }
 
     /**

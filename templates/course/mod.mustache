@@ -1,0 +1,118 @@
+<div class="row">
+    {{! Mod details. }}
+    <div class="col-12 col-md-5 my-1">
+        <a href="{{{url}}}">{{{moduletypeicon}}} {{{name}}}</a>
+
+        {{#hiddenfromstudents}}
+            <br><div class="badge badge-warning"><i class="fa-regular fa-eye-slash"></i> Hidden from students</div>
+        {{/hiddenfromstudents}}
+
+        {{#hiddenfromreport}}
+            <br><div class="badge badge-warning"><i class="fa-regular fa-eye-slash"></i> Hidden from report</div>
+        {{/hiddenfromreport}}
+
+        {{#summative}}
+            <br><div class="badge badge-primary">{{#str}} assesstype:summative, report_feedback_tracker {{/str}}</div>
+        {{/summative}}
+
+        {{#formative}}
+            <br><div class="badge badge-secondary">{{#str}} assesstype:formative, report_feedback_tracker {{/str}}</div>
+        {{/formative}}
+
+        {{#dummy}}
+            <br><div class="badge badge-light">{{#str}} assesstype:dummy, report_feedback_tracker {{/str}}</div>
+        {{/dummy}}
+
+        {{#duedate}}
+            <br><div>Due: {{{duedate}}}</div>
+        {{/duedate}}
+    </div>
+
+    <div class="col-12 col-md-7">
+        {{! Student data. }}
+        {{#studentdata}}
+        <div class="row no-gutters">
+
+            <div class="col-4">
+                {{#duedate}}
+                    <span class="d-md-none">Due: </span>
+                    {{{duedate}}}
+                {{/duedate}}
+            </div>
+
+            <div class="col-4">
+                {{#feedbackduedate}}
+                    <span class="d-md-none">Feedback due: </span>{{{feedbackduedate}}}
+                {{/feedbackduedate}}
+                 {{#markoverdue}}
+                    <br><div class="badge badge-danger">Overdue</div>
+                {{/markoverdue}}
+            </div>
+
+            <div class="col-4 text-right">
+                {{#mark}}
+                    <span class="d-md-none">Mark: </span>
+                    {{{mark}}}
+                {{/mark}}
+            </div>
+        </div>
+        {{/studentdata}}
+
+        {{! Staff data. }}
+        {{#staffdata}}
+        <div class="row no-gutters">
+
+            <div class="col-4">
+                {{#feedbackduedate}}
+                    <span class="d-md-none">Feedback due: </span>{{{feedbackduedate}}}
+                {{/feedbackduedate}}
+
+                {{#markoverdue}}
+                    <br><div class="badge badge-danger">Overdue</div>
+                {{/markoverdue}}
+
+                {{#overrides}}
+                    <div class="badge badge-warning">{{overrides}} users have overrides</div>
+                {{/overrides}}
+                {{^overrides}}
+                    <div>No overrides</div>
+                {{/overrides}}
+            </div>
+
+            <div class="col-3">
+                {{#submissions}}
+                    {{submissions}} <span class="d-md-none">submitted</span>
+                {{/submissions}}
+            </div>
+
+            <div class="col-3">
+                {{#requiredfeedbacks}}
+                    <a href="" class="small"><strong class="h6">{{requiredfeedbacks}}</strong><br>require marking</a>
+                {{/requiredfeedbacks}}
+
+                <div>
+                    <small>{{feedbackpercentage}}%</small>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" aria-label="Progress" aria-valuenow="{{feedbackpercentage}}" style="width: {{feedbackpercentage}}%" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+
+
+
+                {{#requiremarkingcount}}
+                    <a href="{{{url}}}">{{requiremarkingcount}} require marking</a>
+                {{/requiremarkingcount}}
+            </div>
+
+            <div class="col-2 text-right">
+                {{#outputedit}}
+                    <a href="" class="js-edit-tracker-data btn btn-outline-secondary" data-cmid="{{cmid}}" data-courseid="{{courseid}}">
+                        Edit <span class="sr-only">{{{name}}}</span>
+                    </a>
+                {{/outputedit}}
+            </div>
+        </div>
+        {{/staffdata}}
+    </div>
+</div>
+<hr>

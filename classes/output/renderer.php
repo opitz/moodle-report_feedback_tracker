@@ -88,7 +88,7 @@ class renderer extends plugin_renderer_base {
         $feedbacktrackerdata = admin::get_feedback_tracker_admin_data($courseid);
         $feedbacktrackerdata->courseid = $courseid;
 //        return $this->output->render_from_template('report_feedback_tracker/adminwrapper', $feedbacktrackerdata);
-        return $this->output->render_from_template('report_feedback_tracker/course', $feedbacktrackerdata);
+        return $this->output->render_from_template('report_feedback_tracker/course/course', $feedbacktrackerdata);
     }
 
     /**
