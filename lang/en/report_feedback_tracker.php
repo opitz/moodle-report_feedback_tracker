@@ -139,6 +139,7 @@ $string['submission:warning'] = 'Submission due date approaching!';
 $string['submissiondate'] = 'Submitted';
 $string['summative'] = 'Summative';
 $string['summativekey'] = 'assessments contribute to your course mark.';
+$string['summativekeyadmin'] = 'assessments contribute to a student course mark.';
 $string['title:name'] = 'Feedback tracker';
 $string['title:subtext'] = 'Assessments with due dates, feedback dates, and marks from your courses in Moodle.';
 $string['type'] = 'Assessment type';

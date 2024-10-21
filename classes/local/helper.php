@@ -537,7 +537,6 @@ class helper {
         return [];
     }
 
-
     /**
      * Get a submission status icon.
      *
