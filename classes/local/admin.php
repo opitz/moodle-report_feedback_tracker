@@ -319,7 +319,55 @@ class admin {
         // Get the assessment types with the current selection.
         $record->assesstypes = helper::get_assess_types(isset($record->assessmenttype) ? $record->assessmenttype : null);
         $record->notset = isset($record->assessmenttype) ? false : true;
+        $record->overrides = self::get_overrides($gradeitem);
         return $record;
+    }
+
+    /**
+     * Get the number of students that have a submission due date override for a given course module.
+     *
+     * @param stdClass $gradeitem
+     * @return int
+     * @throws dml_exception
+     */
+    protected static function get_overrides(stdClass $gradeitem): int {
+        global $DB;
+
+        $modulename = $gradeitem->itemmodule;
+        $overridetable = $modulename . "_overrides";
+
+        switch ($modulename) {
+            case 'assign':
+                $idfield = 'assignid';
+                break;
+            case 'lesson':
+                $idfield = 'lesson';
+                break;
+            case 'quiz':
+                $idfield = 'quiz';
+                break;
+            default:
+                return 0; // Return no overrides.
+        }
+
+        // Get user overrides.
+        $useroverrides = $DB->get_records_sql("
+            SELECT userid
+            FROM {" . $overridetable . "}
+            WHERE $idfield = :moduleid AND userid IS NOT NULL", array('moduleid' => $gradeitem->iteminstance));
+
+        // Get group overrides and users in those groups.
+        $groupoverrides = $DB->get_records_sql("
+            SELECT gm.userid
+            FROM {" . $overridetable . "} ao
+            JOIN {groups_members} gm ON ao.groupid = gm.groupid
+            WHERE ao.$idfield = :moduleid AND ao.groupid IS NOT NULL", array('moduleid' => $gradeitem->iteminstance));
+
+        // Merge user ids from individual and group overrides.
+        $overrides = array_merge(array_keys($useroverrides), array_keys($groupoverrides));
+
+        // Count unique users.
+        return count(array_unique($overrides));
     }
 
     /**

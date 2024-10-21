@@ -66,7 +66,12 @@
         <div class="row">
             <div class="col-4 small">
                 {{{feedbackduedate}}}
-                <div class="badge badge-warning">12 users have extensions</div>
+                {{#overrides}}
+                    <div class="badge badge-warning">{{overrides}} users have overrides</div>
+                {{/overrides}}
+                {{^overrides}}
+                    <div>No overrides</div>
+                {{/overrides}}
             </div>
             <div class="col-3">
                 {{submissions}}
