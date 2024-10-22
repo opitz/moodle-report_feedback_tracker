@@ -24,8 +24,10 @@
 
 namespace report_feedback_tracker\output;
 
+use context_course;
 use plugin_renderer_base;
 use report_feedback_tracker\local\admin;
+use report_feedback_tracker\local\helper;
 use report_feedback_tracker\local\user;
 
 /**
@@ -42,6 +44,8 @@ class renderer extends plugin_renderer_base {
      * @throws \moodle_exception
      */
     public function render_feedback_tracker_user_data($userid, $courseid = 0): string {
+        global $USER;
+
         // Course ID 1 is not a standard Moodle course and is excluded.
         if ($courseid < 2) {
             $courseid = 0;
@@ -49,29 +53,36 @@ class renderer extends plugin_renderer_base {
         // Get the table data.
         $feedbacktrackerdata = user::get_feedback_tracker_user_data($userid, $courseid);
 
-        // If no course ID is provided, show assessments from all courses.
-        // While there are more than one courses, remove the ones without assessments.
-        // If there is only one course without assessments show it nevertheless.
-        if (count($feedbacktrackerdata->courses) !== 1 && $courseid === 0) {
-            $coursesremoved = false;
-            foreach ($feedbacktrackerdata->courses as $key => $course) {
-                if (empty($course->records)) {
-                    unset($feedbacktrackerdata->courses[$key]);
-                    $coursesremoved = true;
-                }
-            }
-            // If we removed any courses, reindex the array.
-            if ($coursesremoved) {
-                $feedbacktrackerdata->courses = array_values($feedbacktrackerdata->courses);
-            }
-        }
-
-        // Render the table data.
-        if ($courseid) {
+        if ($courseid) { // Render a student view of single course as an editor.
+            $context = context_course::instance($courseid);
+            $feedbacktrackerdata->courseid = $courseid;
+            $feedbacktrackerdata->canedit = has_capability('moodle/grade:edit', $context);
             $feedbacktrackerdata->viewasstudent = true;
+            $feedbacktrackerdata->students = helper::get_students($courseid, $userid);
+
             return $this->output->render_from_template('report_feedback_tracker/course/course',
                 $feedbacktrackerdata);
-        } else {
+        } else { // Render all courses for a student.
+            $feedbacktrackerdata->canedit = false;
+            // While there are more than one courses, remove the ones without assessments.
+            // If there is only one course without assessments show it nevertheless.
+            if ($feedbacktrackerdata->courses) {
+                $coursesremoved = false;
+                foreach ($feedbacktrackerdata->courses as $key => $course) {
+                    // If there is only one course (left) do not remove it.
+                    if (count($feedbacktrackerdata->courses) < 2) {
+                        break;
+                    }
+                    if (empty($course->records)) { // If a course has no grade records, remove it from the report.
+                        unset($feedbacktrackerdata->courses[$key]);
+                        $coursesremoved = true;
+                    }
+                }
+                // If any courses have been removed, re-index the array.
+                if ($coursesremoved) {
+                    $feedbacktrackerdata->courses = array_values($feedbacktrackerdata->courses);
+                }
+            }
             return $this->output->render_from_template('report_feedback_tracker/user/courses', $feedbacktrackerdata);
         }
     }
@@ -132,6 +143,9 @@ class renderer extends plugin_renderer_base {
     public function render_feedback_tracker_admin(int $courseid): string {
         $feedbacktrackerdata = admin::get_feedback_tracker_admin_data($courseid);
         $feedbacktrackerdata->courseid = $courseid;
+        $feedbacktrackerdata->canedit = true;
+        $feedbacktrackerdata->students = helper::get_students($courseid);
+
 //        return $this->output->render_from_template('report_feedback_tracker/adminwrapper', $feedbacktrackerdata);
         return $this->output->render_from_template('report_feedback_tracker/course/course', $feedbacktrackerdata);
     }

@@ -35,12 +35,6 @@ if ((!$userid = optional_param('userid', null, PARAM_INT)) ||
     $userid = $USER->id;
 }
 
-/*
-// Only a user that can edit the gradebook for this course
-if (!has_capability('moodle/grade:edit', $context)) {
-    $userid = $USER->id;
-}
-*/
 $pageparams = ['id' => $course->id];
 $PAGE->set_context($context);
 $PAGE->set_url('/report/feedback_tracker/index.php', $pageparams);
@@ -59,11 +53,6 @@ report_helper::print_report_selector($pluginname);
 
 // Get the renderer and use it.
 $renderer = $PAGE->get_renderer('report_feedback_tracker');
-
-if ($course->id < 2) { // This is not a Moodle course.
-    echo $renderer->render_feedback_tracker_user_data($userid);
-} else {
-    echo $renderer->render_feedback_tracker_user_data($userid, $course->id);
-}
+echo $renderer->render_feedback_tracker_user_data($userid, $course->id);
 
 echo $OUTPUT->footer();

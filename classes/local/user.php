@@ -96,6 +96,11 @@ class user {
             $data->hasyears = true;
         }
 
+        // Get the user information.
+        $user = get_complete_user_data('id', $userid);
+        $data->userfirstname = $user->firstname;
+        $data->userlastname = $user->lastname;
+
         $year = optional_param('year', null, PARAM_INT);
         $year = $year ? substr($year, 0, 4) : self::get_year_to_show($academicyears);
 

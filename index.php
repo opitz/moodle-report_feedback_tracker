@@ -30,13 +30,13 @@ require_once(__DIR__ . '/../../config.php');
 $courseid = optional_param('id', null, PARAM_INT);
 $userid = optional_param('userid', null, PARAM_INT);
 
-// If there is a userid redirect to the user report
-if ($userid) {
-    redirect(new moodle_url("$CFG->wwwroot/report/feedback_tracker/user.php?userid=$userid&id=$courseid"));
-}
 // If there is no course ID given redirect to the user report.
 if (!$courseid) {
     redirect(new moodle_url("$CFG->wwwroot/report/feedback_tracker/user.php"));
+}
+// If there is a userid or the logged-in user has no rights redirect to the user report.
+if ($userid || (!helper::is_course_editor($courseid, $USER->id))) {
+    redirect(new moodle_url("$CFG->wwwroot/report/feedback_tracker/user.php?userid=$userid&id=$courseid"));
 }
 
 $course = isset($courseid) ? get_course($courseid) : $COURSE;
@@ -48,11 +48,6 @@ $PAGE->set_url('/report/feedback_tracker/index.php', $pageparams);
 $PAGE->set_pagelayout('base'); // No drawers.
 
 $context = context_course::instance($course->id);
-
-// Check if the user is able to see the report and redirect to home if not.
-if (!helper::is_course_editor($courseid, $USER->id)) {
-    redirect(new moodle_url("/?redirect=0"));
-}
 
 // Include the AMD module for manipulating general feedback output.
 $PAGE->requires->js_call_amd('report_feedback_tracker/generalfeedback', 'init');

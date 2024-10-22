@@ -729,10 +729,7 @@ class helper {
             return false;
         }
         $coursecontext = context_course::instance($courseid);
-        if (has_capability('moodle/course:update', $coursecontext, $userid)) {
-            return true;
-        }
-        return false;
+        return has_capability('moodle/course:update', $coursecontext, $userid);
     }
 
     /**
@@ -1257,5 +1254,36 @@ class helper {
         return $o;
     }
 
+    public static function get_students(int $courseid, int $userid = 0): array {
+        // Get the students of the course.
+        $context = \context_course::instance($courseid);
+        $users = get_enrolled_users($context);
+        $students = [];
+        foreach ($users as $user) {
+            // Check if the user has no managerial or supervising capabilities (e.g. is a student).
+            if (!has_capability('gradereport/grader:view', $context, $user) &&
+                !has_capability('moodle/course:manageactivities', $context, $user) &&
+                !has_capability('enrol/category:synchronised', $context, $user) &&
+                !has_capability('moodle/course:view', $context, $user)
+            ) {
+                if ((int)$user->id === $userid) {
+                    $user->selected  = true;
+                }
+                $students[] = $user;
+            } else { // If a user has a managerial or supervising role check if there is (also) a student role.
+                $roles = get_user_roles($context, $user->id, true);
+                foreach ($roles as $role) {
+                    if (strstr($role->shortname, 'student')) {
+                        if ($user->id === $userid) {
+                            $user->selected  = true;
+                        }
+                        $students[] = $user;
+                        break;
+                    }
+                }
+            }
+        }
+        return $students;
+    }
 }
 

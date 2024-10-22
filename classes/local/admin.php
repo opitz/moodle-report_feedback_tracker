@@ -66,12 +66,8 @@ class admin {
             }
         }
 
-        // Render the drop down menu for switching into student view.
-        $data->studentdd = $OUTPUT->render_from_template('report_feedback_tracker/studentdropdown', $sdata);
-        $data->students = $sdata->students;
 
         // Check if the user is in edit mode.
-        $data->canedit = true;
         $data->editmode = $PAGE->user_is_editing();
 
         $course = get_course($courseid);
