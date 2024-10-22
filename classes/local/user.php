@@ -149,11 +149,12 @@ class user {
     public static function get_user_course_gradings($course, $userid, stdClass &$data): void {
         global $DB;
 
+        // Note: the uniqueid seems to be necessary for a correct query using Postgres SQL.
         $sql = "
     select
         ROW_NUMBER() OVER (ORDER BY gi.id) AS uniqueid,
-        gi.courseid,
         gi.id as itemid,
+        gi.courseid,
         gi.itemname,
         gi.itemtype,
         gi.itemmodule,
@@ -258,8 +259,8 @@ class user {
 
             // Get the enabled submission types for the assign grade item.
             // Assignments may have NO submission type - we need to know that.
-            $gradeitem->submissiontypes = ($gradeitem->itemmodule == 'assign') ?
-                helper::get_assign_submission_plugins($gradeitem->cmid) : false;
+            $gradeitem->submissiontypes = ($gradeitem->itemmodule === 'assign') ?
+                helper::get_assign_submission_plugins($gradeitem->cmid) : 0;
 
             // All good - now get and store the feedback record.
             // TurnitinToolTwo special treatment as one grading item may have several parts.

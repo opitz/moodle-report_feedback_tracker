@@ -34,11 +34,12 @@
                 "course": "",
                 "assessment": "",
                 "type": "",
-                "type": "",
-                "duedate": "",
-                "submissiondate": "",
-                "feedbackduedate": "",
-                "feedback": ""
+                "duedate": "0",
+                "submissiondate": "0",
+                "feedbackduedate": "0",
+                "feedback": [
+                    {"overdue": "overdue"}
+                ]
             }
         ]
     }
@@ -74,8 +75,15 @@
                 </small>
                 {{#feedback}}
                 <br>
-                    {{{feedback}}}
-                {{/feedback}}
+                    {{#released}}
+                        <span class="badge badge-success">{{#str}} feedback:released, report_feedback_tracker {{/str}}</span>
+                    {{/released}}
+                    {{#late}}
+                        <span class="badge badge-warning">{{#str}} feedback:late, report_feedback_tracker {{/str}}</span>
+                    {{/late}}
+                    {{#overdue}}
+                        <span class="badge badge-danger">{{#str}} feedback:overdue, report_feedback_tracker {{/str}}</span>
+                    {{/overdue}}                {{/feedback}}
             </div>
 
             <!-- Mark data. -->

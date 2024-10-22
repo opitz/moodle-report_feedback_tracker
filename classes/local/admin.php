@@ -89,11 +89,12 @@ class admin {
     public static function get_admin_course_gradings($course, &$data): void {
         global $CFG, $DB, $PAGE;
 
+        // Note: the uniqueid seems to be necessary for a correct query using Postgres SQL.
         $sql = "
     select
         ROW_NUMBER() OVER (ORDER BY gi.id) AS uniqueid,
-        gi.courseid,
         gi.id as itemid,
+        gi.courseid,
         gi.itemname,
         gi.itemtype,
         gi.itemmodule,
@@ -190,6 +191,13 @@ class admin {
                 }
             }
             $itemlist[] = $gradeitem->itemid;
+        }
+
+        // Sort the data records by due date.
+        if (is_array($data->records)) {
+            usort($data->records, function($a, $b) {
+                return strcmp($a->duedateraw, $b->duedateraw);
+            });
         }
 
         // Get the filter options where available.

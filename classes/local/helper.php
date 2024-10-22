@@ -85,7 +85,6 @@ class helper {
      *
      * @param stdClass $gradeitem
      * @return string
-     * @throws dml_exception
      */
     public static function get_feedbacks(stdClass $gradeitem): string {
         return $gradeitem->cmid ? html_writer::div("$gradeitem->feedbacks of $gradeitem->submissions") : '';
@@ -97,48 +96,36 @@ class helper {
      * @param stdClass $gradeitem
      * @param int $feedbackduedate
      * @param int $submissiondate
-     * @return string
+     * @return array
      * @throws coding_exception
      */
-    public static function get_feedback_badge(stdClass $gradeitem, int $feedbackduedate, int $submissiondate): string {
+    public static function get_feedback_badge(stdClass $gradeitem, int $feedbackduedate, int $submissiondate): array {
+        // A general feedback date  will take precedence if present.
+        $feedbackdate = $gradeitem->gfdate ? $gradeitem->gfdate : $gradeitem->feedbackdate;
 
-        // There is no feedback if there is no general feedback date and no submission - except when there is no
-        // enabled submission type available for an 'assign' grade item.
-        // Note: If there are assign submissiontypes they will always at least include one element "Submission comments".
-        // submissiontypes will be false for all other assessments than 'assign'.
-        if (!isset($gradeitem->gfdate) && ($submissiondate == 0) &&
-            $gradeitem->submissiontypes && (count($gradeitem->submissiontypes) > 1)) {
-            return '';
+        // If there is no feedback and
+        // there is no feedback due date or there is no submission show no badge.
+        if (!$feedbackdate && (!$feedbackduedate || !$submissiondate)) {
+            return [];
+        }
+        // If there is feedback but no feedback due date or
+        // the feedback was given within the due date show a success badge.
+        if ((!$feedbackduedate && $feedbackdate) ||
+                ($feedbackduedate && $feedbackdate && ($feedbackdate <= $feedbackduedate))) {
+            return ['released' => 'released'];
         }
 
-        $o = '';
-        $contact = $gradeitem->responsibility;
-
-        // Feedback is available even if there is no due date or when only cohort feedback is given.
-        if ((!$feedbackduedate && isset($gradeitem->finalgrade)) || (isset($gradeitem->gfdate) && $gradeitem->gfdate > 0)) {
-            $o .= html_writer::span(get_string('feedback:released', 'report_feedback_tracker'),
-                "badge badge-success");
-        } else if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate <= $feedbackduedate) {
-            // Feedback was given in time.
-            $o .= html_writer::span(get_string('feedback:released', 'report_feedback_tracker'),
-                "badge badge-success");
-        } else if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate > $feedbackduedate) {
-            // Feedback was given after the feedback due date.
-            $o .= html_writer::span(get_string('feedback:late', 'report_feedback_tracker'),
-                "badge badge-warning");
-        } else if (!isset($gradeitem->finalgrade) && $feedbackduedate < time()) {
-            // NO feedback was given, and it is beyond the feedback due date.
-            $o .= html_writer::span(get_string('feedback:overdue', 'report_feedback_tracker'),
-                "badge badge-danger");
+        // Feedback was given after the feedback due date.
+        if ($feedbackduedate && ($feedbackdate > $feedbackduedate)) {
+            return ['late' => 'late'];
         }
 
-        if ($contact && false) { // Do not show for now.
-            $o .= html_writer::start_span('feedback_tracker_contact');
-            $o .= html_writer::tag('small', get_string('contact', 'report_feedback_tracker') . ': ');
-            $o .= html_writer::span($contact, 'feedback_tracker_contact_body small');
-            $o .= html_writer::end_span();
+        // NO feedback was given, and it is beyond the feedback due date.
+        if ($feedbackduedate && !$feedbackdate && ($feedbackduedate < time())) {
+            return ['overdue' => 'overdue'];
         }
-        return $o;
+
+        return [];
     }
 
     /**
@@ -211,17 +198,17 @@ class helper {
         }
 
         // Feedback is available even if there is no due date or when only cohort feedback is given.
-        if ((!$feedbackduedate && isset($gradeitem->finalgrade)) || (isset($gradeitem->gfdate) && $gradeitem->gfdate > 0)) {
+        if ((!$feedbackduedate && isset($gradeitem->finalgrade)) || (isset($gradeitem->gfdate) && ($gradeitem->gfdate > 0))) {
             return get_string('feedback:released', 'report_feedback_tracker');
         }
 
         // Feedback was given in time.
-        if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate <= $feedbackduedate) {
+        if (isset($gradeitem->finalgrade) && ($gradeitem->feedbackdate <= $feedbackduedate)) {
             return get_string('feedback:released', 'report_feedback_tracker');
         }
 
         // Feedback was given after the feedback due date.
-        if (isset($gradeitem->finalgrade) && $gradeitem->feedbackdate > $feedbackduedate) {
+        if (isset($gradeitem->finalgrade) && ($gradeitem->feedbackdate > $feedbackduedate)) {
             return get_string('feedback:late', 'report_feedback_tracker');
         }
 
@@ -469,10 +456,9 @@ class helper {
      * @return string
      */
     public static function get_submission_status(stdClass $gradeitem, int $submissiondate, int $warningperiod): string {
-        // Check the submission types for course modules.
-        // If no submission type is available do not show any submission badges.
-        // Note: $submissiontypes will always contain at least one element "Submission comments".
-        if ($gradeitem->submissiontypes && (count($gradeitem->submissiontypes) < 2)) {
+        // If no submission type is available for an assignment there can be no submission
+        // so do not show any submission badge.
+        if (($gradeitem->itemmodule == 'assign') && !$gradeitem->submissiontypes) {
             return '';
         }
 
@@ -1100,9 +1086,9 @@ class helper {
      * Get the enabled submission types for a given course module
      *
      * @param int $cmid The ID of the course module
-     * @return array
+     * @return int
      */
-    public static function get_assign_submission_plugins(int $cmid): array {
+    public static function get_assign_submission_plugins(int $cmid): int {
         global $DB;
 
         // Load the course module and assignment instance.
@@ -1118,13 +1104,14 @@ class helper {
 
         foreach ($submissionplugins as $plugin) {
             // Check if the submission plugin is enabled and visible for this assignment.
-            if ($plugin->is_enabled() && $plugin->is_visible()) {
-                // Add the plugin's name to the enabled submission types.
-                $enabledsubmissiontypes[] = $plugin->get_name();
+
+            if ($plugin->is_enabled() && $plugin->is_visible()
+                && $plugin->allow_submissions()) {
+                $enabledsubmissiontypes[] = get_class($plugin);
             }
         }
 
-        return $enabledsubmissiontypes;
+        return count($enabledsubmissiontypes);
     }
 }
 
