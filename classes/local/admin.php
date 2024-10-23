@@ -309,7 +309,9 @@ class admin {
         $record->partname = isset($gradeitem->partname) ? $gradeitem->partname : '';
 
         $record->submissions = count(helper::get_submissions($gradeitem));
-        $record->requiredfeedbacks = $record->submissions - $gradeitem->feedbacks;
+        // If there are more feedbacks than submissions do not show negative values.
+        $record->requiredfeedbacks = ($record->submissions - $gradeitem->feedbacks) < 0 ? 0 :
+            $record->submissions - $gradeitem->feedbacks;
         $record->feedbackpercentage = $record->submissions ? $gradeitem->feedbacks/$record->submissions * 100 : 0;
         $record->method = $gradeitem->method;
         $record->generalfeedback = helper::get_generalfeedback($gradeitem);
