@@ -163,6 +163,7 @@ class renderer extends plugin_renderer_base {
         $data->outputedit = true;
         $data->records = [];
 
+        $dateformat = get_config('report_feedback_tracker', 'dateformat');
         $assessmenttypes = helper::get_assessment_types($courseid);
 
         $data->students = helper::get_students($courseid);
@@ -177,6 +178,7 @@ class renderer extends plugin_renderer_base {
                 $record = new stdClass();
                 $record->name = $gradeitem->itemname;
                 $record->manual = true;
+                $record->feedbackduedateraw = 9999999999; // Needed for sorting. Make sure they are listed last.
 
                 $data->records[] = $record;
                 continue;
@@ -225,9 +227,13 @@ class renderer extends plugin_renderer_base {
             $record->moduletypeiconurl = $module->get_icon_url()->out(false);
             $record->modname = $module->modname;
 
-            $record->duedate = helper::get_duedate($module);
-            $record->feedbackduedate = helper::get_feedbackduedate_new($courseid, $record->duedate);
+            $duedate = helper::get_duedate($module);
+            $record->duedate = $duedate ? date($dateformat, $duedate) : false;
+            // The raw date is needed for sorting.
+            $record->feedbackduedateraw = $duedate ? helper::get_feedbackduedate_new($courseid, $duedate) : 9999999999;
+            $record->feedbackduedate = $record->feedbackduedateraw ? date($dateformat, $record->feedbackduedateraw) : false;
             $record->markoverdue = false;
+
             $record->overrides = helper::get_overrides($module);
             $record->submissions = count(helper::get_submissions($module));
             $grades = helper::get_grade_grades($gradeitem);
@@ -240,7 +246,10 @@ class renderer extends plugin_renderer_base {
             $data->records[] = $record;
         }
 
-
+        // Sort the data records by feedback due date.
+        usort($data->records, function($a, $b) {
+            return strcmp($a->feedbackduedateraw, $b->feedbackduedateraw);
+        });
 
         return $this->output->render_from_template('report_feedback_tracker/course/course', $data);
     }
