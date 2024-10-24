@@ -16,11 +16,13 @@
 
 namespace report_feedback_tracker\local;
 use assign;
+use cm_info;
 use coding_exception;
 use context_course;
 use context_module;
 use core_course\customfield\course_handler;
 use dml_exception;
+use grade_item;
 use html_writer;
 use lang_string;
 use local_assess_type\assess_type;
@@ -311,7 +313,7 @@ class helper {
     /**
      * Return an icon for a module type where available.
      *
-     * @param stdClass $gradeitem
+     * @param cm_info $module
      * @return mixed|string
      */
     public static function get_module_type_icon(stdClass $gradeitem): mixed {
@@ -481,17 +483,17 @@ class helper {
     /**
      * Get all submissions of a course module.
      *
-     * @param stdClass $gradeitem
+     * @param cm_info $cm
      * @return array
      * @throws dml_exception
      */
-    public static function get_submissions(stdClass $gradeitem): array {
+    public static function get_submissions(cm_info $cm): array {
         global $DB;
 
         $validstatus = '';
 
-        if ($gradeitem) {
-            switch ($gradeitem->itemmodule) {
+        if ($cm) {
+            switch ($cm->modname) {
                 case 'assign':
                     $details = [
                         'table' => 'assign_submission',
@@ -551,18 +553,17 @@ class helper {
             if ($details['status'] != '' && $validstatus != '') {
                 $submissionrecords = $DB->get_records($details['table'],
                     [
-                        $details['index'] => $gradeitem->iteminstance,
+                        $details['index'] => $cm->instance,
                         $details['status'] => $validstatus,
                     ]
                 );
             } else {
                 $submissionrecords = $DB->get_records($details['table'],
                     [
-                        $details['index'] => $gradeitem->iteminstance,
+                        $details['index'] => $cm->instance,
                     ]
                 );
             }
-
             return $submissionrecords;
         }
         return [];
@@ -735,9 +736,25 @@ class helper {
     /**
      * Check if a module is supported.
      *
-     * @param stdClass $gradeitem
+     * @param cm_info $module
      * @return bool
      */
+    public static function module_is_supported_new(cm_info $module): bool {
+        global $PAGE;
+
+        $modulelist = [
+            'assign',
+            'lesson',
+            'turnitintooltwo',
+            'quiz',
+            'workshop',
+        ];
+
+        if (in_array($module->modname, $modulelist)) {
+            return true;
+        }
+        return false;
+    }
     public static function module_is_supported(stdClass $gradeitem): bool {
         global $PAGE;
 
@@ -956,6 +973,22 @@ class helper {
         return 0;
     }
 
+    public static function get_feedbackduedate_new(int $courseid, int $duedate): int {
+        $academicyear = (int) self::get_academic_year($courseid);
+
+        // If there is no due date there is no feedback due date.
+        if (!$duedate) {
+            return 0;
+        }
+
+        // For assessments before academic year 2024-25 the feedback due date period was 1 calendar month.
+        // From academic year 2024-25 on the feedback due date period is 20 working days.
+        if ($academicyear < 2024) {
+            return strtotime('+1 month', $duedate);
+        }
+        return self::compute_feedbackduedate($duedate);
+    }
+
     /**
      * Compute the feedbackperiod.
      *
@@ -984,9 +1017,7 @@ class helper {
                 $daysadded++;
             }
         }
-
         return strtotime($currentdate);
-
     }
 
     /**
@@ -1161,27 +1192,50 @@ class helper {
             // A course module with a part ID (e.g. turnitintooltwo).
             // Currently the part ID is not used for checking different parts until it is supported by local_assess_type.
             if (isset($gradeitem->cmid) && isset($gradeitem->partid) &&
-                    ($assessmenttype->cmid === $gradeitem->cmid)
+                ($assessmenttype->cmid === $gradeitem->cmid)
             ) {
                 $gradeitem->assessmenttype = $assessmenttype->type;
                 $gradeitem->locked = $assessmenttype->locked;
                 break;
             } else if ( // A course module w/o a part.
-                    isset($gradeitem->cmid) && !isset($gradeitem->partid) &&
-                    ($assessmenttype->cmid === $gradeitem->cmid)
+                isset($gradeitem->cmid) && !isset($gradeitem->partid) &&
+                ($assessmenttype->cmid === $gradeitem->cmid)
             ) {
                 $gradeitem->assessmenttype = $assessmenttype->type;
                 $gradeitem->locked = $assessmenttype->locked;
                 break;
             } else if ( // A grade item w/o a course module.
-                    !isset($gradeitem->cmid) && isset($gradeitem->itemid) &&
-                    ($assessmenttype->gradeitemid === $gradeitem->itemid)
+                !isset($gradeitem->cmid) && isset($gradeitem->itemid) &&
+                ($assessmenttype->gradeitemid === $gradeitem->itemid)
             ) {
                 $gradeitem->assessmenttype = $assessmenttype->type;
                 $gradeitem->locked = $assessmenttype->locked;
                 break;
             }
         }
+    }
+    public static function get_assessment_type_new(stdClass $record, array $assessmenttypes): array {
+        foreach ($assessmenttypes as $assessmenttype) {
+            // A course module with a part ID (e.g. turnitintooltwo).
+            // Currently, the part ID is not used for checking different parts until it is supported by local_assess_type.
+            if (
+                    isset($record->cmid) && isset($record->partid) &&
+                    ($assessmenttype->cmid === $record->cmid)
+            ) {
+                return ['type' => $assessmenttype->type, 'locked' => $assessmenttype->locked];
+            } else if ( // A course module w/o a part.
+                    isset($record->cmid) && !isset($record->partid) &&
+                    ($assessmenttype->cmid === $record->cmid)
+            ) {
+                return ['type' => $assessmenttype->type, 'locked' => $assessmenttype->locked];
+            } else if ( // A grade item w/o a course module.
+                    !isset($record->cmid) && isset($record->itemid) &&
+                    ($assessmenttype->gradeitemid === $record->itemid)
+            ) {
+                return ['type' => $assessmenttype->type, 'locked' => $assessmenttype->locked];
+            }
+        }
+        return ['type' => -1, 'locked' => false];
     }
 
     /**
@@ -1285,5 +1339,103 @@ class helper {
         }
         return $students;
     }
+
+    /**
+     * Get the due date of a course module.
+     *
+     * @param cm_info $cm
+     * @return int
+     * @throws dml_exception
+     */
+    public static function get_duedate(cm_info $cm): int {
+        global $DB;
+
+        switch ($cm->modname) {
+            case 'assign':
+                $record = $DB->get_record('assign', ['id' => $cm->instance], 'duedate');
+                $duedate = $record->duedate;
+                break;
+            case 'lesson':
+                $record = $DB->get_record('lesson', ['id' => $cm->instance], 'deadline');
+                $duedate = $record->deadline;
+                break;
+            case 'quiz':
+                $record = $DB->get_record('quiz', ['id' => $cm->instance], 'timeclose');
+                $duedate = $record->timeclose;
+                break;
+            case 'workshop':
+                $record = $DB->get_record('workshop', ['id' => $cm->instance], 'submissionend');
+                $duedate = $record->submissionend;
+                break;
+            default:
+                $duedate = 0;
+        }
+
+        return $duedate;
+    }
+
+    /**
+     * Get the number of students that have a submission due date override for a given course module.
+     *
+     * @param cm_info $module
+     * @return int
+     * @throws dml_exception
+     */
+    public static function get_overrides(cm_info $module): int {
+        global $DB;
+
+        switch ($module->modname) {
+            case 'assign':
+                $idfield = 'assignid';
+                break;
+            case 'lesson':
+                $idfield = 'lessonid';
+                break;
+            case 'quiz':
+                $idfield = 'quiz';
+                break;
+            default:
+                return 0; // Return no overrides.
+        }
+
+        // Get user overrides.
+        $overridetable = $module->modname . "_overrides";
+        $useroverrides = $DB->get_records_sql("
+            SELECT userid
+            FROM {" . $overridetable . "}
+            WHERE $idfield = :moduleid AND userid IS NOT NULL", array('moduleid' => $module->instance));
+
+        // Get group overrides and users in those groups.
+        $groupoverrides = $DB->get_records_sql("
+            SELECT gm.userid
+            FROM {" . $overridetable . "} ao
+            JOIN {groups_members} gm ON ao.groupid = gm.groupid
+            WHERE ao.$idfield = :moduleid AND ao.groupid IS NOT NULL", array('moduleid' => $module->instance));
+
+        // Merge user ids from individual and group overrides.
+        $overrides = array_merge(array_keys($useroverrides), array_keys($groupoverrides));
+
+        // Count unique users.
+        return count(array_unique($overrides));
+    }
+
+    /**
+     * Get the final grades for a given grade item.
+     *
+     * @param grade_item $gradeitem
+     * @return int
+     * @throws dml_exception
+     */
+    public static function get_grade_grades(grade_item $gradeitem): int {
+        global $DB;
+        $sql = "select count(distinct gg.userid) as grades
+                from {grade_grades} gg 
+                where gg.itemid = :gradeitemid and gg.finalgrade > -1";
+
+        // Execute the query.
+        $result = $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
+        return $result->grades;
+    }
+
 }
 

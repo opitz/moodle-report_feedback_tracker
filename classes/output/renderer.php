@@ -25,10 +25,13 @@
 namespace report_feedback_tracker\output;
 
 use context_course;
+use grade_item;
+use local_assess_type\assess_type;
 use plugin_renderer_base;
 use report_feedback_tracker\local\admin;
 use report_feedback_tracker\local\helper;
 use report_feedback_tracker\local\user;
+use stdClass;
 
 /**
  * Renderer class for feedback tracker report table.
@@ -141,6 +144,95 @@ class renderer extends plugin_renderer_base {
     }
 
     public function render_feedback_tracker_admin(int $courseid): string {
+        global $DB, $OUTPUT;
+
+        $data = new stdClass();
+
+        $context = context_course::instance($courseid);
+        $modinfo = get_fast_modinfo($courseid);
+
+        // Get all grade items for the course.
+        $gradeitems = grade_item::fetch_all(['courseid' => $courseid]);
+
+        // Get all course modules for the course.
+        $coursemodules = get_fast_modinfo($courseid);
+
+        $data->courseid = $courseid;
+        $data->staffdata = true;
+        $data->canedit = true;
+        $data->outputedit = true;
+
+        $assessmenttypes = helper::get_assessment_types($courseid);
+
+        $data->students = helper::get_students($courseid);
+
+        // Get the course module for each grade item.
+        $modules = [];
+        foreach ($gradeitems as $gradeitem) {
+            // SQL query to get the course module ID from a grade item.
+                $sql = "
+                    SELECT cm.id AS cmid
+                    FROM {course_modules} cm
+                    JOIN {modules} m ON cm.module = m.id
+                    JOIN {grade_items} gi ON gi.iteminstance = cm.instance AND gi.itemmodule = m.name
+                    WHERE gi.id = :gradeitemid
+                ";
+
+            // Execute the query.
+            $cm = $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
+
+            if ($cm) {
+                $cmid = $cm->cmid;
+                $modules[] = $modinfo->get_cm($cmid);
+            } else { // There is no course module for this grade item.
+                $cmid = 0;
+            }
+        }
+
+        // Build the records.
+        $data->records = [];
+        foreach ($modules as $module) {
+            if (!helper::module_is_supported_new($module)) {
+                continue;
+            }
+            $record = new stdClass();
+            $record->name = $module->get_name();
+            // Module badges.
+            $record->hiddenfromstudents = !$module->visible;
+            $record->hiddenfromreport = false;
+
+            $record->cmid = $module->id;
+            $record->partid = false;
+
+            $assessmenttype = helper::get_assessment_type_new($record, $assessmenttypes);
+            $record->formative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
+            $record->summative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
+            $record->dummy = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_DUMMY ? true : false;
+            $record->notset = !$record->formative && !$record->summative && !$record->dummy;
+
+            $record->moduletypeiconurl = $module->get_icon_url()->out(false);
+            $record->modname = $module->modname;
+
+            $record->duedate = helper::get_duedate($module);
+            $record->feedbackduedate = helper::get_feedbackduedate_new($courseid, $record->duedate);
+            $record->markoverdue = false;
+            $record->overrides = helper::get_overrides($module);
+            $record->submissions = count(helper::get_submissions($module));
+            $grades = helper::get_grade_grades($gradeitem);
+            $record->requiredfeedbacks = ($record->submissions - $grades) < 0 ? 0 :
+                $record->submissions - $grades;
+            $record->feedbackpercentage = round($record->submissions ? $grades/$record->submissions * 100 : 0, 2);
+            $record->requiremarkingcount = false;
+            $record->url = $module->get_url();
+
+            $data->records[] = $record;
+        }
+
+
+
+        return $this->output->render_from_template('report_feedback_tracker/course/course', $data);
+    }
+    public function render_feedback_tracker_admin0(int $courseid): string {
         $feedbacktrackerdata = admin::get_feedback_tracker_admin_data($courseid);
         $feedbacktrackerdata->courseid = $courseid;
         $feedbacktrackerdata->canedit = true;

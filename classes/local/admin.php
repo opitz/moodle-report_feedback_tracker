@@ -333,7 +333,7 @@ class admin {
      * @return int
      * @throws dml_exception
      */
-    protected static function get_overrides(stdClass $gradeitem): int {
+    protected static function get_overrides0(stdClass $gradeitem): int {
         global $DB;
 
         $modulename = $gradeitem->itemmodule;

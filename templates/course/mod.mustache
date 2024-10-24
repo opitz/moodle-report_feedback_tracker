@@ -1,7 +1,9 @@
 <div class="row">
     {{! Mod details. }}
     <div class="col-12 col-md-5 my-1">
-        <a href="{{{url}}}">{{{moduletypeicon}}} {{{name}}}</a>
+        <a href="{{{url}}}">
+            <img class='icon mr-0' src='{{{moduletypeiconurl}}}' alt='$module->modname' title=$title> {{{name}}}
+        </a>
 
         {{#hiddenfromstudents}}
             <br><div class="badge badge-warning"><i class="fa-regular fa-eye-slash"></i> Hidden from students</div>
@@ -22,6 +24,10 @@
         {{#dummy}}
             <br><div class="badge badge-light">{{#str}} assesstype:dummy, report_feedback_tracker {{/str}}</div>
         {{/dummy}}
+
+        {{#notset}}
+            <br><div class="badge">{{#str}} assesstype:notset, report_feedback_tracker {{/str}}</div>
+        {{/notset}}
 
         {{#duedate}}
             <br><div>Due: {{{duedate}}}</div>
