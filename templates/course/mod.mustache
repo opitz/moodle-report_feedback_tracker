@@ -2,7 +2,13 @@
     {{! Mod details. }}
     <div class="col-12 col-md-5 my-1">
         <a href="{{{url}}}">
-            <img class='icon mr-0' src='{{{moduletypeiconurl}}}' alt='$module->modname' title=$title> {{{name}}}
+            {{#manual}}
+                <i class="icon fa-regular fa-hand-spock"></i>
+            {{/manual}}
+            {{^manual}}
+                <img class='icon mr-0' src='{{{moduletypeiconurl}}}' alt='{{{name}}}'>
+            {{/manual}}
+            {{{name}}}
         </a>
 
         {{#hiddenfromstudents}}
@@ -102,12 +108,6 @@
                         <div class="progress-bar bg-success" role="progressbar" aria-label="Progress" aria-valuenow="{{feedbackpercentage}}" style="width: {{feedbackpercentage}}%" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                 </div>
-
-
-
-                {{#requiremarkingcount}}
-                    <a href="{{{url}}}">{{requiremarkingcount}} require marking</a>
-                {{/requiremarkingcount}}
             </div>
 
             <div class="col-2 text-right">

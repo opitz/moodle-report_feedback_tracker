@@ -161,14 +161,27 @@ class renderer extends plugin_renderer_base {
         $data->staffdata = true;
         $data->canedit = true;
         $data->outputedit = true;
+        $data->records = [];
 
         $assessmenttypes = helper::get_assessment_types($courseid);
 
         $data->students = helper::get_students($courseid);
 
-        // Get the course module for each grade item.
+        // Get the course module for each grade item and add any manual grade items.
         $modules = [];
         foreach ($gradeitems as $gradeitem) {
+
+            // If it is a 'manual' grade item there is no course module.
+            if ($gradeitem->itemtype === 'manual') {
+                // Add a manual record to the data.
+                $record = new stdClass();
+                $record->name = $gradeitem->itemname;
+                $record->manual = true;
+
+                $data->records[] = $record;
+                continue;
+            }
+
             // SQL query to get the course module ID from a grade item.
                 $sql = "
                     SELECT cm.id AS cmid
@@ -190,7 +203,6 @@ class renderer extends plugin_renderer_base {
         }
 
         // Build the records.
-        $data->records = [];
         foreach ($modules as $module) {
             if (!helper::module_is_supported_new($module)) {
                 continue;
