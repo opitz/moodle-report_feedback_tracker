@@ -1431,10 +1431,10 @@ class helper {
         global $DB;
         $sql = "select count(distinct gg.userid) as grades
                 from {grade_grades} gg 
-                where gg.itemid = :gradeiteminstance and gg.finalgrade > -1";
+                where gg.itemid = :gradeitemid and gg.finalgrade > -1";
 
         // Execute the query.
-        $result = $DB->get_record_sql($sql, ['gradeiteminstance' => $gradeitem->iteminstance]);
+        $result = $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
         return $result->grades;
     }
 
