@@ -170,7 +170,6 @@ class renderer extends plugin_renderer_base {
         $data->dropdownstudents = helper::get_students_for_dropdown($courseid);
 
         // Get the course module for each grade item and add any manual grade items.
-        $modules = [];
         foreach ($gradeitems as $gradeitem) {
 
             // If it is a 'manual' grade item there is no course module.
@@ -185,8 +184,14 @@ class renderer extends plugin_renderer_base {
                 continue;
             }
 
+            // Skip any gradeitem without a module or a with module that is not suported.
+            if (!$gradeitem->itemmodule || !helper::module_is_supported_new($gradeitem->itemmodule)) {
+                continue;
+            }
+
+
             // SQL query to get the course module ID from a grade item.
-                $sql = "
+            $sql = "
                     SELECT cm.id AS cmid
                     FROM {course_modules} cm
                     JOIN {modules} m ON cm.module = m.id
@@ -198,53 +203,50 @@ class renderer extends plugin_renderer_base {
             $cm = $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
 
             if ($cm) {
+                // Get the module.
                 $cmid = $cm->cmid;
-                $modules[] = $modinfo->get_cm($cmid);
+                $module = $modinfo->get_cm($cmid);
+
+                // Build the record.
+                $record = new stdClass();
+                $record->name = $gradeitem->itemname; // The grade item name has more details.
+                $record->moduletypeiconurl = $module->get_icon_url()->out(false);
+
+                $record->hiddenfromstudents = !$module->visible;
+                $record->hiddenfromreport = false;
+
+                $record->cmid = $module->id;
+                $record->partid = false;
+
+                // Assessment type.
+                $assessmenttype = helper::get_assessment_type_new($record, $assessmenttypes);
+                $record->formative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
+                $record->summative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
+                $record->dummy = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_DUMMY ? true : false;
+                $record->notset = !$record->formative && !$record->summative && !$record->dummy;
+
+                $record->modname = $module->modname;
+
+                $duedate = helper::get_duedate($module);
+                $record->duedate = $duedate ? date($dateformat, $duedate) : false;
+                // The raw date is needed for sorting.
+                $record->feedbackduedateraw = $duedate ? helper::get_feedbackduedate_new($courseid, $duedate) : 9999999999;
+                $record->feedbackduedate = $record->feedbackduedateraw ? date($dateformat, $record->feedbackduedateraw) : false;
+                $record->markoverdue = false;
+
+                $record->overrides = helper::get_overrides($module);
+                $record->submissions = count(helper::get_submissions($module));
+                $grades = helper::get_grade_grades($gradeitem);
+                $record->requiredfeedbacks = ($record->submissions - $grades) < 0 ? 0 :
+                    $record->submissions - $grades;
+                $record->feedbackpercentage = round($record->submissions ? $grades/$record->submissions * 100 : 0, 2);
+                $record->requiremarkingcount = false;
+                $record->url = $module->get_url();
+
+                $data->records[] = $record;
             } else { // There is no course module for this grade item.
                 $cmid = 0;
             }
-        }
-
-        // Build the records.
-        foreach ($modules as $module) {
-            if (!helper::module_is_supported_new($module)) {
-                continue;
-            }
-            $record = new stdClass();
-            $record->name = $module->get_name();
-            // Module badges.
-            $record->hiddenfromstudents = !$module->visible;
-            $record->hiddenfromreport = false;
-
-            $record->cmid = $module->id;
-            $record->partid = false;
-
-            $assessmenttype = helper::get_assessment_type_new($record, $assessmenttypes);
-            $record->formative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
-            $record->summative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
-            $record->dummy = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_DUMMY ? true : false;
-            $record->notset = !$record->formative && !$record->summative && !$record->dummy;
-
-            $record->moduletypeiconurl = $module->get_icon_url()->out(false);
-            $record->modname = $module->modname;
-
-            $duedate = helper::get_duedate($module);
-            $record->duedate = $duedate ? date($dateformat, $duedate) : false;
-            // The raw date is needed for sorting.
-            $record->feedbackduedateraw = $duedate ? helper::get_feedbackduedate_new($courseid, $duedate) : 9999999999;
-            $record->feedbackduedate = $record->feedbackduedateraw ? date($dateformat, $record->feedbackduedateraw) : false;
-            $record->markoverdue = false;
-
-            $record->overrides = helper::get_overrides($module);
-            $record->submissions = count(helper::get_submissions($module));
-            $grades = helper::get_grade_grades($gradeitem);
-            $record->requiredfeedbacks = ($record->submissions - $grades) < 0 ? 0 :
-                $record->submissions - $grades;
-            $record->feedbackpercentage = round($record->submissions ? $grades/$record->submissions * 100 : 0, 2);
-            $record->requiremarkingcount = false;
-            $record->url = $module->get_url();
-
-            $data->records[] = $record;
         }
 
         // Sort the data records by feedback due date.
@@ -253,15 +255,6 @@ class renderer extends plugin_renderer_base {
         });
 
         return $this->output->render_from_template('report_feedback_tracker/course/course', $data);
-    }
-    public function render_feedback_tracker_admin0(int $courseid): string {
-        $feedbacktrackerdata = admin::get_feedback_tracker_admin_data($courseid);
-        $feedbacktrackerdata->courseid = $courseid;
-        $feedbacktrackerdata->canedit = true;
-        $feedbacktrackerdata->dropdownstudents = helper::get_students_for_dropdown($courseid);
-
-//        return $this->output->render_from_template('report_feedback_tracker/adminwrapper', $feedbacktrackerdata);
-        return $this->output->render_from_template('report_feedback_tracker/course/course', $feedbacktrackerdata);
     }
 
     /**

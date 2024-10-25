@@ -736,21 +736,22 @@ class helper {
     /**
      * Check if a module is supported.
      *
-     * @param cm_info $module
+     * @param string $itemmodule the item module (e.g. 'assign', 'quiz' etc.)
      * @return bool
      */
-    public static function module_is_supported_new(cm_info $module): bool {
+    public static function module_is_supported_new(string $itemmodule): bool {
         global $PAGE;
 
         $modulelist = [
             'assign',
             'lesson',
+            'manual',
             'turnitintooltwo',
             'quiz',
             'workshop',
         ];
 
-        if (in_array($module->modname, $modulelist)) {
+        if (in_array($itemmodule, $modulelist)) {
             return true;
         }
         return false;
@@ -1430,10 +1431,10 @@ class helper {
         global $DB;
         $sql = "select count(distinct gg.userid) as grades
                 from {grade_grades} gg 
-                where gg.itemid = :gradeitemid and gg.finalgrade > -1";
+                where gg.itemid = :gradeiteminstance and gg.finalgrade > -1";
 
         // Execute the query.
-        $result = $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
+        $result = $DB->get_record_sql($sql, ['gradeiteminstance' => $gradeitem->iteminstance]);
         return $result->grades;
     }
 
