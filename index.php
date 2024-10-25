@@ -63,7 +63,12 @@ report_helper::print_report_selector($pluginname);
 
 // Get the renderer and use it.
 $renderer = $PAGE->get_renderer('report_feedback_tracker');
-//echo $renderer->render_feedback_tracker_admin_wrapper($courseid);
-echo $renderer->render_feedback_tracker_admin($courseid);
+
+// Allow switching to the old admin interface.
+if (get_config('report_feedback_tracker', 'oldadmin')) {
+    echo $renderer->render_feedback_tracker_admin_wrapper($courseid);
+} else {
+    echo $renderer->render_feedback_tracker_admin($courseid);
+}
 
 echo $OUTPUT->footer();

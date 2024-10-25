@@ -308,11 +308,11 @@ class admin {
         $record->partid = $gradeitem->partid;
         $record->partname = isset($gradeitem->partname) ? $gradeitem->partname : '';
 
-        $record->submissions = count(helper::get_submissions($gradeitem));
+//        $record->submissions = count(helper::get_submissions($gradeitem));
         // If there are more feedbacks than submissions do not show negative values.
-        $record->requiredfeedbacks = ($record->submissions - $gradeitem->feedbacks) < 0 ? 0 :
-            $record->submissions - $gradeitem->feedbacks;
-        $record->feedbackpercentage = $record->submissions ? $gradeitem->feedbacks/$record->submissions * 100 : 0;
+//        $record->requiredfeedbacks = ($record->submissions - $gradeitem->feedbacks) < 0 ? 0 :
+//            $record->submissions - $gradeitem->feedbacks;
+//        $record->feedbackpercentage = $record->submissions ? $gradeitem->feedbacks/$record->submissions * 100 : 0;
         $record->method = $gradeitem->method;
         $record->generalfeedback = helper::get_generalfeedback($gradeitem);
         $record->contact = $gradeitem->responsibility;
@@ -321,7 +321,7 @@ class admin {
         // Get the assessment types with the current selection.
         $record->assesstypes = helper::get_assess_types(isset($record->assessmenttype) ? $record->assessmenttype : null);
         $record->notset = isset($record->assessmenttype) ? false : true;
-        $record->overrides = self::get_overrides($gradeitem);
+//        $record->overrides = self::get_overrides($gradeitem);
         $record->staffdata = true;
         return $record;
     }

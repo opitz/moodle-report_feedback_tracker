@@ -122,6 +122,7 @@ $string['settings:feedbackdeadlinedays'] = 'Feedback period';
 $string['settings:feedbackdeadlinedaysinfo'] = 'Number of working days between assessment due date and feedback due date.';
 $string['settings:feedbackextenddays'] = 'Extension period';
 $string['settings:feedbackextenddaysinfo'] = 'Extended number of calendar days after the feedback due date to provide feedback (yellow state).';
+$string['settings:interfaceheading'] = 'Interface settings';
 $string['settings:layoutheading'] = 'Layout';
 $string['settings:modheader'] = 'Show module header';
 $string['settings:supportassignment'] = 'Assignments';

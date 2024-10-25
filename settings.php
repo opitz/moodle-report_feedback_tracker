@@ -36,7 +36,10 @@ if ($ADMIN->fulltree) {
 
     // Setting for module header.
     $settings->add(new admin_setting_heading('report_feedback_tracker_layout',
-        get_string('settings:layoutheading', 'report_feedback_tracker'), ''));
+        get_string('settings:interfaceheading', 'report_feedback_tracker'), ''));
+
+    $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/oldadmin',
+        'Use old admin interface', '', false));
 
     $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/modheader',
         get_string('settings:modheader', 'report_feedback_tracker'), '', false));
