@@ -1154,22 +1154,28 @@ class helper {
                 return 0; // Return no overrides.
         }
 
+        $overrides = [];
         // Get user overrides.
         $overridetable = $module->modname . "_overrides";
         $useroverrides = $DB->get_records_sql("
-            SELECT userid
+            SELECT *
             FROM {" . $overridetable . "}
             WHERE $idfield = :moduleid AND userid IS NOT NULL", ['moduleid' => $module->instance]);
 
+        foreach ($useroverrides as $useroverride) {
+            $overrides[$useroverride->userid] = $useroverride->userid;
+        }
+
         // Get group overrides and users in those groups.
         $groupoverrides = $DB->get_records_sql("
-            SELECT gm.userid
+            SELECT gm.*
             FROM {" . $overridetable . "} ao
             JOIN {groups_members} gm ON ao.groupid = gm.groupid
             WHERE ao.$idfield = :moduleid AND ao.groupid IS NOT NULL", ['moduleid' => $module->instance]);
 
-        // Merge user ids from individual and group overrides.
-        $overrides = array_merge(array_keys($useroverrides), array_keys($groupoverrides));
+        foreach ($groupoverrides as $groupoverride) {
+            $overrides[$groupoverride->userid] = $groupoverride->userid;
+        }
 
         // Count unique users.
         return count(array_unique($overrides));
