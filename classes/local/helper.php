@@ -373,7 +373,6 @@ class helper {
      *
      * @param cm_info $cm
      * @return array
-     * @throws dml_exception
      */
     public static function get_submissions(cm_info $cm): array {
         global $DB;

@@ -32,41 +32,12 @@ use stdClass;
  */
 class admin {
     /**
-     * Get the Feedback tracker data for all enrolled users of a given course.
+     * Get a course module to the grade item where available and return a record for it.
      *
-     * @param int $courseid
-     * @return stdClass
-     * @throws \dml_exception
-     */
-    /**
-     * @param grade_item $gradeitem
-     * @return false|mixed
-     * @throws dml_exception
-     */
-    public static function get_cm_from_gradeitem(grade_item $gradeitem) {
-        global $DB;
-
-        // SQL query to get the course module ID from a grade item.
-        $sql = "
-                    SELECT cm.id AS cmid
-                    FROM {course_modules} cm
-                    JOIN {modules} m ON cm.module = m.id
-                    JOIN {grade_items} gi ON gi.iteminstance = cm.instance AND gi.itemmodule = m.name
-                    WHERE gi.id = :gradeitemid
-                ";
-
-        // Execute the query.
-        return $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
-    }
-
-    /**
-     * Create a module record from a grade item.
-     * x
      * @param grade_item $gradeitem
      * @param course_modinfo $modinfo
      * @param array $assessmenttypes
      * @return false|stdClass
-     * @throws dml_exception
      */
     public static function get_module_record(
         grade_item $gradeitem,
@@ -101,9 +72,9 @@ class admin {
         $record->assessmenttype = $assessmenttype['type'];
         $record->selectedassessmenttypelabel = helper::get_selected_assess_type_label($record->assessmenttype);
         $record->locked = $assessmenttype['locked'];
-        $record->formative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
-        $record->summative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
-        $record->dummy = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_DUMMY ? true : false;
+        $record->formative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_FORMATIVE;
+        $record->summative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_SUMMATIVE;
+        $record->dummy = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_DUMMY;
         $record->notset = !$record->formative && !$record->summative && !$record->dummy;
 
         $record->assesstypes = helper::get_assess_types(isset($record->assessmenttype) ? $record->assessmenttype : null);
@@ -124,12 +95,34 @@ class admin {
 
         // Grades and markings.
         $grades = helper::get_grade_grades($gradeitem);
-        $record->requiredfeedbacks = ($record->submissions - $grades) < 0 ? 0 :
-            $record->submissions - $grades;
+        $record->requiredfeedbacks = max($record->submissions - $grades, 0);
         $record->feedbackpercentage = $record->submissions ? round($grades / $record->submissions * 100, 2) : 0;
         $record->url = $module->get_url();
 
         return $record;
+    }
+
+    /**
+     * Get a course module ID from a grade item where available.
+     *
+     * @param grade_item $gradeitem
+     * @return false|mixed
+     * @throws dml_exception
+     */
+    public static function get_cm_from_gradeitem(grade_item $gradeitem) {
+        global $DB;
+
+        // SQL query to get the course module ID from a grade item.
+        $sql = "
+                    SELECT cm.id AS cmid
+                        FROM {course_modules} cm
+                        JOIN {modules} m ON cm.module = m.id
+                        JOIN {grade_items} gi ON gi.iteminstance = cm.instance AND gi.itemmodule = m.name
+                    WHERE gi.id = :gradeitemid
+                ";
+
+        // Execute the query.
+        return $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
     }
 
 }
