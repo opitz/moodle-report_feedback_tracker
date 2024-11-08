@@ -60,6 +60,6 @@ report_helper::print_report_selector($pluginname);
 
 // Get the renderer and use it.
 $renderer = $PAGE->get_renderer('report_feedback_tracker');
-echo $renderer->render_feedback_tracker_admin_data($courseid);
+echo $renderer->render_feedback_tracker_course_report($courseid);
 
 echo $OUTPUT->footer();

@@ -33,19 +33,19 @@ use report_feedback_tracker\local\user;
 use stdClass;
 
 /**
- * Renderer class for feedback tracker report table.
+ * Renderer class for feedback tracker report.
  */
 class renderer extends plugin_renderer_base {
 
     /**
-     * Render the user table.
+     * Render the user report.
      *
      * @param int $userid
      * @param int $courseid optional course id to limit output.
      * @return string
      * @throws \moodle_exception
      */
-    public function render_feedback_tracker_user_data($userid, $courseid = 0): string {
+    public function render_feedback_tracker_user_report($userid, $courseid = 0): string {
         global $USER;
 
         // Course ID 1 is not a standard Moodle course and is excluded.
@@ -60,7 +60,7 @@ class renderer extends plugin_renderer_base {
             $feedbacktrackerdata->courseid = $courseid;
             $feedbacktrackerdata->canedit = has_capability('moodle/grade:edit', $context);
             $feedbacktrackerdata->viewasstudent = true;
-            $feedbacktrackerdata->dropdownstudents = helper::get_students_for_dropdown($courseid, $userid);
+            $feedbacktrackerdata->dropdownstudents = helper::get_course_students($courseid, $userid);
 
             return $this->output->render_from_template('report_feedback_tracker/course/course',
                 $feedbacktrackerdata);
@@ -89,7 +89,13 @@ class renderer extends plugin_renderer_base {
         }
     }
 
-    public function render_feedback_tracker_admin_data(int $courseid): string {
+    /**
+     * Render the course report.
+     *
+     * @param int $courseid
+     * @return string
+     */
+    public function render_feedback_tracker_course_report(int $courseid): string {
         global $DB;
 
         $modinfo = get_fast_modinfo($courseid);
@@ -107,7 +113,7 @@ class renderer extends plugin_renderer_base {
         $data->outputedit = true;
         $data->records = [];
 
-        $data->dropdownstudents = helper::get_students_for_dropdown($courseid);
+        $data->dropdownstudents = helper::get_course_students($courseid);
 
         // Create records for manual grade items and supported course modules.
         foreach ($gradeitems as $gradeitem) {

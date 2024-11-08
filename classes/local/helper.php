@@ -610,7 +610,7 @@ class helper {
     }
 
     /**
-     * Check if a module is supported.
+     * Check if a module is supported for the admin report.
      *
      * @param string $itemmodule the item module (e.g. 'assign', 'quiz' etc.)
      * @return bool
@@ -620,7 +620,15 @@ class helper {
         return get_config('report_feedback_tracker', 'support' . $itemmodule);
     }
 
+    /**
+     * Check if a module is supported for the student report.
+     *
+     * @param stdClass $gradeitem
+     * @return bool
+     */
     public static function module_is_supported(stdClass $gradeitem): bool {
+        // Note: once the data collection for students will be refactored there will be only
+        // one common method to check if a module is supported.
         global $PAGE;
 
         // Course type is not supported.
@@ -651,18 +659,7 @@ class helper {
             'workshop',
         ];
 
-        $supportedmodules = [];
-
-        foreach ($modulelist as $module) {
-            if (get_config('report_feedback_tracker', 'support' . $module)) {
-                array_push($supportedmodules, $module);
-            }
-        }
-
-        if (in_array($gradeitem->itemmodule, $supportedmodules)) {
-            return true;
-        }
-        return false;
+        return in_array($gradeitem->itemmodule, $modulelist) && self::is_supported_module($gradeitem->itemmodule);
     }
 
     /**
@@ -1064,8 +1061,14 @@ class helper {
         return $o;
     }
 
-    public static function get_students_for_dropdown(int $courseid, int $userid = 0): array {
-        // Get the students of the course.
+    /**
+     * Get the students of a course.
+     *
+     * @param int $courseid
+     * @param int $userid
+     * @return array
+     */
+    public static function get_course_students(int $courseid, int $userid = 0): array {
         $context = \context_course::instance($courseid);
         $users = get_enrolled_users($context);
         $students = [];
@@ -1179,6 +1182,20 @@ class helper {
 
         // Count unique users.
         return count(array_unique($overrides));
+    }
+
+    /**
+     * Provide a URL of the override settings of a given course module where available.
+     *
+     * @param cm_info $module
+     * @return string
+     */
+    public static function get_overrides_url(cm_info $module): string {
+        $supportedmodules = ['assign', 'lesson', 'quiz'];
+        if (in_array($module->modname, $supportedmodules)) {
+            return "/mod/$module->modname/overrides.php?cmid=$module->id";
+        }
+        return "#";
     }
 
     /**

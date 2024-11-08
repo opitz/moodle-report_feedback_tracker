@@ -81,16 +81,16 @@
                         {{#markoverdue}}
                             <br><div class="badge badge-danger">Overdue</div>
                         {{/markoverdue}}
-
-                        {{#overrides}}
-                            <div class="badge badge-warning">{{overrides}} users have overrides</div>
-                        {{/overrides}}
                     </div>
 
                     <div class="col-3">
                         {{#submissions}}
                             {{submissions}} <span class="d-md-none">submitted</span>
                         {{/submissions}}
+
+                        {{#overrides}}
+                            <br><a href="{{{overridesurl}}}"  class="badge badge-warning" >{{overrides}} {{#str}}users:have_extensions, report_feedback_tracker{{/str}}</a>
+                        {{/overrides}}
                     </div>
 
                     <div class="col-3">

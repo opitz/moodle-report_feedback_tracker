@@ -57,7 +57,7 @@ class get_assessment_types extends external_api {
      * @param int|null $selection
      * @return string
      */
-    public static function execute( $selection) {
+    public static function execute($selection) {
         $assessmenttypes = helper::get_assess_types($selection);
         if ($selection < 0) { // Only if no selection has been made yet, add a 'not set' option.
             $unselected = ['value' => -1, 'label' => 'Assessment type not set', 'isselected' => true];

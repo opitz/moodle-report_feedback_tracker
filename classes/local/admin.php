@@ -91,6 +91,7 @@ class admin {
 
         // Student data.
         $record->overrides = helper::get_overrides($module);
+        $record->overridesurl = helper::get_overrides_url($module);
         $record->submissions = count(helper::get_submissions($module));
 
         // Grades and markings.
