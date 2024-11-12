@@ -75,7 +75,7 @@ class renderer extends plugin_renderer_base {
                     if (count($feedbacktrackerdata->courses) < 2) {
                         break;
                     }
-                    if (empty($course->records)) { // If a course has no grade records, remove it from the report.
+                    if (empty($course->items)) { // If a course has no grade records, remove it from the report.
                         unset($feedbacktrackerdata->courses[$key]);
                         $coursesremoved = true;
                     }
@@ -96,7 +96,7 @@ class renderer extends plugin_renderer_base {
      * @return string
      */
     public function render_feedback_tracker_course_report(int $courseid): string {
-        global $DB;
+        global $CFG, $USER;
 
         $modinfo = get_fast_modinfo($courseid);
 
@@ -111,93 +111,107 @@ class renderer extends plugin_renderer_base {
         $data->staffdata = true;
         $data->canedit = true;
         $data->outputedit = true;
-        $data->records = [];
+        $data->items = [];
 
         $data->dropdownstudents = helper::get_course_students($courseid);
 
         // Create records for manual grade items and supported course modules.
         foreach ($gradeitems as $gradeitem) {
+            if (($gradeitem->itemtype === 'mod') &&
+                helper::is_supported_module($gradeitem->itemmodule) &&
+                $item = admin::get_module_data($gradeitem, $modinfo, $assessmenttypes)) {
+                if ($gradeitem->itemmodule === 'turnitintooltwo') {
+                    $tttparts = helper::get_turnitin_parts($gradeitem);
 
-            // If it is a 'manual' grade item there is no course module.
-            if ($gradeitem->itemtype === 'manual') {
-                $record = new stdClass();
-                $record->name = $gradeitem->itemname;
-                $record->manual = true;
-                $record->feedbackduedateraw = 9999999999; // Needed for sorting. Make sure they are listed last.
+                    foreach ($tttparts as $tttpart) {
+                        $item->name = $gradeitem->itemname . " - " . $tttpart->partname;
+                        $item->partid = $tttpart->id;
 
-                $data->records[] = $record;
-                continue;
-            }
+                        // Get the due date for each part.
+                        $duedate = $tttpart->dtdue;
+                        $item->duedate = $duedate ? date($dateformat, $duedate) : false;
+                        // The feedback due date timestamp is needed for sorting.
+                        $item->feedbackduedateraw = $duedate ?
+                            helper::calculate_feedback_duedate($courseid, $duedate) : 9999999999;
+                        $item->feedbackduedate = $duedate ? date($dateformat, $item->feedbackduedateraw) : false;
 
-            // Skip any gradeitem without a module or a with module that is not suported.
-            if (!$gradeitem->itemmodule || !helper::is_supported_module($gradeitem->itemmodule)) {
-                continue;
-            }
+                        // Get additional information for each part record.
+                        self::add_additional_data($item);
 
-            // Skip if no module record can be found.
-            if (!$record = admin::get_module_record($gradeitem, $modinfo, $assessmenttypes)) {
-                continue;
-            }
+                        // If there is a valid raw due date format it.
+                        $item->feedbackduedate = ($item->feedbackduedateraw && $item->feedbackduedateraw < 9999999999) ?
+                            date($dateformat, $item->feedbackduedateraw) : false;
 
-            // If the module is a Turnitin module create a record for each part of it.
-            if ($gradeitem->itemmodule === 'turnitintooltwo') {
-                $tttparts = helper::get_turnitin_parts($gradeitem);
-
-                foreach ($tttparts as $tttpart) {
-                    $record->name = $gradeitem->itemname . " - " . $tttpart->partname;
-                    $record->partid = $tttpart->id;
-
-                    $duedate = $tttpart->dtdue;
-                    // The raw date is needed for sorting.
-                    $record->feedbackduedateraw = $duedate ? helper::calculate_feedback_duedate($courseid, $duedate) : 9999999999;
-                    $record->feedbackduedate = $duedate ? date($dateformat, $record->feedbackduedateraw) : false;
-
+                        $data->items[] = clone $item;
+                    }
+                } else {
                     // Get additional information for the record.
-                    $params = [
-                        'gradeitem' => $gradeitem->id,
-                        'partid' => $record->partid,
-                    ];
-                    if ($additionaldata = $DB->get_record('report_feedback_tracker', $params)) {
-                        $record->method = $additionaldata->method;
-                        $record->contact = $additionaldata->responsibility;
-                        $record->generalfeedback = $additionaldata->generalfeedback;
-                        if ($additionaldata->feedbackduedate) {
-                            $record->feedbackduedateraw = $additionaldata->feedbackduedate;
-                            $record->feedbackduedate = date($dateformat, $record->feedbackduedateraw);
-                        }
-                        $record->additionaldata = $record->generalfeedback || $record->method || $record->contact;
-                        $record->hiddenfromreport = $additionaldata->hidden || $record->hiddenfromreport;
-                    }
+                    self::add_additional_data($item);
 
-                    $data->records[] = clone $record;
+                    $data->items[] = $item;
                 }
-            } else {
-                // Get additional information for the record.
-                $params = [
-                    'gradeitem' => $gradeitem->id,
-                ];
-                if ($additionaldata = $DB->get_record('report_feedback_tracker', $params)) {
-                    $record->method = $additionaldata->method;
-                    $record->contact = $additionaldata->responsibility;
-                    $record->generalfeedback = $additionaldata->generalfeedback;
-                    if ($additionaldata->feedbackduedate) {
-                        $record->feedbackduedateraw = $additionaldata->feedbackduedate;
-                        $record->feedbackduedate = date($dateformat, $record->feedbackduedateraw);
-                    }
-                    $record->additionaldata = $record->generalfeedback || $record->method || $record->contact;
-                    $record->hiddenfromreport = $additionaldata->hidden || $record->hiddenfromreport;
-                }
+            } else if ($gradeitem->itemtype === 'manual') {
+                $item = new stdClass();
+                $item->name = $gradeitem->itemname;
+                $item->gradeitemid = $gradeitem->id;
+                $item->partid = false;
+                $item->manual = true;
+                $item->feedbackduedateraw = 9999999999; // Needed for sorting. Make sure they are listed last.
+                // Add a URL pointing to the gradebook item in single view.
+                $item->url = "$CFG->wwwroot/grade/report/singleview/index.php?id=$gradeitem->courseid&" .
+                    "item=grade&itemid=$gradeitem->id&gpr_type=report&gpr_plugin=grader&gpr_courseid=$gradeitem->courseid";
+                // Get additional information for each part record.
+                self::add_additional_data($item);
 
-                $data->records[] = $record;
+                $data->items[] = $item;
             }
         }
 
         // Sort the data records by feedback due date.
-        usort($data->records, function($a, $b) {
+        usort($data->items, function($a, $b) {
             return strcmp($a->feedbackduedateraw, $b->feedbackduedateraw);
         });
 
         return $this->output->render_from_template('report_feedback_tracker/course/course', $data);
+    }
+
+    /**
+     * Add additional data for the grade item where available.
+     *
+     * @param stdClass $data
+     * @param array $params
+     * @return void
+     */
+    protected static function add_additional_data(stdClass &$data): void {
+        global $DB;
+
+        $dateformat = get_config('report_feedback_tracker', 'dateformat');
+
+        $params = ['gradeitem' => $data->gradeitemid];
+        if ($data->partid) {
+            $params['partid'] = $data->partid;
+        }
+
+        if ($record = $DB->get_record('report_feedback_tracker', $params)) {
+            $data->method = $record->method;
+            $data->contact = $record->responsibility;
+            $data->generalfeedback = $record->generalfeedback;
+
+            if ($record->feedbackduedate) {
+                $data->feedbackduedateraw = $record->feedbackduedate;
+                // If there is a valid raw feedback due date format it.
+                if ($data->feedbackduedateraw && $data->feedbackduedateraw < 9999999999) {
+                    $data->feedbackduedate = date($dateformat, $data->feedbackduedateraw);
+                }
+            }
+
+            // Check if there is additional data to show.
+            if ($data->generalfeedback || $data->method || $data->contact) {
+                $data->additionaldata = true;
+            }
+
+            $data->hiddenfromreport = $record->hidden;
+        }
     }
 
 }

@@ -25,9 +25,13 @@ export const init = async() => {
             const assessmenttype = module.querySelector('[data-assessmenttype]').getAttribute('data-assessmenttype');
             const locked = module.querySelector('[data-locked]').getAttribute('data-locked') * 1;
             const assessmenttypelabel = module.querySelector('[data-label]').getAttribute('data-label');
-            const feedbackduedate = module.querySelector('[data-feedbackduedate]').getAttribute('data-feedbackduedate');
+            const feedbackduedateraw = module.querySelector('[data-feedbackduedateraw]').getAttribute('data-feedbackduedateraw');
+
             // Format the feedback due date for the date picker.
-            const date = new Date(feedbackduedate * 1000); // Convert to milliseconds
+            let date = new Date(Date.now()); // Use the current date timestamp in milliseconds by default.
+            if (feedbackduedateraw < 9999999999) { // If there is a valid raw feedback date use this.
+                date = new Date(feedbackduedateraw * 1000); // Convert to milliseconds
+            }
             // Extract year, month, and day, and format as 'Y-m-d'
             const fullyear = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -66,7 +70,7 @@ export const init = async() => {
                         assessmenttype: assessmenttype,
                         assessmenttypelabel: assessmenttypelabel,
                         locked: locked,
-                        feedbackduedate: feedbackduedate,
+                        feedbackduedateraw: feedbackduedateraw,
                         formatteddate: formatteddate,
                         assessmenttypes: assessmenttypes
                     }),

@@ -72,11 +72,11 @@ final class feedback_tracker_test extends advanced_testcase {
         // Get the user data.
         $userdata = user::get_feedback_tracker_user_data($student1->id, $course->id);
 
-        $records = $userdata->records;
-        $feedbackreleased = $records[0];
-        $feedbackextended = $records[1];
-        $feedbacklate = $records[2];
-        $submissionlate = $records[3];
+        $items = $userdata->items;
+        $feedbackreleased = $items[0];
+        $feedbackextended = $items[1];
+        $feedbacklate = $items[2];
+        $submissionlate = $items[3];
 
         $this->assertEquals($student1->username, $feedbackreleased->student, "Assert submission is by student 1");
         $this->assertTrue(strstr($feedbackreleased->submissionstatus, get_string('submission:success',

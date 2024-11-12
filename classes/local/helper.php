@@ -951,27 +951,27 @@ class helper {
     /**
      * Get the assessment type and lock status for a course module and its optional part.
      *
-     * @param stdClass $record
+     * @param stdClass $data
      * @param array $assessmenttypes
      * @return array
      */
-    public static function get_assessment_type(stdClass $record, array $assessmenttypes): array {
+    public static function get_assessment_type(stdClass $data, array $assessmenttypes): array {
         foreach ($assessmenttypes as $assessmenttype) {
             // A course module with a part ID (e.g. turnitintooltwo).
             // Currently, the part ID is not used for checking different parts until it is supported by local_assess_type.
             if (
-                isset($record->cmid) && isset($record->partid) &&
-                ($assessmenttype->cmid === $record->cmid)
+                isset($data->cmid) && isset($data->partid) &&
+                ($assessmenttype->cmid === $data->cmid)
             ) {
                 return ['type' => $assessmenttype->type, 'locked' => $assessmenttype->locked];
             } else if ( // A course module w/o a part.
-                isset($record->cmid) && !isset($record->partid) &&
-                ($assessmenttype->cmid === $record->cmid)
+                isset($data->cmid) && !isset($data->partid) &&
+                ($assessmenttype->cmid === $data->cmid)
             ) {
                 return ['type' => $assessmenttype->type, 'locked' => $assessmenttype->locked];
             } else if ( // A grade item w/o a course module.
-                !isset($record->cmid) && isset($record->itemid) &&
-                ($assessmenttype->gradeitemid === $record->itemid)
+                !isset($data->cmid) && isset($data->itemid) &&
+                ($assessmenttype->gradeitemid === $data->itemid)
             ) {
                 return ['type' => $assessmenttype->type, 'locked' => $assessmenttype->locked];
             }

@@ -39,7 +39,7 @@ class admin {
      * @param array $assessmenttypes
      * @return false|stdClass
      */
-    public static function get_module_record(
+    public static function get_module_data(
         grade_item $gradeitem,
         course_modinfo $modinfo,
         array $assessmenttypes
@@ -56,53 +56,55 @@ class admin {
         $module = $modinfo->get_cm($cmid);
 
         // Build the record.
-        $record = new stdClass();
-        $record->gradeitemid = $gradeitem->id;
-        $record->name = $gradeitem->itemname; // The grade item name has more details.
-        $record->moduletypeiconurl = $module->get_icon_url()->out(false);
+        $data = new stdClass();
+        $data->gradeitemid = $gradeitem->id;
+        $data->name = $gradeitem->itemname; // The grade item name has more details.
+        $data->moduletypeiconurl = $module->get_icon_url()->out(false);
 
-        $record->cmid = $module->id;
-        $record->partid = false;
+        $data->hiddenfromstudents = !$module->visible;
+        $data->hiddenfromreport = false;
+
+        $data->cmid = $module->id;
+        $data->partid = false;
 
         // Assessment type.
-        $assessmenttype = helper::get_assessment_type($record, $assessmenttypes);
-        $record->assessmenttype = $assessmenttype['type'];
-        $record->selectedassessmenttypelabel = helper::get_selected_assess_type_label($record->assessmenttype);
-        $record->locked = $assessmenttype['locked'];
-        $record->formative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_FORMATIVE;
-        $record->summative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_SUMMATIVE;
-        $record->dummy = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_DUMMY;
-        $record->notset = !$record->formative && !$record->summative && !$record->dummy;
+        $assessmenttype = helper::get_assessment_type($data, $assessmenttypes);
+        $data->assessmenttype = $assessmenttype['type'];
+        $data->selectedassessmenttypelabel = helper::get_selected_assess_type_label($data->assessmenttype);
+        $data->locked = $assessmenttype['locked'];
+        $data->formative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_FORMATIVE;
+        $data->summative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_SUMMATIVE;
+        $data->dummy = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_DUMMY;
+        $data->notset = !$data->formative && !$data->summative && !$data->dummy;
 
         // Hiding attributes.
-        $record->hiddenfromstudents = !$module->visible;
-        $record->hiddenfromreport = $record->dummy;
+        $data->hiddenfromstudents = !$module->visible;
+        $data->hiddenfromreport = $data->dummy;
 
-        $record->assesstypes = helper::get_assess_types(isset($record->assessmenttype) ? $record->assessmenttype : null);
+        $data->assesstypes = helper::get_assess_types(isset($data->assessmenttype) ? $data->assessmenttype : null);
 
-        $record->modname = $module->modname;
+        $data->modname = $module->modname;
 
         // Dates.
         $duedate = helper::get_duedate($module);
-        $record->duedate = $duedate ? date($dateformat, $duedate) : false;
+        $data->duedate = $duedate ? date($dateformat, $duedate) : false;
         // The raw date is needed for sorting.
-        $record->feedbackduedateraw = $duedate ? helper::calculate_feedback_duedate($gradeitem->courseid, $duedate) : 9999999999;
-        $record->feedbackduedate = $duedate ? date($dateformat, $record->feedbackduedateraw) : false;
-        $record->markoverdue = false;
+        $data->feedbackduedateraw = $duedate ? helper::calculate_feedback_duedate($gradeitem->courseid, $duedate) : 9999999999;
+        $data->feedbackduedate = $data->duedate ? date($dateformat, $data->feedbackduedateraw) : false;
+        $data->markoverdue = false;
 
         // Student data.
-        $record->overrides = helper::get_overrides($module);
-        $record->overridesurl = helper::get_overrides_url($module);
-        $record->submissions = helper::count_submissions($module);
+        $data->overrides = helper::get_overrides($module);
+        $data->overridesurl = helper::get_overrides_url($module);
+        $data->submissions = helper::count_submissions($module);
 
         // Grades and markings.
-        $grades = helper::count_grades($gradeitem, $module);
-        $record->requiredfeedbacks = helper::count_missing_grades($gradeitem, $module, $record->submissions);
-        $record->feedbackpercentage = $record->submissions ?
-            round(($record->submissions - $record->requiredfeedbacks) / $record->submissions * 100, 0) : 0;
-        $record->url = $module->get_url();
+        $data->requiredfeedbacks = helper::count_missing_grades($gradeitem, $module, $data->submissions);
+        $data->feedbackpercentage = $data->submissions ?
+            round(($data->submissions - $data->requiredfeedbacks) / $data->submissions * 100, 0) : 0;
+        $data->url = $module->get_url();
 
-        return $record;
+        return $data;
     }
 
     /**

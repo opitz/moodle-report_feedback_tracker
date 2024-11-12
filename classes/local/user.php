@@ -87,7 +87,7 @@ class user {
      */
     public static function get_feedback_tracker_user_data($userid, $courseid = 0): stdClass {
         $data = new stdClass();
-        $data->records = [];
+        $data->items = [];
         $data->courses = [];
         $enrolledcourses = enrol_get_users_courses($userid);
         // Get the academic years of the user.
@@ -221,7 +221,7 @@ class user {
         $courseobject->shortname = $course->shortname;
         $courseobject->fullname = $course->fullname;
         $courseobject->image = \core_course\external\course_summary_exporter::get_course_image($course);
-        $courseobject->records = [];
+        $courseobject->items = [];
         $modinfo = get_fast_modinfo($course->id, $userid);
 
         // Different modules use different field names for the due date.
@@ -273,16 +273,16 @@ class user {
                 self::get_user_turnitin_records($course, $gradeitem, $userid, $assessmenttypes, $data, $courseobject);
             } else {
                 if ($record = self::get_user_feedback_record($course, $userid, $gradeitem, $assessmenttypes)) {
-                    $data->records[] = $record;
-                    $courseobject->records[] = $record;
+                    $data->items[] = $record;
+                    $courseobject->items[] = $record;
                 }
             }
             $itemlist[] = $gradeitem->itemid;
         }
 
         // Sort the courseobject records by due date.
-        if (is_array($courseobject->records)) {
-            usort($courseobject->records, function($a, $b) {
+        if (is_array($courseobject->items)) {
+            usort($courseobject->items, function($a, $b) {
                 return strcmp($a->duedateraw, $b->duedateraw);
             });
         }
@@ -301,7 +301,7 @@ class user {
      */
     protected static function get_user_feedback_record($course, $userid, $gradeitem, $assessmenttypes): stdClass|bool {
         $gradeitem->partid = 0; // Only turnitintooltwo assessments may have parts.
-        return self::compile_user_record($course, $userid, $gradeitem, $assessmenttypes);
+        return self::compile_user_data($course, $userid, $gradeitem, $assessmenttypes);
     }
 
     /**
@@ -343,9 +343,9 @@ class user {
                 $gradeitem->partid = $tttpart->id;
                 $gradeitem->partname = helper::get_partname($gradeitem->partid);
 
-                if ($record = self::compile_user_record($course, $userid, $gradeitem, $assessmenttypes)) {
-                    $data->records[] = $record;
-                    $courseobject->records[] = $record;
+                if ($item = self::compile_user_data($course, $userid, $gradeitem, $assessmenttypes)) {
+                    $data->items[] = $item;
+                    $courseobject->items[] = $item;
                 }
             }
         }
@@ -360,7 +360,7 @@ class user {
      * @param array $assessmenttypes
      * @return stdClass|bool
      */
-    protected static function compile_user_record(stdClass $course, int $userid, stdClass $gradeitem, array $assessmenttypes): stdClass|bool {
+    protected static function compile_user_data($course, $userid, $gradeitem, $assessmenttypes): stdClass|bool {
 
         // Append the assessment type information where available.
         helper::append_assessment_type_to_gradeitem($gradeitem, $assessmenttypes);
@@ -379,45 +379,45 @@ class user {
         // Get the submission date if any.
         $submissiondate = helper::get_submissiondate($userid, $gradeitem);
 
-        $record = new stdClass();
-        $record->submissiondate = $submissiondate == 0 ? '--' : date($dateformat, $submissiondate);
-        $record->submissionstatus = helper::get_submission_status($gradeitem, $submissiondate, $warningperiod);
-        $record->courseid = $course->id;
-        $record->coursename = $course->fullname;
-        $record->cmid = $gradeitem->itemid;
-        $record->assessment = helper::get_item_link($gradeitem);
-        $record->assessmenttype = isset($gradeitem->assessmenttype) ? (int) $gradeitem->assessmenttype : null;
-        $record->moduletypeicon = helper::get_module_type_icon($gradeitem);
-        $record->module = helper::get_item_module($gradeitem);
-        $record->formative = isset($record->assessmenttype) &&
-            $record->assessmenttype === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
-        $record->summative = isset($record->assessmenttype) &&
-            $record->assessmenttype === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
-        $record->assesstypelabel = helper::get_assesstype_label($record->assessmenttype);
-        $record->duedate = $gradeitem->duedate == 0 ?
+        $data = new stdClass();
+        $data->submissiondate = $submissiondate == 0 ? '--' : date($dateformat, $submissiondate);
+        $data->submissionstatus = helper::get_submission_status($gradeitem, $submissiondate, $warningperiod);
+        $data->courseid = $course->id;
+        $data->coursename = $course->fullname;
+        $data->cmid = $gradeitem->itemid;
+        $data->assessment = helper::get_item_link($gradeitem);
+        $data->assessmenttype = isset($gradeitem->assessmenttype) ? (int) $gradeitem->assessmenttype : null;
+        $data->moduletypeicon = helper::get_module_type_icon($gradeitem);
+        $data->module = helper::get_item_module($gradeitem);
+        $data->formative = isset($data->assessmenttype) &&
+            $data->assessmenttype === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
+        $data->summative = isset($data->assessmenttype) &&
+            $data->assessmenttype === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
+        $data->assesstypelabel = helper::get_assesstype_label($data->assessmenttype);
+        $data->duedate = $gradeitem->duedate == 0 ?
             get_string('datenotset', 'report_feedback_tracker') :
             date($dateformat, $gradeitem->duedate);
-        $record->duedateraw = $gradeitem->duedate == 0 ? 9999999999 : $gradeitem->duedate;
-        $record->feedbackduedate = $feedbackduedate == 0 ?
+        $data->duedateraw = $gradeitem->duedate == 0 ? 9999999999 : $gradeitem->duedate;
+        $data->feedbackduedate = $feedbackduedate == 0 ?
             get_string('datenotset', 'report_feedback_tracker') :
             date($dateformat, $feedbackduedate);
-        $record->feedbackduedateraw = $feedbackduedate == 0 ? 9999999999 : $feedbackduedate;
-        $record->grade = ($gradeitem->finalgrade ?
+        $data->feedbackduedateraw = $feedbackduedate == 0 ? 9999999999 : $feedbackduedate;
+        $data->grade = ($gradeitem->finalgrade ?
             (int)$gradeitem->finalgrade . '/' . (int)$gradeitem->grademax : false);
-        $record->student = $gradeitem->student;
-        $record->grader = $gradeitem->grader;
-        $record->feedbackdate = $gradeitem->feedbackdate ? $gradeitem->feedbackdate : $gradeitem->gfdate;
-        $record->feedbackstatus = helper::get_feedback_status($gradeitem, $feedbackduedate, $submissiondate);
-        $record->feedback = helper::get_feedback_badge($gradeitem, $feedbackduedate, $submissiondate);
-        $record->method = $gradeitem->method;
-        $record->responsibility = html_writer::div($gradeitem->responsibility);
-        $record->generalfeedback = helper::get_generalfeedback($gradeitem);
-        $record->gfurl = $gradeitem->gfurl;
-        $record->contact = $gradeitem->responsibility;
-        $record->additionaldata = $record->generalfeedback || $record->method || $record->contact;
-        $record->isdummy = isset($record->assessmenttype) && $record->assessmenttype == assess_type::ASSESS_TYPE_DUMMY;
+        $data->student = $gradeitem->student;
+        $data->grader = $gradeitem->grader;
+        $data->feedbackdate = $gradeitem->feedbackdate ? $gradeitem->feedbackdate : $gradeitem->gfdate;
+        $data->feedbackstatus = helper::get_feedback_status($gradeitem, $feedbackduedate, $submissiondate);
+        $data->feedback = helper::get_feedback_badge($gradeitem, $feedbackduedate, $submissiondate);
+        $data->method = $gradeitem->method;
+        $data->responsibility = html_writer::div($gradeitem->responsibility);
+        $data->generalfeedback = helper::get_generalfeedback($gradeitem);
+        $data->gfurl = $gradeitem->gfurl;
+        $data->contact = $gradeitem->responsibility;
+        $data->additionaldata = $data->generalfeedback || $data->method || $data->contact;
+        $data->isdummy = isset($data->assessmenttype) && $data->assessmenttype == assess_type::ASSESS_TYPE_DUMMY;
 
-        return $record;
+        return $data;
     }
 
 }

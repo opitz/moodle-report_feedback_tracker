@@ -41,7 +41,7 @@
 </div>
 
 {{! Data. }}
-{{#records}}
+{{#items}}
     {{#viewasstudent}}
         {{> report_feedback_tracker/user/mod }}
     {{/viewasstudent}}
@@ -49,7 +49,7 @@
     {{^viewasstudent}}
         {{> report_feedback_tracker/course/mod }}
     {{/viewasstudent}}
-{{/records}}
+{{/items}}
 
 {{#js}}
     require(['report_feedback_tracker/editmodule'], function(Edit) {
