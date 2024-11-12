@@ -47,28 +47,28 @@
             <input type="hidden" id="js-partid" value="{{partid}}">
 
             <div class="form-group">
-                <label for="contact" class="font-weight-bold">Contact</label>
+                <label for="contact" class="font-weight-bold">{{#str}} header:contact, report_feedback_tracker {{/str}}</label>
                 <input type="text" class="form-control" id="js-contact" name="contact" value="{{{contact}}}">
 
             </div>
             <div class="form-group">
-                <label for="method" class="font-weight-bold">Method</label>
+                <label for="method" class="font-weight-bold">{{#str}} header:method, report_feedback_tracker {{/str}}</label>
                 <input type="text" class="form-control" id="js-method" name="method" value="{{{method}}}">
 
             </div>
             <div class="form-group">
-                <label for="generalfeedback" class="font-weight-bold">Generalfeedback</label>
+                <label for="generalfeedback" class="font-weight-bold">{{#str}} header:generalfeedback, report_feedback_tracker {{/str}}</label>
                 <textarea class="form-control" id="js-generalfeedback" name="generalfeedback" rows= "5">{{{generalfeedback}}}</textarea>
 
             </div>
             <div class="form-group">
-                <label for="feedbackduedate" class="font-weight-bold">Feedbackduedate</label>
+                <label for="feedbackduedate" class="font-weight-bold">{{#str}} header:feedbackduedate, report_feedback_tracker {{/str}}</label>
                 <input type="date" class="form-control" id="feedbackduedate" name="feedbackduedate" value="{{{formatteddate}}}">
                 <input type="hidden" id="js-formatteddate" value="{{formatteddate}}">
 
             </div>
             <div class="form-group">
-                <label for="js-assessmenttype" class="font-weight-bold">Assessmenttype</label>
+                <label for="js-assessmenttype" class="font-weight-bold">{{#str}} header:assessmenttype, report_feedback_tracker {{/str}}</label>
 
                 {{#locked}}
                     <div>{{assessmenttypelabel}}</div>
@@ -84,7 +84,7 @@
             <div class="form-group">
                 <div class="form-check">
                     <label class="form-check-label">
-                        <input type="checkbox" class="form-check-input" value=""  id="js-hidden" name="hidden" {{#hidden}}checked{{/hidden}}>Hidden from student report
+                        <input type="checkbox" class="form-check-input" value=""  id="js-hidden" name="hidden" {{#hidden}}checked{{/hidden}}>{{#str}} header:hiddenfromstudents, report_feedback_tracker {{/str}}
                     </label>
                 </div>
             </div>

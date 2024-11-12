@@ -12,11 +12,11 @@
                 <span data-name>{{{name}}}</span>
             </a>
             {{#hiddenfromstudents}}
-                <br><div class="badge badge-warning"><i class="fa-regular fa-eye-slash"></i> Hidden from students</div>
+                <br><div class="badge badge-warning"><i class="fa-regular fa-eye-slash"></i> {{#str}} badge:hiddenfromstudents, report_feedback_tracker {{/str}}</div>
             {{/hiddenfromstudents}}
 
             {{#hiddenfromreport}}
-                <br><div class="badge badge-warning" data-hiddenfromreport="{{hiddenfromreport}}"><i class="fa-regular fa-eye-slash"></i> Hidden from report</div>
+                <br><div class="badge badge-warning" data-hiddenfromreport="{{hiddenfromreport}}"><i class="fa-regular fa-eye-slash"></i> {{#str}} badge:hiddenfromreport, report_feedback_tracker {{/str}}</div>
             {{/hiddenfromreport}}
 
             <span data-assessmenttype="{{assessmenttype}}" data-locked="{{locked}}" data-label="{{selectedassessmenttypelabel}}">
@@ -45,23 +45,23 @@
 
                     <div class="col-4">
                         {{#duedate}}
-                            <span class="d-md-none">Due: </span>
+                            <span class="d-md-none">{{#str}} due, report_feedback_tracker {{/str}}: </span>
                             {{{duedate}}}
                         {{/duedate}}
                     </div>
 
                     <div class="col-4">
                         {{#feedbackduedate}}
-                            <span class="d-md-none">Feedback due: </span>{{{feedbackduedate}}}
+                            <span class="d-md-none">{{#str}} feedback:due, report_feedback_tracker {{/str}}: </span>{{{feedbackduedate}}}
                         {{/feedbackduedate}}
                         {{#markoverdue}}
-                            <br><div class="badge badge-danger">Overdue</div>
+                            <br><div class="badge badge-danger">{{#str}} feedback:overdue, report_feedback_tracker {{/str}}</div>
                         {{/markoverdue}}
                     </div>
 
                     <div class="col-4 text-right">
                         {{#mark}}
-                            <span class="d-md-none">Mark: </span>
+                            <span class="d-md-none">{{#str}} header:mark, report_feedback_tracker {{/str}}: </span>
                             {{{mark}}}
                         {{/mark}}
                     </div>
@@ -74,17 +74,17 @@
 
                     <div class="col-4" data-feedbackduedate="{{{feedbackduedateraw}}}">
                         {{#feedbackduedate}}
-                            <span class="d-md-none">Feedback due: </span><span id="js-feedbackduedate">{{{feedbackduedate}}}</span>
+                            <span class="d-md-none">{{#str}} feedback:due, report_feedback_tracker {{/str}}: </span>{{{feedbackduedate}}}
                         {{/feedbackduedate}}
 
                         {{#markoverdue}}
-                            <br><div class="badge badge-danger">Overdue</div>
+                            <br><div class="badge badge-danger">{{#str}} feedback:overdue, report_feedback_tracker {{/str}}</div>
                         {{/markoverdue}}
                     </div>
 
                     <div class="col-3">
                         {{#submissions}}
-                            {{submissions}} <span class="d-md-none">submitted</span>
+                            {{submissions}} <span class="d-md-none">{{#str}} submitted, report_feedback_tracker {{/str}}</span>
                         {{/submissions}}
 
                         {{#overrides}}
@@ -93,16 +93,18 @@
                     </div>
 
                     <div class="col-3">
-                        {{#requiredfeedbacks}}
-                            <a href="{{{url}}}" class="small"><strong class="h6">{{requiredfeedbacks}}</strong><br>require marking</a>
-                        {{/requiredfeedbacks}}
+                        {{#submissions}}
+                            {{#requiredfeedbacks}}
+                                <a href="{{{url}}}">{{requiredfeedbacks}} <small>{{#str}} requiremarking, report_feedback_tracker {{/str}}</small></a>
+                            {{/requiredfeedbacks}}
 
-                        <div>
-                            <small>{{feedbackpercentage}}%</small>
-                            <div class="progress">
-                                <div class="progress-bar bg-success" role="progressbar" aria-label="Progress" aria-valuenow="{{feedbackpercentage}}" style="width: {{feedbackpercentage}}%" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div>
+                                <small>{{feedbackpercentage}}%</small>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" aria-label="Progress" aria-valuenow="{{feedbackpercentage}}" style="width: {{feedbackpercentage}}%" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
                             </div>
-                        </div>
+                        {{/submissions}}
                     </div>
 
                     <div class="col-2 text-right">

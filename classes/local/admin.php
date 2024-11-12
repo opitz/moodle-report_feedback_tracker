@@ -93,12 +93,13 @@ class admin {
         // Student data.
         $record->overrides = helper::get_overrides($module);
         $record->overridesurl = helper::get_overrides_url($module);
-        $record->submissions = count(helper::get_submissions($module));
+        $record->submissions = helper::count_submissions($module);
 
         // Grades and markings.
-        $grades = helper::get_grade_grades($gradeitem);
-        $record->requiredfeedbacks = max($record->submissions - $grades, 0);
-        $record->feedbackpercentage = $record->submissions ? round($grades / $record->submissions * 100, 2) : 0;
+        $grades = helper::count_grades($gradeitem, $module);
+        $record->requiredfeedbacks = helper::count_missing_grades($gradeitem, $module, $record->submissions);
+        $record->feedbackpercentage = $record->submissions ?
+            round(($record->submissions - $record->requiredfeedbacks) / $record->submissions * 100, 0) : 0;
         $record->url = $module->get_url();
 
         return $record;

@@ -369,83 +369,71 @@ class helper {
     }
 
     /**
-     * Get all submissions of a course module.
+     * Count all submissions of a course module.
      *
      * @param cm_info $cm
      * @return array
      */
-    public static function get_submissions(cm_info $cm): array {
+    public static function count_submissions(cm_info $cm): int {
         global $DB;
 
-        $validstatus = '';
-
         if ($cm) {
+            $context = context_module::instance($cm->id);
             switch ($cm->modname) {
                 case 'assign':
-                    $table = 'assign_submission';
-                    $index = 'assignment';
-                    $userid = 'userid';
-                    $date = 'timemodified';
-                    $status = 'status';
-                    $validstatus = 'submitted'; // Only get dates from submissions with a valid status.
-                    $latest = 'latest';
-                    $groupid = 'groupid';
-                    break;
+                    // Get the group submission status.
+                    $assignment = new assign($context, $cm, $cm->course);
+                    return $assignment->count_submissions();
                 case 'lesson':
-                    $table = 'lesson_attempts';
-                    $index = 'lessonid';
-                    $userid = 'userid';
-                    $date = 'timeseen';
-                    $status = 'correct';
-                    break;
+                    $params = ['lessonid' => $cm->instance, 'correct' => 1];
+                    return count($DB->get_records('lesson_attempts', $params));
                 case 'quiz':
-                    $table = 'quiz_attempts';
-                    $index = 'quiz';
-                    $userid = 'userid';
-                    $date = 'timefinish';
-                    $status = 'state';
-                    $validstatus = 'finished'; // Only get dates from submissions with a valid status.
-                    break;
+                    $params = ['quiz' => $cm->instance, 'state' => 'finished'];
+                    return count($DB->get_records('quiz_attempts', $params));
                 case 'turnitintooltwo':
-                    $table = 'turnitintooltwo_submissions';
-                    $index = 'turnitintooltwoid';
-                    $userid = 'userid';
-                    $date = 'submission_modified';
-                    $status = '';
-                    break;
+                    $params = ['turnitintooltwoid' => $cm->instance];
+                    return count($DB->get_records('turnitintooltwo_submissions', $params));
                 case 'scorm':
-                    break;
+                    return 0;
                 case 'workshop':
-                    $table = 'workshop_submissions';
-                    $index = 'workshopid';
-                    $userid = 'authorid';
-                    $date = 'timemodified';
-                    $status = '';
-                    break;
+                    $params = ['workshopid' => $cm->instance];
+                    return count($DB->get_records('workshop_submissions', $params));
                 default:
-                    break;
+                    return 0;
             }
         }
-
-        $args = [];
-        $args[$index] = $cm->instance;
-        if ($status) {
-            $args[$status] = $validstatus;
-        }
-        if (isset($latest)) {
-            $args[$latest] = 1;
-        }
-
-        // If the assessment allows group submissions exclude them from counting
-        // as a group submission will create individual submissions for each group member.
-        if (isset($groupid)) {
-            $args[$groupid] = 0;
-        }
-
-        if ($submissionrecords = $DB->get_records($table, $args)) {
-            return $submissionrecords;
-        }
         return [];
+    }
+
+    /**
+     * Count the missing grades for a given grade item.
+     *
+     * @param grade_item $gradeitem
+     * @param cm_info $cm
+     * @param int $submissions the number of submissions for this course module.
+     * @return int
+     * @throws dml_exception
+     */
+    public static function count_missing_grades(grade_item $gradeitem, cm_info $cm, int $submissions): int {
+        global $DB;
+
+        // Assignments provide a way to count grades.
+        if ($cm->modname === 'assign') {
+            // Get the group submission status.
+            $context = context_module::instance($cm->id);
+            $assignment = new assign($context, $cm, $cm->course);
+            return $assignment->count_submissions_need_grading();
+        }
+
+        // For modules other than assignments fetch the grades from the grade-grades table.
+        $sql = "select distinct gg.userid
+                from {grade_grades} gg
+                where gg.itemid = :gradeitemid and gg.finalgrade > -1";
+
+        // Execute the query.
+        $grades = $DB->get_records_sql($sql, ['gradeitemid' => $gradeitem->id]);
+
+        return $submissions - count($grades);
     }
 
     /**
@@ -1199,22 +1187,56 @@ class helper {
     }
 
     /**
-     * Get the final grades for a given grade item.
+     * Count the grades for a given grade item.
      *
      * @param grade_item $gradeitem
+     * @param cm_info $cm
      * @return int
      * @throws dml_exception
      */
-    public static function get_grade_grades(grade_item $gradeitem): int {
+    public static function count_grades(grade_item $gradeitem, cm_info $cm): int {
         global $DB;
-        $sql = "select count(distinct gg.userid) as grades
+
+        $sql = "select distinct gg.userid
                 from {grade_grades} gg
                 where gg.itemid = :gradeitemid and gg.finalgrade > -1";
 
         // Execute the query.
-        $result = $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
-        return $result->grades;
+        $grades = $DB->get_records_sql($sql, ['gradeitemid' => $gradeitem->id]);
+
+        // Assignments may have group submissions.
+        if ($cm->modname === 'assign') {
+            // Get the group submission status.
+            $context = context_module::instance($cm->id);
+            $assignment = new assign($context, $cm, $cm->course);
+
+            // If group submissions are enabled count only group grades.
+            if ($assignment->get_instance()->teamsubmission) {
+                return self::count_group_grades($gradeitem->courseid, $grades);
+            }
+        }
+        return count($grades);
     }
 
+    /**
+     * Extract the group grades from individual grades and count them.
+     *
+     * @param int $courseid
+     * @param array $grades the individual grades.
+     * @return int
+     */
+    public static function count_group_grades(int $courseid, array $grades): int {
+        $groupgrades = [];
+        foreach ($grades as $grade) {
+            // For the specified course get the groups the graded user belongs to.
+            $usergroups = groups_get_user_groups($courseid, $grade->userid);
+            foreach ($usergroups as $usergroup) {
+                // Add only one grade per group.
+                $groupindex = isset($usergroup[0]) ? $usergroup[0] : 0; // Group ID 0 is the default group.
+                $groupgrades[$groupindex] = true;
+            }
+        }
+        return count($groupgrades);
+    }
 }
 
