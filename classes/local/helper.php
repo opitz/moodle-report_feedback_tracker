@@ -199,9 +199,9 @@ class helper {
     }
 
     /**
-     * Return an icon for a module type where available.
+     * Return an icon for a grade item module type where available.
      *
-     * @param cm_info $module
+     * @param stdClass $gradeitem
      * @return mixed|string
      */
     public static function get_module_type_icon(stdClass $gradeitem): mixed {
@@ -856,6 +856,8 @@ class helper {
     }
 
     /**
+     * Get the label of the selected assessment type.
+     *
      * @param int $selection
      * @return string
      * @throws coding_exception

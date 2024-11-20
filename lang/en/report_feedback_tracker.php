@@ -22,6 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['additionalinformationhint'] = 'Additional information shown in feedback tracker to all students for this assessment.';
 $string['assesstype:dummy'] = 'Dummy';
 $string['assesstype:formative'] = 'Formative';
 $string['assesstype:notset'] = 'Not set';
@@ -52,10 +53,13 @@ $string['dateformat:default'] = "d M Y";
 $string['datenotset'] = 'Date not set';
 $string['due'] = 'Due';
 $string['duesubmissiondate'] = 'Due /<br>Submission';
+$string['edit'] = 'Edit';
 $string['edit:generalfeedback'] = 'Edit general feedback';
 $string['edit:method'] = 'Edit method';
+$string['edit:module'] = 'Edit module';
 $string['edit:responsibility'] = 'Edit responsibility';
 $string['feedback'] = 'Feedback status';
+$string['feedback:cohort'] = 'Cohort feedback';
 $string['feedback:datenotset'] = 'Date not set';
 $string['feedback:due'] = 'Feedback due';
 $string['feedback:extended'] = 'Feedback in extended period';
@@ -97,7 +101,7 @@ $string['grader'] = 'Grader';
 $string['header:additionalinformation'] = 'Additional information';
 $string['header:assessment'] = 'Assessment';
 $string['header:assessmenttype'] = 'Assessment type';
-$string['header:cohortfeedback'] = 'Cohort feedback<br>provided';
+$string['header:cohortfeedback'] = 'Cohort feedback provided';
 $string['header:contact'] = 'Contact';
 $string['header:duedate'] = 'Due';
 $string['header:edit'] = 'Edit';
@@ -105,8 +109,8 @@ $string['header:feedbackdue'] = 'Feedback due';
 $string['header:feedbackduedate'] = 'Feedback due date';
 $string['header:feedbacks'] = 'Feedback due<br>provided';
 $string['header:generalfeedback'] = 'Additional information';
-$string['header:hiddenfromstudents'] = 'Hidden from student report';
 $string['header:hidden_item'] = 'Hide from report';
+$string['header:hiddenfromstudents'] = 'Hidden from student report';
 $string['header:mark'] = 'Mark';
 $string['header:marking'] = 'Marking';
 $string['header:method'] = 'Method';

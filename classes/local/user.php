@@ -371,7 +371,7 @@ class user {
         }
 
         $warningdays = get_config('report_feedback_tracker', 'warningdays');
-        $warningperiod = $warningdays * DAYSECS; // Number of seconds in the warning period.
+        $warningperiod = $warningdays ? $warningdays * DAYSECS : 0; // Number of seconds in the warning period.
         $dateformat = get_config('report_feedback_tracker', 'dateformat');
 
         // If there is a manual feedback due date use it, otherwise calculate it from the submission due date where set.

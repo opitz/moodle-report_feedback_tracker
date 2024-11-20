@@ -24,6 +24,7 @@
 
 use Behat\Gherkin\Node\TableNode;
 use Behat\Mink\Exception\ExpectationException;
+use Behat\Mink\Exception\ElementNotFoundException;
 
 /**
  * Steps definitions related to editing mode.
@@ -33,6 +34,35 @@ use Behat\Mink\Exception\ExpectationException;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_report_feedback_tracker extends behat_base {
+
+    /**
+     * Clicks the edit button for the given module name.
+     *
+     * Example: I click on the "Edit" button in the "Test quiz" module
+     *
+     * @When /^I click on the "Edit" button in the "([^"]+)" module$/
+     * @param string $modulename The name of the module.
+     * @throws ElementNotFoundException If the module or button cannot be found.
+     */
+    public function i_click_on_the_edit_button_in_the_module($modulename) {
+        $session = $this->getSession();
+        $page = $session->getPage();
+
+        // Locate the module by its name.
+        $module = $page->find('xpath', "//div[@class='module' and @data-modulename='{$modulename}']");
+        if (!$module) {
+            throw new ElementNotFoundException($session, 'module', 'data-modulename', $modulename);
+        }
+
+        // Find the edit button within the module.
+        $button = $module->find('css', '.js-edit-tracker-data');
+        if (!$button) {
+            throw new ElementNotFoundException($session, 'button', 'css', '.js-edit-tracker-data');
+        }
+
+        // Click the button.
+        $button->click();
+    }
 
     /**
      * Select an option from a dropdown menu.

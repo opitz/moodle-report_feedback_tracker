@@ -128,4 +128,97 @@ class admin {
         return $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
     }
 
+    /**
+     * Save the module data from the module edit form.
+     *
+     * @param array $params
+     * @return void
+     */
+    public static function save_module_data(array $params): void {
+        global $DB, $USER;
+
+        $itemid = $params['itemid'];
+        $partid = $params['partid'];
+        $contact = $params['contact'];
+        $method = $params['method'];
+        $hidden = $params['hidden'];
+        $generalfeedback = $params['generalfeedback'];
+        $feedbackduedate = $params['feedbackduedate'];
+        $reason = $params['reason'];
+        $previousfeedbackduedate = $params['previousfeedbackduedate'];
+        $assessmenttype = $params['assessmenttype'];
+        $cohortfeedback = $params['cohortfeedback'];
+
+        // Get or create the record.
+        if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid, 'partid' => $partid])) {
+            $record->responsibility = $contact;
+            $record->method = $method;
+            $record->hidden = isset($hidden);
+            $record->generalfeedback = $generalfeedback;
+
+            // Only save a feedback due date when it has changed.
+            if ($feedbackduedate !== $previousfeedbackduedate) {
+                $record->feedbackduedate = strtotime($feedbackduedate);
+            }
+
+            // Update the current time as gfdate only if the cohort feedback state has changed.
+            if (isset($cohortfeedback)) {
+                if (!$record->gfdate) {
+                    $record->gfdate = time();
+                }
+            } else { // If cohort feedback is disabled remove the date.
+                if ($record->gfdate) {
+                    $record->gfdate = null;
+                }
+            }
+
+            $DB->update_record('report_feedback_tracker', $record);
+        } else {
+            $record = new stdClass();
+            $record->gradeitem = $itemid;
+            $record->partid = $partid;
+            $record->responsibility = $contact;
+            $record->method = $method;
+            $record->hidden = isset($hidden);
+            $record->generalfeedback = $generalfeedback;
+
+            // Save a feedback due date only when it has changed.
+            if ($feedbackduedate !== $previousfeedbackduedate) {
+                $record->feedbackduedate = strtotime($feedbackduedate);
+            }
+
+            // Save the current time as gfdate if cohort feedback is set.
+            if ($cohortfeedback) {
+                $record->gfdate = time();
+            }
+
+            $DB->insert_record('report_feedback_tracker', $record);
+        }
+
+        // If there is a new manually set feedback due date store the reason for it in a different table.
+        if (($feedbackduedate !== $previousfeedbackduedate) && $reason) {
+            $record = new stdClass();
+            $record->gradeitem = $itemid;
+            $record->partid = $partid;
+            $record->feedbackduedate = strtotime($feedbackduedate);
+            $record->reason = $reason;
+            $record->userid = $USER->id;
+            $record->changedate = time();
+            $DB->insert_record('report_feedback_tracker_duedates', $record);
+        }
+
+        // Update the assessment type separately in the local_assess_type table.
+        if ($gradeitem = $DB->get_record('grade_items', ['id' => $itemid])) {
+            // Update course module records.
+            if ($gradeitem->itemtype === 'mod') {
+                if ($cm = get_coursemodule_from_instance($gradeitem->itemmodule, $gradeitem->iteminstance)) {
+                    assess_type::update_type($gradeitem->courseid, $assessmenttype, $cm->id);
+                }
+            } else {
+                // Update the gradebook grade item and category.
+                assess_type::update_type($gradeitem->courseid, $assessmenttype, 0, $itemid);
+            }
+        }
+    }
+
 }

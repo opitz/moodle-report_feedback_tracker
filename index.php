@@ -23,6 +23,7 @@
  */
 
 use core\report_helper;
+use report_feedback_tracker\local\admin;
 use report_feedback_tracker\local\helper;
 
 require_once(__DIR__ . '/../../config.php');
@@ -41,6 +42,24 @@ if ($userid || (!helper::is_course_editor($courseid, $USER->id))) {
 
 $course = isset($courseid) ? get_course($courseid) : $COURSE;
 require_login($course);
+
+// If this was called from a form take care of the form data.
+if ($_SERVER["REQUEST_METHOD"] == "POST" && confirm_sesskey()) {
+    $params = [];
+    $params['itemid'] = required_param('itemid', PARAM_INT);
+    $params['partid'] = optional_param('partid', null, PARAM_INT);
+    $params['contact'] = optional_param('contact', null, PARAM_TEXT);
+    $params['method'] = optional_param('method', null, PARAM_TEXT);
+    $params['hidden'] = optional_param('hidden', null, PARAM_BOOL);
+    $params['generalfeedback'] = optional_param('generalfeedback', null, PARAM_TEXT);
+    $params['feedbackduedate'] = optional_param('feedbackduedate', null, PARAM_TEXT);
+    $params['reason'] = optional_param('reason', null, PARAM_TEXT);
+    $params['previousfeedbackduedate'] = optional_param('previousfeedbackduedate', null, PARAM_TEXT);
+    $params['assessmenttype'] = optional_param('assessmenttype', null, PARAM_INT);
+    $params['cohortfeedback'] = optional_param('cohortfeedback', null, PARAM_INT);
+
+    admin::save_module_data($params);
+}
 
 $pageparams = ['id' => $course->id];
 

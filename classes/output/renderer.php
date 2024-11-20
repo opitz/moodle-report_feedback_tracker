@@ -179,7 +179,6 @@ class renderer extends plugin_renderer_base {
      * Add additional data for the grade item where available.
      *
      * @param stdClass $data
-     * @param array $params
      * @return void
      */
     protected static function add_additional_data(stdClass &$data): void {
@@ -202,12 +201,18 @@ class renderer extends plugin_renderer_base {
                 // If there is a valid raw feedback due date format it.
                 if ($data->feedbackduedateraw && $data->feedbackduedateraw < 9999999999) {
                     $data->feedbackduedate = date($dateformat, $data->feedbackduedateraw);
+                    $data->customfeedbackduedate = true;
                 }
             }
 
             // Check if there is additional data to show.
             if ($data->generalfeedback || $data->method || $data->contact) {
                 $data->additionaldata = true;
+            }
+
+            // Check if cohort feedback has been set.
+            if ($record->gfdate) {
+                $data->cohortfeedback = true;
             }
 
             $data->hiddenfromreport = (isset($data->hiddenfromreport) && $data->hiddenfromreport) || $record->hidden;

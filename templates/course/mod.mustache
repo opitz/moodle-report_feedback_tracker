@@ -1,4 +1,40 @@
-<div class="module">
+{{!
+    This file is part the Feedback tracker report plugin for Moodle
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template report_feedback_tracker/mod
+
+    Template for a module of the Feedback tracker course report.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * none
+
+    Example context (json):
+    {
+        "moduletypeiconurl": "https://www.nasa.gov"
+    }
+
+}}
+
+<div class="module" data-modulename="{{{name}}}">
     <div class="row">
         {{! Mod details. }}
         <div class="col-12 col-md-5 my-1">
@@ -9,7 +45,7 @@
                 {{^manual}}
                     <span data-icon><img class='icon mr-0' src='{{{moduletypeiconurl}}}' alt='{{{name}}}'></span>
                 {{/manual}}
-                <span data-name>{{{name}}}</span>
+                <span class="module-name" data-name>{{{name}}}</span>
             </a>
             {{#hiddenfromstudents}}
                 <br><div class="badge badge-warning"><i class="fa-regular fa-eye-slash"></i> {{#str}} badge:hiddenfromstudents, report_feedback_tracker {{/str}}</div>
@@ -77,9 +113,17 @@
                             <span class="d-md-none">{{#str}} feedback:due, report_feedback_tracker {{/str}}: </span>{{{feedbackduedate}}}
                         {{/feedbackduedate}}
 
+                        {{#customfeedbackduedate}}
+                            <br><div class="badge badge-warning">{{#str}} feedbackduedate:custom, report_feedback_tracker {{/str}}</div>
+                        {{/customfeedbackduedate}}
+
                         {{#markoverdue}}
                             <br><div class="badge badge-danger">{{#str}} feedback:overdue, report_feedback_tracker {{/str}}</div>
                         {{/markoverdue}}
+
+                        {{#cohortfeedback}}
+                            <br><div class="badge badge-light js-cohortfeedback">{{#str}} feedback:cohort, report_feedback_tracker {{/str}}</div>
+                        {{/cohortfeedback}}
                     </div>
 
                     <div class="col-3">
@@ -109,9 +153,9 @@
 
                     <div class="col-2 text-right">
                         {{#outputedit}}
-                            <dev class="js-edit-tracker-data btn btn-outline-secondary" data-cmid="{{cmid}}" data-courseid="{{courseid}}" data-gradeitemid="{{gradeitemid}}" data-partid="{{partid}}" data-action="report_feedback_tracker/editmodule">
+                            <button class="js-edit-tracker-data btn btn-outline-secondary" data-cmid="{{cmid}}" data-courseid="{{courseid}}" data-gradeitemid="{{gradeitemid}}" data-partid="{{partid}}" data-action="report_feedback_tracker/editmodule">
                                 Edit <span class="sr-only">{{{name}}}</span>
-                            </dev>
+                            </button>
                         {{/outputedit}}
                     </div>
                 </div>

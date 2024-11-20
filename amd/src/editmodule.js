@@ -1,7 +1,8 @@
-import ModalSaveCancel from 'core/modal_save_cancel';
+import Modal from 'core/modal';
 import ModalEvents from 'core/modal_events';
 import Templates from 'core/templates';
-import {getAssessmentTypes, updateModule} from "./repository";
+import {getAssessmentTypes} from "./repository";
+import {get_string as getString} from 'core/str';
 
 const Selectors = {
     actions: {
@@ -10,18 +11,17 @@ const Selectors = {
 };
 
 export const init = async() => {
-    window.console.log('editmodule.js initialised');
 
     document.addEventListener('click', async e => {
         if (e.target.closest(Selectors.actions.editModule)) {
+            const sesskey = M.cfg.sesskey;
+            const courseid = document.getElementById('courseid').value;
             const gradeitemid = e.target.getAttribute('data-gradeitemid');
             const partid = e.target.getAttribute('data-partid');
 
             const module = e.target.closest('.module');
-
             const icon = module.querySelector('[data-icon]').innerHTML;
             const name = module.querySelector('[data-name]').innerHTML;
-
             const assessmenttype = module.querySelector('[data-assessmenttype]').getAttribute('data-assessmenttype');
             const locked = module.querySelector('[data-locked]').getAttribute('data-locked') * 1;
             const assessmenttypelabel = module.querySelector('[data-label]').getAttribute('data-label');
@@ -58,11 +58,18 @@ export const init = async() => {
             const assessTypeDummy = 2;
             const hiddendisabled = (selection === assessTypeDummy) || locked;
 
+            const cohortfeedback = module.querySelector('.js-cohortfeedback');
+
+            const title = `${await getString('edit', 'report_feedback_tracker')} ${name}`;
+
             // Show a modal to edit.
-            const modal = await ModalSaveCancel.create({
-                title: 'Edit module',
+            const modal = await Modal.create({
+                title: title,
+                removeOnClose: true,
                 body: Templates.render('report_feedback_tracker/course/modedit_modal',
                     {
+                        sesskey: sesskey,
+                        courseid: courseid,
                         gradeitemid: gradeitemid,
                         partid: partid,
                         icon: icon,
@@ -77,40 +84,11 @@ export const init = async() => {
                         locked: locked,
                         feedbackduedateraw: feedbackduedateraw,
                         formatteddate: formatteddate,
-                        assessmenttypes: assessmenttypes
+                        assessmenttypes: assessmenttypes,
+                        cohortfeedback: cohortfeedback
                     }),
             });
             modal.show();
-
-            modal.getRoot().on(ModalEvents.save, async() => {
-                const gradeitemid = document.getElementById('js-gradeitemid').value;
-                const partid = document.getElementById('js-partid').value;
-                const contact = document.getElementById('contact').value;
-                const method = document.getElementById('method').value;
-                const hidden = document.getElementById('hidden').checked;
-                const assessmenttype = document.getElementById('js-assessmenttype').value;
-                const generalfeedback = document.getElementById('generalfeedback').value;
-
-                // The feedback due date from date picker.
-                const feedbackduedate = document.getElementById('feedbackduedate').value;
-                const formatteddate = document.getElementById('js-formatteddate').value;
-
-                // Convert the datepicker output into UNIX timestamp.
-                const date = new Date(feedbackduedate);
-                let feedbackduedateraw = Math.floor(date.getTime() / 1000);
-
-                // If the date has NOT changed, mark it for NOT saving.
-                if (feedbackduedate === formatteddate) {
-                    feedbackduedateraw = -1;
-                }
-
-                // Update the database.
-                await updateModule(gradeitemid, partid, contact, method, hidden, assessmenttype,
-                    feedbackduedateraw, generalfeedback);
-
-                // Reload the page.
-                location.reload(true);
-            });
 
             modal.getRoot().on(ModalEvents.cancel, () => {
                 modal.destroy();

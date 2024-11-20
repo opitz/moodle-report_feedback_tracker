@@ -31,20 +31,14 @@ Feature: In a course administration page, navigate through report page, test for
 #    And I click on "Save and return to course" "button"
 
   @javascript
-  Scenario: For an admin the selector should be available in course feedback report report page
+  Scenario: For an admin the report selector should be available in course feedback report page
     Given I am on the "Course 1" "course" page logged in as "admin"
     When I navigate to "Reports" in current page administration
     And I click on "Feedback tracker" "link"
     Then "Report" "field" should exist in the "tertiary-navigation" "region"
     And I should see "Feedback tracker" in the "tertiary-navigation" "region"
+    And I should see "Course report"
     And I should see "Test quiz"
-    And I should not see "Hide from report"
-    And I am on "Course 1" course homepage with editing mode on
-    When I navigate to "Reports" in current page administration
-    And I click on "Feedback tracker" "link"
-    Then I should see "Feedback tracker" in the "tertiary-navigation" "region"
-    And I should see "Test quiz"
-    And I should see "Hide from report"
     And I log out
 
   @javascript
@@ -54,6 +48,7 @@ Feature: In a course administration page, navigate through report page, test for
     And I click on "Feedback tracker" "link"
     Then "Report" "field" should exist in the "tertiary-navigation" "region"
     And I should see "Feedback tracker" in the "tertiary-navigation" "region"
+    And I should see "Course report"
     And I should see "Test quiz"
 
   @javascript

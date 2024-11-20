@@ -41,76 +41,78 @@ Feature: As an admin I want to be able to hide a grade item from the report, I w
     Then "Report" "field" should exist in the "tertiary-navigation" "region"
     And I should see "Feedback tracker" in the "tertiary-navigation" "region"
     And I should see "Test quiz"
-    And I should not see "Hide from report"
-    And I turn editing mode on
-    Then I should see "Feedback tracker" in the "tertiary-navigation" "region"
-    And I should see "Test assignment" in the "#js-feedback-table" "css_element"
-    And I should see "Test quiz" in the "#js-feedback-table" "css_element"
-    And I should see "Hide from report" in the "#js-feedback-table" "css_element"
-    # Hide item from report.
-    When I click on ".hiding_checkbox:nth-child(1)" "css_element"
-    And I turn editing mode off
-    Then I should see "Feedback tracker" in the "tertiary-navigation" "region"
-    And I should not see "Test assignment" in the "#js-feedback-table" "css_element"
-    And I should see "Test quiz" in the "#js-feedback-table" "css_element"
+    And I should not see "Hidden from report"
+
+    And I click on the "Edit" button in the "Test quiz" module
+    Then I should see "Edit Test quiz"
+
+    When I click on "Hidden from student report" "checkbox"
+    And I press "Save"
+    Then I should see "Hidden from report"
+
     And I log out
+
     # Check that the student cannot see the hidden item as well.
     When I am on the "Course 1" "course" page logged in as "student1"
     And I follow "Profile" in the user menu
     And I follow "Feedback tracker"
     Then I should see "Feedback tracker"
-    And I should not see "Test assignment" in the "#behat-feedback-area" "css_element"
-    And I should see "Test quiz" in the "#behat-feedback-area" "css_element"
+    And I should not see "Test quiz"
+    And I should see "Test assignment"
     And I log out
+
     # Make item visible again.
     When I am on the "Course 1" "course" page logged in as "admin"
     When I navigate to "Reports" in current page administration
     And I click on "Feedback tracker" "link"
-    And I turn editing mode on
-    Then I should see "Test assignment"
-    When I click on ".hiding_checkbox:nth-child(1)" "css_element"
-    And I turn editing mode off
-    And I should see "Test assignment" in the "#js-feedback-table" "css_element"
-    And I should see "Test quiz" in the "#js-feedback-table" "css_element"
+    Then I should see "Test quiz"
+    And I should see "Hidden from report"
+    And I click on the "Edit" button in the "Test quiz" module
+    Then I should see "Edit Test quiz"
+
+    When I click on "Hidden from student report" "checkbox"
+    And I press "Save"
+    Then I should not see "Hidden from report"
+
     And I log out
+
     # Check that the student can see the revealed item again as well.
     When I am on the "Course 1" "course" page logged in as "student1"
     And I follow "Profile" in the user menu
     And I follow "Feedback tracker"
     Then I should see "Feedback tracker"
-    And I should see "Test assignment" in the "#behat-feedback-area" "css_element"
-    And I should see "Test quiz" in the "#behat-feedback-area" "css_element"
+    And I should see "Test assignment"
+    And I should see "Test quiz"
 
   @javascript
   Scenario: As a course admin I can add additional information.
     Given I am on the "Course 1" "course" page logged in as "admin"
+
     When I navigate to "Reports" in current page administration
     And I click on "Feedback tracker" "link"
-    And I turn editing mode on
-    When I click on ".fa-pencil:nth-child(2)" "css_element"
-    Then I should see "Additional information"
+
+    And I click on the "Edit" button in the "Test quiz" module
+    Then I should see "Edit Test quiz"
+    And I click on "#behat-additional-details" "css_element"
+    Then I should see "Contact"
+
     When I set the following fields to these values:
-      | generalfeedback | Some general feedback |
-      | gfurl           | https://www.ucl.ac.uk  |
-    And I press "Save changes"
-    Then I should see "Some general feedback"
-    And I should see "https://www.ucl.ac.uk"
+      | Method                  | Method test                   |
+      | Contact                 | Contact test                  |
+      | Additional information  | Addtitional information test  |
+
+    And I press "Save"
+
+    Then I should see "Method test"
+    And I should see "Contact test"
+    And I should see "Addtitional information test"
+
     And I log out
-    # Check that a student can see the general feedback.
+
+    # Check that a student can see the additional information.
     When I am on the "Course 1" "course" page logged in as "student1"
     And I follow "Profile" in the user menu
     And I follow "Feedback tracker"
-    Then I should see "Feedback tracker"
-    And I should see "Some general feedback"
-    And I should see "https://www.ucl.ac.uk"
-
-  @javascript
-  Scenario: As a course admin I can use filter to narrow down information.
-    Given I am on the "Course 1" "course" page logged in as "admin"
-    When I navigate to "Reports" in current page administration
-    And I click on "Feedback tracker" "link"
-    Then I should see "Test assignment" in the "#js-feedback-table" "css_element"
-    And I should see "Test quiz" in the "#js-feedback-table" "css_element"
-    When I select "Quiz" from the "filtertype" dropdown
-    Then I should not see "Test assignment" in the "#js-feedback-table" "css_element"
-    And I should see "Test quiz" in the "#js-feedback-table" "css_element"
+    Then I should see "Method test"
+    And I should see "Contact test"
+    And I should see "Addtitional information test"

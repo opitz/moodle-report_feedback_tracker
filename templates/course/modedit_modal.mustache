@@ -14,9 +14,9 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template report_feedback_tracker/generalfeedback_modal
+    @template report_feedback_tracker/modedit_modal
 
-    Template for displaying a modal dialog to edit general feedback.
+    Template for displaying a modal dialog to edit information for a module.
 
     Classes required for JS:
     * none
@@ -29,7 +29,7 @@
 
     Example context (json):
     {
-        "title": "A title",
+        "name": "A name",
         "generalfeedbacklabel": "General Feedback:",
         "generalfeedback": "This is good.",
         "gfurllabel": "NASA",
@@ -37,60 +37,100 @@
     }
 
 }}
-<div class="modal-header text-nowrap">
-    <h5>{{{icon}}} {{{name}}}</h5>
-</div>
+
 <div class="modal-body">
-    <div class="row">
-        <form id="modalForm">
-            <input type="hidden" id="js-gradeitemid" value="{{gradeitemid}}">
-            <input type="hidden" id="js-partid" value="{{partid}}">
+    <form action="/report/feedback_tracker/?id={{courseid}}" method="post">
+        {{! Hidden data. }}
+        <input type="hidden" name="sesskey" value="{{sesskey}}">
+        <input type="hidden" id="gradeitemid" name="itemid" value="{{gradeitemid}}">
+        <input type="hidden" id="partid" name="partid" value="{{partid}}">
 
-            <div class="form-group">
-                <label for="contact" class="font-weight-bold">{{#str}} header:contact, report_feedback_tracker {{/str}}</label>
-                <input type="text" class="form-control" id="contact" name="contact" value="{{{contact}}}">
-
-            </div>
-            <div class="form-group">
-                <label for="method" class="font-weight-bold">{{#str}} header:method, report_feedback_tracker {{/str}}</label>
-                <input type="text" class="form-control" id="method" name="method" value="{{{method}}}">
-
-            </div>
-            <div class="form-group">
-                <label for="generalfeedback" class="font-weight-bold">{{#str}} header:generalfeedback, report_feedback_tracker {{/str}}</label>
-                <textarea class="form-control" id="generalfeedback" name="generalfeedback" rows= "5">{{{generalfeedback}}}</textarea>
-
-            </div>
-            <div class="form-group">
-                <label for="feedbackduedate" class="font-weight-bold">{{#str}} header:feedbackduedate, report_feedback_tracker {{/str}}</label>
-                <input type="date" class="form-control" id="feedbackduedate" name="feedbackduedate" value="{{{formatteddate}}}">
-                <input type="hidden" id="js-formatteddate" value="{{formatteddate}}">
-
-            </div>
-            <div class="form-group">
-                <label for="js-assessmenttype" class="font-weight-bold">{{#str}} header:assessmenttype, report_feedback_tracker {{/str}}</label>
+        {{! Assessment type.}}
+        <fieldset>
+            <legend class="h6">{{#str}} header:assessmenttype, report_feedback_tracker {{/str}}</legend>
+            <div class="form-group py-1">
+                <label for="assessmenttype" class="sr-only">{{#str}} header:assessmenttype, report_feedback_tracker {{/str}}</label>
 
                 {{#locked}}
                     <div>{{assessmenttypelabel}}</div>
                 {{/locked}}
                 {{^locked}}
-                    <select id="js-assessmenttype" class="form-control">
+                    <select id="assessmenttype" name="assessmenttype" class="form-control">
                         {{#assessmenttypes}}
                             <option value="{{value}}" {{#isselected}}selected{{/isselected}}>{{label}}</option>
                         {{/assessmenttypes}}
                     </select>
                 {{/locked}}
             </div>
-            <div class="form-group">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" value="" id="hidden" name="hidden" {{#hidden}}checked{{/hidden}} {{#hiddendisabled}}disabled{{/hiddendisabled}}>
-                    <label for="hidden" class="form-check-label">
-                        {{#str}} header:hiddenfromstudents, report_feedback_tracker {{/str}}
-                    </label>
+            <div class="custom-control custom-switch py-1">
+                <input type="checkbox" class="custom-control-input" value="" id="hidden" name="hidden" {{#hidden}}checked{{/hidden}} {{#hiddendisabled}}disabled{{/hiddendisabled}}>
+                <label for="hidden" class="custom-control-label">
+                    {{#str}} header:hiddenfromstudents, report_feedback_tracker {{/str}}
+                </label>
+            </div>
+
+        </fieldset>
+        <hr>
+
+        {{! Feedback due date. }}
+        <fieldset>
+            <legend class="h6">{{#str}} header:feedbackduedate, report_feedback_tracker {{/str}}</legend>
+            <div class="form-group py-1">
+                <label for="feedbackduedate" class="sr-only">{{#str}} header:feedbackduedate, report_feedback_tracker {{/str}}</label>
+                <input type="date" class="form-control" id="feedbackduedate" name="feedbackduedate" value="{{{formatteddate}}}">
+                <input type="hidden" id="previousfeedbackduedate" name="previousfeedbackduedate" value="{{formatteddate}}">
+            </div>
+
+            {{! Dynamic form elements. }}
+            <div id="js-reason" class="sr-only">
+                <div class="form-group py-1">
+                    <label for="reason">{{#str}} feedbackduedate:reason, report_feedback_tracker {{/str}}</label>
+                    <input type="text" class="form-control" id="reason" name="reason" value="">
                 </div>
             </div>
-        </form>
-    </div>
+        </fieldset>
+        <hr>
+
+        {{! Additional data. }}
+        <fieldset>
+            <legend class="sr-only">{{#str}} header:additionalinformation, report_feedback_tracker {{/str}}</legend>
+            <details>
+                <summary id="behat-additional-details" class="h6">{{#str}} header:additionalinformation, report_feedback_tracker {{/str}}</summary>
+                <p class="bg-light p-3 small">{{#str}} additionalinformationhint, report_feedback_tracker {{/str}}
+                <p>
+
+                <div class="form-group py-1">
+                    <label for="method">{{#str}} header:method, report_feedback_tracker {{/str}}</label>
+                    <input type="text" class="form-control" id="method" name="method" value="{{{method}}}">
+                </div>
+
+                <div class="form-group py-1">
+                    <label for="contact">{{#str}} header:contact, report_feedback_tracker {{/str}}</label>
+                    <input type="text" class="form-control" id="contact" name="contact" value="{{{contact}}}">
+                </div>
+
+                <div class="form-group py-1">
+                    <label for="generalfeedback">{{#str}} header:generalfeedback, report_feedback_tracker {{/str}}</label>
+                    <textarea class="form-control" id="generalfeedback" name="generalfeedback" rows= "5">{{{generalfeedback}}}</textarea>
+                </div>
+
+                <div class="custom-control custom-switch py-1">
+                    <input type="checkbox" class="custom-control-input" value="" id="cohortfeedback" name="cohortfeedback" {{#cohortfeedback}}checked{{/cohortfeedback}}>
+                    <label for="cohortfeedback" class="custom-control-label">
+                        {{#str}} header:cohortfeedback, report_feedback_tracker {{/str}}
+                    </label>
+                </div>
+
+            </details>
+        </fieldset>
+        <hr>
+
+        <div class="text-right py-1">
+            <input type="button" class="btn btn-secondary" data-action="hide" aria-label="Close" value="{{#str}}cancel{{/str}}">
+            <input type="submit" class="btn btn-primary" value="{{#str}}save{{/str}}">
+        </div>
+
+    </form>
 </div>
 
 {{#js}}
