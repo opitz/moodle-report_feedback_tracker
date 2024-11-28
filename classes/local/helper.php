@@ -1172,8 +1172,8 @@ class helper {
             $overrides[$groupoverride->userid] = $groupoverride->userid;
         }
 
-        // Count unique users.
-        return count(array_unique($overrides));
+        // Count users.
+        return count($overrides);
     }
 
     /**

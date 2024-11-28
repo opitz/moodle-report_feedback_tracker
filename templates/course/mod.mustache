@@ -134,8 +134,7 @@
                         {{#overrides}}
                             <div>
                                 <a href="{{{overridesurl}}}" class="small">
-                                    <i class="fa-solid fa-user-clock"></i>
-                                    {{overrides}} {{#str}}users:have_extensions, report_feedback_tracker{{/str}}
+                                    <i class="fa-solid fa-user-clock"></i>{{.}}
                                 </a>
                             </div>
                         {{/overrides}}
@@ -144,7 +143,9 @@
                     <div class="col-3">
                         {{#submissions}}
                             {{#requiredfeedbacks}}
-                                <a href="{{{url}}}">{{requiredfeedbacks}} <small>{{#str}} requiremarking, report_feedback_tracker {{/str}}</small></a>
+                                <a href="{{{url}}}">
+                                    <small>{{#str}} requiremarking, report_feedback_tracker, {{.}} {{/str}}</small>
+                                </a>
                             {{/requiredfeedbacks}}
 
                             <div>

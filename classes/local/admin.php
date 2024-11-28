@@ -92,7 +92,12 @@ class admin {
         $data->markoverdue = false;
 
         // Student data.
-        $data->overrides = helper::get_overrides($module);
+        $overrides = helper::get_overrides($module);
+        if ($overrides === 1) {
+            $data->overrides = get_string('users:extension', 'report_feedback_tracker');
+        } else if ($overrides > 1) {
+            $data->overrides = get_string('users:extensions', 'report_feedback_tracker', $overrides);
+        }
         $data->overridesurl = helper::get_overrides_url($module);
         $data->submissions = helper::count_submissions($module);
 
