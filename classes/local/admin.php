@@ -19,9 +19,10 @@ use coding_exception;
 use course_modinfo;
 use dml_exception;
 use grade_item;
-use html_writer;
 use local_assess_type\assess_type;
+use moodle_url;
 use stdClass;
+use cm_info;
 
 /**
  * This file contains the admin functions used by the feedback tracker report.
@@ -106,6 +107,7 @@ class admin {
         $data->feedbackpercentage = $data->submissions ?
             round(($data->submissions - $data->requiredfeedbacks) / $data->submissions * 100, 0) : 0;
         $data->url = $module->get_url();
+        $data->markingurl = self::get_markingurl($module);
 
         return $data;
     }
@@ -131,6 +133,25 @@ class admin {
 
         // Execute the query.
         return $DB->get_record_sql($sql, ['gradeitemid' => $gradeitem->id]);
+    }
+
+    /**
+     * Get a URL to marking.
+     *
+     * @param cm_info $module
+     * @return string
+     */
+    private static function get_markingurl(cm_info $module): string {
+        global $CFG;
+
+        switch ($module->modname) {
+            case 'assign':
+                return new moodle_url('/mod/assign/view.php', ['id' => $module->id, 'action' => 'grading']);
+            case 'quiz':
+                return new moodle_url('/mod/quiz/report.php', ['id' => $module->id, 'mode' => 'overview']);
+        }
+
+        return $module->get_url();
     }
 
     /**
