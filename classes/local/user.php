@@ -405,11 +405,10 @@ class user {
         $data->student = $gradeitem->student;
         $data->grader = $gradeitem->grader;
         $data->feedbackdate = $gradeitem->feedbackdate ? $gradeitem->feedbackdate : $gradeitem->gfdate;
-        $data->feedbackstatus = helper::get_feedback_status($gradeitem, $feedbackduedate, $submissiondate);
         $data->feedback = helper::get_feedback_badge($gradeitem, $feedbackduedate, $submissiondate);
         $data->method = $gradeitem->method;
         $data->responsibility = html_writer::div($gradeitem->responsibility);
-        $data->generalfeedback = helper::get_generalfeedback($gradeitem);
+        $data->generalfeedback = $gradeitem->generalfeedback;
         $data->gfurl = $gradeitem->gfurl;
         $data->contact = $gradeitem->responsibility;
         $data->additionaldata = $data->generalfeedback || $data->method || $data->contact;

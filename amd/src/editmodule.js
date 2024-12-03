@@ -25,24 +25,21 @@ export const init = async() => {
             const assessmenttype = module.querySelector('[data-assessmenttype]').getAttribute('data-assessmenttype');
             const locked = module.querySelector('[data-locked]').getAttribute('data-locked') * 1;
             const assessmenttypelabel = module.querySelector('[data-label]').getAttribute('data-label');
-            const feedbackduedateraw = module.querySelector('[data-feedbackduedateraw]').getAttribute('data-feedbackduedateraw');
 
-            // Format the feedback due date for the date picker.
-            let date = new Date(Date.now()); // Use the current date timestamp in milliseconds by default.
-            if (feedbackduedateraw < 9999999999) { // If there is a valid raw feedback date use this.
-                date = new Date(feedbackduedateraw * 1000); // Convert to milliseconds
-            }
-            // Extract year, month, and day, and format as 'Y-m-d'
-            const fullyear = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const formatteddate = `${fullyear}-${month}-${day}`;
+            const formattedduedate = module.querySelector('[data-customfeedbackduedate]') ?
+                module.querySelector('[data-customfeedbackduedate]').
+                getAttribute('data-customfeedbackduedate') : null;
+
+            const formattedreleaseddate = module.querySelector('[data-customfeedbackreleaseddate]') ?
+                module.querySelector('[data-customfeedbackreleaseddate]').
+                getAttribute('data-customfeedbackreleaseddate') : null;
 
             // Optional information.
             const contactElement = module.querySelector('[data-contact]');
             const methodElement = module.querySelector('[data-method]');
             const generalfeedbackElement = module.querySelector('[data-generalfeedback]');
             const hiddenElement = module.querySelector('[data-hiddenfromreport]');
+            const reasonElement = module.querySelector('[data-feedbackduedatereason]');
 
             const contact = contactElement ? contactElement.getAttribute('data-contact') : null;
             const method = methodElement ? methodElement.getAttribute('data-method') : null;
@@ -54,13 +51,16 @@ export const init = async() => {
             const assessmenttypes = JSON.parse(await getAssessmentTypes(selection));
 
             // If assessment type is either dummy or summative set by SITS disable 'hide from student report' option.
-            // TODO: Use assess_type::ASSESS_TYPE_DUMMY.
-            const assessTypeDummy = 2;
+            const assessTypeDummy = 2; // This is assess_type::ASSESS_TYPE_DUMMY.
             const hiddendisabled = (selection === assessTypeDummy) || locked;
 
-            const cohortfeedback = module.querySelector('.js-cohortfeedback');
+            const feedbackduedatereason = reasonElement ? reasonElement.getAttribute('data-feedbackduedatereason') : null;
 
             const title = `${await getString('edit', 'report_feedback_tracker')} ${name}`;
+
+            const today = new Date();
+            // Format the date as YYYY-MM-DD
+            const formattedtoday = today.toISOString().split('T')[0];
 
             // Show a modal to edit.
             const modal = await Modal.create({
@@ -82,13 +82,14 @@ export const init = async() => {
                         assessmenttype: assessmenttype,
                         assessmenttypelabel: assessmenttypelabel,
                         locked: locked,
-                        feedbackduedateraw: feedbackduedateraw,
-                        formatteddate: formatteddate,
+                        formattedduedate: formattedduedate,
                         assessmenttypes: assessmenttypes,
-                        cohortfeedback: cohortfeedback
+                        formattedreleaseddate: formattedreleaseddate,
+                        feedbackduedatereason: feedbackduedatereason,
+                        today: formattedtoday
                     }),
             });
-            modal.show();
+            await modal.show();
 
             modal.getRoot().on(ModalEvents.cancel, () => {
                 modal.destroy();

@@ -113,6 +113,50 @@ class admin {
     }
 
     /**
+     * Add additional data for the grade item where available.
+     *
+     * @param stdClass $data
+     * @return void
+     */
+    public static function add_additional_data(stdClass &$data): void {
+        global $DB;
+
+        $dateformat = get_config('report_feedback_tracker', 'dateformat');
+
+        $params = ['gradeitem' => $data->gradeitemid];
+        if ($data->partid) {
+            $params['partid'] = $data->partid;
+        }
+
+        // There should be only one record - make sure nevertheless...
+        if ($record = $DB->get_record('report_feedback_tracker', $params, '*', IGNORE_MULTIPLE)) {
+            $data->method = $record->method;
+            $data->contact = $record->responsibility;
+            $data->generalfeedback = $record->generalfeedback;
+
+            if ($record->feedbackduedate) {
+                $data->customfeedbackduedate = date('Y-m-d', $record->feedbackduedate);
+                $data->feedbackduedateraw = $record->feedbackduedate;
+                $data->feedbackduedate = date($dateformat, $record->feedbackduedate);
+
+                // Get a custom feedback due date reason entry for the grade item where available.
+                $data->feedbackduedatereason = self::get_reason($data->gradeitemid, $data->feedbackduedate);
+            }
+
+            // Check if there is additional data to show.
+            if ($data->generalfeedback || $data->method || $data->contact) {
+                $data->additionaldata = true;
+            }
+
+            if ($record->gfdate) {
+                $data->customfeedbackreleaseddate = date('Y-m-d', $record->gfdate);
+            }
+
+            $data->hiddenfromreport = (isset($data->hiddenfromreport) && $data->hiddenfromreport) || $record->hidden;
+        }
+    }
+
+    /**
      * Get a course module ID from a grade item where available.
      *
      * @param grade_item $gradeitem
@@ -170,10 +214,14 @@ class admin {
         $hidden = $params['hidden'];
         $generalfeedback = $params['generalfeedback'];
         $feedbackduedate = $params['feedbackduedate'];
+        $feedbackreleaseddate = $params['feedbackreleaseddate'];
         $reason = $params['reason'];
         $previousfeedbackduedate = $params['previousfeedbackduedate'];
         $assessmenttype = $params['assessmenttype'];
         $cohortfeedback = $params['cohortfeedback'];
+        $customfeedbackduedatecheckbox = $params['customfeedbackduedatecheckbox'];
+        $customfeedbackreleaseddatecheckbox = $params['customfeedbackreleaseddatecheckbox'];
+        $locked = $params['locked'];
 
         // Get or create the record.
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $itemid, 'partid' => $partid])) {
@@ -182,15 +230,20 @@ class admin {
             $record->hidden = isset($hidden);
             $record->generalfeedback = $generalfeedback;
 
-            // Only save a feedback due date when it has changed.
-            if ($feedbackduedate !== $previousfeedbackduedate) {
-                $record->feedbackduedate = strtotime($feedbackduedate);
+            // If custom feedback due date is checked.
+            if (isset($customfeedbackduedatecheckbox)) {
+                // Only save a feedback due date when it has changed.
+                if ($feedbackduedate !== $previousfeedbackduedate) {
+                    $record->feedbackduedate = strtotime($feedbackduedate);
+                }
+            } else { // Remove the custom feedback due date.
+                $record->feedbackduedate = null;
             }
 
             // Update the current time as gfdate only if the cohort feedback state has changed.
-            if (isset($cohortfeedback)) {
+            if (isset($customfeedbackreleaseddatecheckbox)) {
                 if (!$record->gfdate) {
-                    $record->gfdate = time();
+                    $record->gfdate = strtotime($feedbackreleaseddate);
                 }
             } else { // If cohort feedback is disabled remove the date.
                 if ($record->gfdate) {
@@ -233,8 +286,8 @@ class admin {
             $DB->insert_record('report_feedback_tracker_duedates', $record);
         }
 
-        // Update the assessment type separately in the local_assess_type table.
-        if ($gradeitem = $DB->get_record('grade_items', ['id' => $itemid])) {
+        // If the assessment type is not locked update it separately in the local_assess_type table.
+        if (!$locked && ($gradeitem = $DB->get_record('grade_items', ['id' => $itemid]))) {
             // Update course module records.
             if ($gradeitem->itemtype === 'mod') {
                 if ($cm = get_coursemodule_from_instance($gradeitem->itemmodule, $gradeitem->iteminstance)) {
@@ -245,6 +298,25 @@ class admin {
                 assess_type::update_type($gradeitem->courseid, $assessmenttype, 0, $itemid);
             }
         }
+    }
+
+    /**
+     * Return the current reason for a custom feedback due date or false.
+     *
+     * @param int $gradeitemid
+     * @param string $feedbackduedate
+     * @return string
+     */
+    public static function get_reason(int $gradeitemid, string $feedbackduedate): string {
+        global $DB;
+
+        $params = ['gradeitem' => $gradeitemid, 'feedbackduedate' => strtotime($feedbackduedate)];
+        $record = $DB->get_record('report_feedback_tracker_duedates', $params, '*', IGNORE_MULTIPLE);
+        if (isset($record->reason)) {
+            return $record->reason;
+        }
+
+        return "";
     }
 
 }

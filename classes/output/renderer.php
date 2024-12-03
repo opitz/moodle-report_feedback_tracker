@@ -136,7 +136,7 @@ class renderer extends plugin_renderer_base {
                         $item->feedbackduedate = $duedate ? date($dateformat, $item->feedbackduedateraw) : false;
 
                         // Get additional information for each part record.
-                        self::add_additional_data($item);
+                        admin::add_additional_data($item);
 
                         // If there is a valid raw due date format it.
                         $item->feedbackduedate = ($item->feedbackduedateraw && $item->feedbackduedateraw < 9999999999) ?
@@ -146,7 +146,7 @@ class renderer extends plugin_renderer_base {
                     }
                 } else {
                     // Get additional information for the record.
-                    self::add_additional_data($item);
+                    admin::add_additional_data($item);
 
                     $data->items[] = $item;
                 }
@@ -161,7 +161,7 @@ class renderer extends plugin_renderer_base {
                 $item->url = "$CFG->wwwroot/grade/report/singleview/index.php?id=$gradeitem->courseid&" .
                     "item=grade&itemid=$gradeitem->id&gpr_type=report&gpr_plugin=grader&gpr_courseid=$gradeitem->courseid";
                 // Get additional information for each part record.
-                self::add_additional_data($item);
+                admin::add_additional_data($item);
 
                 $data->items[] = $item;
             }
@@ -173,51 +173,6 @@ class renderer extends plugin_renderer_base {
         });
 
         return $this->output->render_from_template('report_feedback_tracker/course/course', $data);
-    }
-
-    /**
-     * Add additional data for the grade item where available.
-     *
-     * @param stdClass $data
-     * @return void
-     */
-    protected static function add_additional_data(stdClass &$data): void {
-        global $DB;
-
-        $dateformat = get_config('report_feedback_tracker', 'dateformat');
-
-        $params = ['gradeitem' => $data->gradeitemid];
-        if ($data->partid) {
-            $params['partid'] = $data->partid;
-        }
-
-        // There should be only one record - make sure nevertheless...
-        if ($record = $DB->get_record('report_feedback_tracker', $params, '*', IGNORE_MULTIPLE)) {
-            $data->method = $record->method;
-            $data->contact = $record->responsibility;
-            $data->generalfeedback = $record->generalfeedback;
-
-            if ($record->feedbackduedate) {
-                $data->feedbackduedateraw = $record->feedbackduedate;
-                // If there is a valid raw feedback due date format it.
-                if ($data->feedbackduedateraw && $data->feedbackduedateraw < 9999999999) {
-                    $data->feedbackduedate = date($dateformat, $data->feedbackduedateraw);
-                    $data->customfeedbackduedate = true;
-                }
-            }
-
-            // Check if there is additional data to show.
-            if ($data->generalfeedback || $data->method || $data->contact) {
-                $data->additionaldata = true;
-            }
-
-            // Check if cohort feedback has been set.
-            if ($record->gfdate) {
-                $data->cohortfeedback = true;
-            }
-
-            $data->hiddenfromreport = (isset($data->hiddenfromreport) && $data->hiddenfromreport) || $record->hidden;
-        }
     }
 
 }

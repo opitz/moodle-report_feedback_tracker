@@ -46,7 +46,7 @@ Feature: As an admin I want to be able to hide a grade item from the report, I w
     And I click on the "Edit" button in the "Test quiz" module
     Then I should see "Edit Test quiz"
 
-    When I click on "Hidden from student report" "checkbox"
+    When I click on "Hide from student report" "checkbox"
     And I press "Save"
     Then I should see "Hidden from report"
 
@@ -70,7 +70,7 @@ Feature: As an admin I want to be able to hide a grade item from the report, I w
     And I click on the "Edit" button in the "Test quiz" module
     Then I should see "Edit Test quiz"
 
-    When I click on "Hidden from student report" "checkbox"
+    When I click on "Hide from student report" "checkbox"
     And I press "Save"
     Then I should not see "Hidden from report"
 
@@ -97,7 +97,7 @@ Feature: As an admin I want to be able to hide a grade item from the report, I w
     Then I should see "Contact"
 
     When I set the following fields to these values:
-      | Method                  | Method test                   |
+      | Feedback method         | Method test                   |
       | Contact                 | Contact test                  |
       | Additional information  | Addtitional information test  |
 

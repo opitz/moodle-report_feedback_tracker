@@ -53,10 +53,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && confirm_sesskey()) {
     $params['hidden'] = optional_param('hidden', null, PARAM_BOOL);
     $params['generalfeedback'] = optional_param('generalfeedback', null, PARAM_TEXT);
     $params['feedbackduedate'] = optional_param('feedbackduedate', null, PARAM_TEXT);
+    $params['feedbackreleaseddate'] = optional_param('feedbackreleaseddate', null, PARAM_TEXT);
     $params['reason'] = optional_param('reason', null, PARAM_TEXT);
     $params['previousfeedbackduedate'] = optional_param('previousfeedbackduedate', null, PARAM_TEXT);
     $params['assessmenttype'] = optional_param('assessmenttype', null, PARAM_INT);
     $params['cohortfeedback'] = optional_param('cohortfeedback', null, PARAM_INT);
+    $params['customfeedbackduedatecheckbox'] = optional_param('customfeedbackduedatecheckbox', null, PARAM_INT);
+    $params['customfeedbackreleaseddatecheckbox'] = optional_param('customfeedbackreleaseddatecheckbox', null, PARAM_INT);
+    $params['locked'] = optional_param('locked', null, PARAM_INT);
 
     admin::save_module_data($params);
 }

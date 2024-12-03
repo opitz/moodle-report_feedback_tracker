@@ -82,12 +82,9 @@ final class feedback_tracker_test extends advanced_testcase {
         $this->assertTrue(strstr($feedbackreleased->submissionstatus, get_string('submission:success',
                 'report_feedback_tracker')) > 0, "Assert submission is in time");
         $this->assertEquals('80/100', $feedbackreleased->grade, "Assert grade is shown correctly");
-        $this->assertEquals('Released', $feedbackreleased->feedbackstatus, "Assert feedback is released");
-
-        $this->assertEquals(get_string('feedback:late', 'report_feedback_tracker'),
-            $feedbackextended->feedbackstatus, "Assert feedback is late");
-        $this->assertEquals(get_string('feedback:late', 'report_feedback_tracker'),
-            $feedbacklate->feedbackstatus, "Assert late feedback");
+        $this->assertTrue(isset($feedbackreleased->feedback['released']), "Assert feedback is released");
+        $this->assertTrue(isset($feedbackextended->feedback['late']), "Assert feedback is late");
+        $this->assertTrue(isset($feedbacklate->feedback['late']), "Assert feedback is late");
         $this->assertTrue(strstr($submissionlate->submissionstatus,
                 get_string('submission:late', 'report_feedback_tracker')) > 0, "Assert late submission");
     }

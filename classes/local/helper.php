@@ -92,74 +92,37 @@ class helper {
      * @throws coding_exception
      */
     public static function get_feedback_badge(stdClass $gradeitem, int $feedbackduedate, int $submissiondate): array {
-        // A general feedback date will take precedence if present.
-        $feedbackdate = $gradeitem->gfdate ? $gradeitem->gfdate : $gradeitem->feedbackdate;
 
-        // If there is no feedback and
-        // there is no feedback due date or there is no submission show no badge.
-        if ((!$feedbackdate && (!$feedbackduedate || !$submissiondate)) ||
-                ((!$gradeitem->finalgrade) || ($gradeitem->hiddengrade === 1) || ($gradeitem->hiddengrade > time()))
+        // If there is no general feedback date and no submission or
+        // the grade has not (yet) been released there is no feedback.
+        if ((!isset($gradeitem->gfdate) && $submissiondate == 0) ||
+            ($gradeitem->hiddengrade === 1) || ($gradeitem->hiddengrade > time())
         ) {
             return [];
-        }
-        // If there is feedback but no feedback due date or
-        // the feedback was given within the due date show a success badge.
-        if ((!$feedbackduedate && $feedbackdate) ||
-                ($feedbackduedate && $feedbackdate && ($feedbackdate <= $feedbackduedate))) {
-            return ['released' => 'released'];
-        }
-
-        // Feedback was given after the feedback due date.
-        if ($feedbackduedate && ($feedbackdate > $feedbackduedate)) {
-            return ['late' => 'late'];
-        }
-
-        // NO feedback was given, and it is beyond the feedback due date.
-        if ($feedbackduedate && !$feedbackdate && ($feedbackduedate < time())) {
-            return ['overdue' => 'overdue'];
-        }
-
-        return [];
-    }
-
-    /**
-     * Get a feedback status.
-     *
-     * @param stdClass $gradeitem
-     * @param int $feedbackduedate
-     * @param int $submissiondate
-     * @return lang_string|string
-     * @throws coding_exception
-     */
-    public static function get_feedback_status(stdClass $gradeitem, int $feedbackduedate, int $submissiondate): lang_string|string {
-
-        // If there is no general feedback date and no submission there is no feedback(?).
-        if (!isset($gradeitem->gfdate) && $submissiondate == 0) {
-            return '';
         }
 
         // Feedback is available even if there is no due date or when only cohort feedback is given.
         if ((!$feedbackduedate && isset($gradeitem->finalgrade)) || (isset($gradeitem->gfdate) && ($gradeitem->gfdate > 0))) {
-            return get_string('feedback:released', 'report_feedback_tracker');
+            return ['released' => 'released'];
         }
 
         // Feedback was given in time.
         if (isset($gradeitem->finalgrade) && ($gradeitem->feedbackdate <= $feedbackduedate)) {
-            return get_string('feedback:released', 'report_feedback_tracker');
+            return ['released' => 'released'];
         }
 
         // Feedback was given after the feedback due date.
         if (isset($gradeitem->finalgrade) && ($gradeitem->feedbackdate > $feedbackduedate)) {
-            return get_string('feedback:late', 'report_feedback_tracker');
+            return ['late' => 'late'];
         }
 
         // NO feedback was given, and it is beyond the feedback due date.
         if (!isset($gradeitem->finalgrade) && $feedbackduedate < time()) {
-            return get_string('feedback:overdue', 'report_feedback_tracker');
+            return ['overdue' => 'overdue'];
         }
 
-        // The feedback is due within the due time - so do nothing and show a contact.
-        return '';
+        // The feedback is due within the due time - so do nothing.
+        return [];
     }
 
     /**
@@ -1029,28 +992,6 @@ class helper {
         }
 
         return count($enabledsubmissiontypes);
-    }
-
-    /**
-     * Show the general feedback and the gf URL to students.
-     *
-     * @param stdClass $gradeitem
-     * @return string
-     */
-    public static function get_generalfeedback($gradeitem): string {
-
-        $o = '';
-        if ($gradeitem->generalfeedback) {
-            $o .= html_writer::start_span('generalfeedback');
-            $o .= html_writer::span($gradeitem->generalfeedback, 'generalfeedbacktext',
-                ['id' => 'generalfeedbacktext_' . $gradeitem->itemid]);
-            $link = "<a href='$gradeitem->gfurl'>$gradeitem->gfurl</a>";
-            $o .= html_writer::span($link, 'gfurl',
-                ['id' => 'gfurl_' . $gradeitem->itemid]);
-
-            $o .= html_writer::end_span();
-        }
-        return $o;
     }
 
     /**

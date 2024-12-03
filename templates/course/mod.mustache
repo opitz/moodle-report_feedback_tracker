@@ -88,7 +88,7 @@
 
                     <div class="col-4">
                         {{#feedbackduedate}}
-                            <span class="d-md-none">{{#str}} feedback:due, report_feedback_tracker {{/str}}: </span>{{{feedbackduedate}}}
+                            <span class="d-md-none feedbackduedatereason">{{#str}} feedback:due, report_feedback_tracker {{/str}}: </span>{{{feedbackduedate}}}
                         {{/feedbackduedate}}
                         {{#markoverdue}}
                             <br><div class="badge badge-danger">{{#str}} feedback:overdue, report_feedback_tracker {{/str}}</div>
@@ -114,15 +114,19 @@
                         {{/feedbackduedate}}
 
                         {{#customfeedbackduedate}}
-                            <br><div class="badge badge-warning">{{#str}} feedbackduedate:custom, report_feedback_tracker {{/str}}</div>
+                            <br><div class="badge badge-warning js-customfeedbackduedate" data-customfeedbackduedate="{{customfeedbackduedate}}" data-feedbackduedatereason="{{feedbackduedatereason}}">{{#str}} feedbackduedate:custom, report_feedback_tracker {{/str}}</div>
                         {{/customfeedbackduedate}}
+
+                        {{#customfeedbackreleaseddate}}
+                            <br><div class="badge badge-warning js-customfeedbackreleaseddate" data-customfeedbackreleaseddate="{{customfeedbackreleaseddate}}">{{#str}} feedbackreleaseddate:custom, report_feedback_tracker {{/str}}</div>
+                        {{/customfeedbackreleaseddate}}
 
                         {{#markoverdue}}
                             <br><div class="badge badge-danger">{{#str}} feedback:overdue, report_feedback_tracker {{/str}}</div>
                         {{/markoverdue}}
 
                         {{#cohortfeedback}}
-                            <br><div class="badge badge-light js-cohortfeedback">{{#str}} feedback:cohort, report_feedback_tracker {{/str}}</div>
+                            <br><div class="badge badge-light js-cohortfeedback" data-cohortfeedback="{{cohortfeedback}}">{{#str}} feedback:cohort, report_feedback_tracker {{/str}}</div>
                         {{/cohortfeedback}}
                     </div>
 
