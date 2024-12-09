@@ -167,7 +167,7 @@ function xmldb_report_feedback_tracker_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024093000, 'report', 'feedback_tracker');
     }
 
-    // Replacing partname with partid to identify TTT parts.
+    // Replacing partname with partid to identify turnitintooltwo parts.
     if ($oldversion < 2024101000) {
 
         // Define table report_feedback_tracker.

@@ -416,7 +416,7 @@ class helper {
             return '';
         }
 
-        $dateformat = get_config('report_feedback_tracker', 'dateformat');
+        $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
         $duedate = $gradeitem->duedate;
 
         // Submission was in time.
@@ -426,7 +426,8 @@ class helper {
                 [
                     'data-toggle' => 'tooltip',
                     'data-placement' => 'bottom',
-                    'title' => "Submitted " . date($dateformat, $submissiondate),
+                    'title' => get_string('submission:success', 'report_feedback_tracker') . " " .
+                        userdate($submissiondate, $dateformat),
                 ]);
         }
 
@@ -437,7 +438,8 @@ class helper {
                 [
                     'data-toggle' => 'tooltip',
                     'data-placement' => 'bottom',
-                    'title' => "Submitted " . date($dateformat, $submissiondate),
+                    'title' => get_string('submission:success', 'report_feedback_tracker') . " " .
+                        userdate($submissiondate, $dateformat),
                 ]);
         }
 
@@ -887,7 +889,7 @@ class helper {
      * @param array $assessmenttypes
      * @return void
      */
-    public static function append_assessment_type_to_gradeitem(stdClass &$gradeitem, array $assessmenttypes): void {
+    public static function append_assessment_type_to_gradeitem(stdClass $gradeitem, array $assessmenttypes): void {
         foreach ($assessmenttypes as $assessmenttype) {
             // A course module with a part ID (e.g. turnitintooltwo).
             // Currently the part ID is not used for checking different parts until it is supported by local_assess_type.

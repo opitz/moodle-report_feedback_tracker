@@ -46,15 +46,14 @@ class admin {
         array $assessmenttypes
     ): false|stdClass {
 
-        if (!$cm = self::get_cm_from_gradeitem($gradeitem)) {
+        if ($cm = self::get_cm_from_gradeitem($gradeitem)) {
+            // Get the module.
+            $module = $modinfo->get_cm($cm->cmid);
+        } else {
             return false;
         }
 
-        $dateformat = get_config('report_feedback_tracker', 'dateformat');
-
-        // Get the module.
-        $cmid = $cm->cmid;
-        $module = $modinfo->get_cm($cmid);
+        $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
 
         // Build the module data.
         $data = new stdClass();
@@ -77,7 +76,7 @@ class admin {
 
         // Hiding attributes.
         $data->hiddenfromstudents = !$module->visible;
-        $data->hiddenfromreport = $data->dummy;
+        $data->hiddenfromreport = $data->dummy; // Dummy assessments are always hidden from the student report.
 
         $data->hiddendisabled = true;
         $data->assesstypes = helper::get_assess_types(isset($data->assessmenttype) ? $data->assessmenttype : null);
@@ -86,10 +85,10 @@ class admin {
 
         // Dates.
         $duedate = helper::get_duedate($module);
-        $data->duedate = $duedate ? date($dateformat, $duedate) : false;
+        $data->duedate = $duedate ? userdate($duedate, $dateformat) : false;
         // The raw date is needed for sorting.
         $data->feedbackduedateraw = $duedate ? helper::calculate_feedback_duedate($gradeitem->courseid, $duedate) : 9999999999;
-        $data->feedbackduedate = $data->duedate ? date($dateformat, $data->feedbackduedateraw) : false;
+        $data->feedbackduedate = $data->duedate ? userdate($data->feedbackduedateraw, $dateformat) : false;
         $data->markoverdue = false;
 
         // Student data.
@@ -110,50 +109,6 @@ class admin {
         $data->markingurl = self::get_markingurl($module);
 
         return $data;
-    }
-
-    /**
-     * Add additional data for the grade item where available.
-     *
-     * @param stdClass $data
-     * @return void
-     */
-    public static function add_additional_data(stdClass &$data): void {
-        global $DB;
-
-        $dateformat = get_config('report_feedback_tracker', 'dateformat');
-
-        $params = ['gradeitem' => $data->gradeitemid];
-        if ($data->partid) {
-            $params['partid'] = $data->partid;
-        }
-
-        // There should be only one record - make sure nevertheless...
-        if ($record = $DB->get_record('report_feedback_tracker', $params, '*', IGNORE_MULTIPLE)) {
-            $data->method = $record->method;
-            $data->contact = $record->responsibility;
-            $data->generalfeedback = $record->generalfeedback;
-
-            if ($record->feedbackduedate) {
-                $data->customfeedbackduedate = date('Y-m-d', $record->feedbackduedate);
-                $data->feedbackduedateraw = $record->feedbackduedate;
-                $data->feedbackduedate = date($dateformat, $record->feedbackduedate);
-
-                // Get a custom feedback due date reason entry for the grade item where available.
-                $data->feedbackduedatereason = self::get_reason($data->gradeitemid, $data->feedbackduedate);
-            }
-
-            // Check if there is additional data to show.
-            if ($data->generalfeedback || $data->method || $data->contact) {
-                $data->additionaldata = true;
-            }
-
-            if ($record->gfdate) {
-                $data->customfeedbackreleaseddate = date('Y-m-d', $record->gfdate);
-            }
-
-            $data->hiddenfromreport = (isset($data->hiddenfromreport) && $data->hiddenfromreport) || $record->hidden;
-        }
     }
 
     /**
@@ -298,25 +253,6 @@ class admin {
                 assess_type::update_type($gradeitem->courseid, $assessmenttype, 0, $itemid);
             }
         }
-    }
-
-    /**
-     * Return the current reason for a custom feedback due date or false.
-     *
-     * @param int $gradeitemid
-     * @param string $feedbackduedate
-     * @return string
-     */
-    public static function get_reason(int $gradeitemid, string $feedbackduedate): string {
-        global $DB;
-
-        $params = ['gradeitem' => $gradeitemid, 'feedbackduedate' => strtotime($feedbackduedate)];
-        $record = $DB->get_record('report_feedback_tracker_duedates', $params, '*', IGNORE_MULTIPLE);
-        if (isset($record->reason)) {
-            return $record->reason;
-        }
-
-        return "";
     }
 
 }

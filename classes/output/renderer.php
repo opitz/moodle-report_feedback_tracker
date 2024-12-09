@@ -100,7 +100,7 @@ class renderer extends plugin_renderer_base {
 
         $modinfo = get_fast_modinfo($courseid);
 
-        $dateformat = get_config('report_feedback_tracker', 'dateformat');
+        $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
         $assessmenttypes = helper::get_assessment_types($courseid);
 
         // Get all grade items for the course.
@@ -124,29 +124,33 @@ class renderer extends plugin_renderer_base {
                     $tttparts = helper::get_turnitin_parts($gradeitem);
 
                     foreach ($tttparts as $tttpart) {
-                        $item->name = $gradeitem->itemname . " - " . $tttpart->partname;
-                        $item->partid = $tttpart->id;
+                        // Each part of a turnitintooltwo assessment starts as a clone of the module
+                        // and adds data related to each part.
+                        $tttitem = clone $item;
+                        $tttitem->name = $gradeitem->itemname . " - " . $tttpart->partname;
+                        $tttitem->partid = $tttpart->id;
 
                         // Get the due date for each part.
                         $duedate = $tttpart->dtdue;
-                        $item->duedate = $duedate ? date($dateformat, $duedate) : false;
                         // The feedback due date timestamp is needed for sorting.
-                        $item->feedbackduedateraw = $duedate ?
-                            helper::calculate_feedback_duedate($courseid, $duedate) : 9999999999;
-                        $item->feedbackduedate = $duedate ? date($dateformat, $item->feedbackduedateraw) : false;
+                        if (!$duedate) {
+                            $tttitem->feedbackduedateraw = 9999999999;
+                            $tttitem->feedbackduedate = false;
+                            $tttitem->duedate = false;
+                        } else {
+                            $tttitem->feedbackduedateraw = helper::calculate_feedback_duedate($courseid, $duedate);
+                            $tttitem->feedbackduedate = userdate($tttitem->feedbackduedateraw, $dateformat);
+                            $tttitem->duedate = userdate($duedate, $dateformat);
+                        }
 
                         // Get additional information for each part record.
-                        admin::add_additional_data($item);
+                        self::add_additional_data($tttitem);
 
-                        // If there is a valid raw due date format it.
-                        $item->feedbackduedate = ($item->feedbackduedateraw && $item->feedbackduedateraw < 9999999999) ?
-                            date($dateformat, $item->feedbackduedateraw) : false;
-
-                        $data->items[] = clone $item;
+                        $data->items[] = $tttitem;
                     }
                 } else {
                     // Get additional information for the record.
-                    admin::add_additional_data($item);
+                    self::add_additional_data($item);
 
                     $data->items[] = $item;
                 }
@@ -161,7 +165,7 @@ class renderer extends plugin_renderer_base {
                 $item->url = "$CFG->wwwroot/grade/report/singleview/index.php?id=$gradeitem->courseid&" .
                     "item=grade&itemid=$gradeitem->id&gpr_type=report&gpr_plugin=grader&gpr_courseid=$gradeitem->courseid";
                 // Get additional information for each part record.
-                admin::add_additional_data($item);
+                self::add_additional_data($item);
 
                 $data->items[] = $item;
             }
@@ -173,6 +177,68 @@ class renderer extends plugin_renderer_base {
         });
 
         return $this->output->render_from_template('report_feedback_tracker/course/course', $data);
+    }
+
+    /**
+     * Add additional data for the grade item where available.
+     *
+     * @param stdClass $data
+     * @return void
+     */
+    private static function add_additional_data(stdClass $data): void {
+        global $DB;
+
+        $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
+        $params = ['gradeitem' => $data->gradeitemid];
+        if ($data->partid) {
+            $params['partid'] = $data->partid;
+        }
+
+        // There should be only one record - make sure nevertheless...
+        if ($record = $DB->get_record('report_feedback_tracker', $params, '*', IGNORE_MULTIPLE)) {
+            $data->method = $record->method;
+            $data->contact = $record->responsibility;
+            $data->generalfeedback = $record->generalfeedback;
+
+            if ($record->feedbackduedate) {
+                $data->customfeedbackduedate = date('Y-m-d', $record->feedbackduedate);
+                $data->feedbackduedateraw = $record->feedbackduedate;
+                $data->feedbackduedate = userdate($record->feedbackduedate, $dateformat);
+
+                // Get a custom feedback due date reason entry for the grade item where available.
+                $data->feedbackduedatereason = self::get_reason($data->gradeitemid, $data->feedbackduedate);
+            }
+
+            // Check if there is additional data to show.
+            if ($data->generalfeedback || $data->method || $data->contact) {
+                $data->additionaldata = true;
+            }
+
+            if ($record->gfdate) {
+                $data->customfeedbackreleaseddate = date('Y-m-d', $record->gfdate);
+            }
+
+            $data->hiddenfromreport = (isset($data->hiddenfromreport) && $data->hiddenfromreport) || $record->hidden;
+        }
+    }
+
+    /**
+     * Return the current reason for a custom feedback due date or false.
+     *
+     * @param int $gradeitemid
+     * @param string $feedbackduedate
+     * @return string
+     */
+    private static function get_reason(int $gradeitemid, string $feedbackduedate): string {
+        global $DB;
+
+        $params = ['gradeitem' => $gradeitemid, 'feedbackduedate' => strtotime($feedbackduedate)];
+        $record = $DB->get_record('report_feedback_tracker_duedates', $params, '*', IGNORE_MULTIPLE);
+        if (isset($record->reason)) {
+            return $record->reason;
+        }
+
+        return "";
     }
 
 }

@@ -321,8 +321,8 @@ class user {
       $gradeitem,
       $userid,
       $assessmenttypes,
-      &$data,
-      &$courseobject
+      $data,
+      $courseobject
     ): void {
 
         $tttparts = helper::get_turnitin_records($course->id);
@@ -371,7 +371,7 @@ class user {
 
         $warningdays = get_config('report_feedback_tracker', 'warningdays');
         $warningperiod = $warningdays ? $warningdays * DAYSECS : 0; // Number of seconds in the warning period.
-        $dateformat = get_config('report_feedback_tracker', 'dateformat');
+        $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
 
         // If there is a manual feedback due date use it, otherwise calculate it from the submission due date where set.
         $feedbackduedate = helper::get_feedbackduedate($gradeitem);
@@ -379,7 +379,7 @@ class user {
         $submissiondate = helper::get_submissiondate($userid, $gradeitem);
 
         $data = new stdClass();
-        $data->submissiondate = $submissiondate == 0 ? '--' : date($dateformat, $submissiondate);
+        $data->submissiondate = $submissiondate == 0 ? '--' : userdate($submissiondate, $dateformat);
         $data->submissionstatus = helper::get_submission_status($gradeitem, $submissiondate, $warningperiod);
         $data->courseid = $course->id;
         $data->coursename = $course->fullname;
@@ -395,11 +395,11 @@ class user {
         $data->assesstypelabel = helper::get_assesstype_label($data->assessmenttype);
         $data->duedate = $gradeitem->duedate == 0 ?
             get_string('datenotset', 'report_feedback_tracker') :
-            date($dateformat, $gradeitem->duedate);
+            userdate($gradeitem->duedate, $dateformat);
         $data->duedateraw = $gradeitem->duedate == 0 ? 9999999999 : $gradeitem->duedate;
         $data->feedbackduedate = $feedbackduedate == 0 ?
             get_string('datenotset', 'report_feedback_tracker') :
-            date($dateformat, $feedbackduedate);
+            userdate($feedbackduedate, $dateformat);
         $data->feedbackduedateraw = $feedbackduedate == 0 ? 9999999999 : $feedbackduedate;
         $data->grade = self::get_grade($gradeitem);
         $data->student = $gradeitem->student;

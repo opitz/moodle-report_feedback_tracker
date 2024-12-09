@@ -63,11 +63,6 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_heading('report_feedback_tracker_dates',
         get_string('settings:datesheading', 'report_feedback_tracker'), ''));
 
-    $settings->add(new admin_setting_configtext('report_feedback_tracker/dateformat',
-        get_string('settings:dateformat', 'report_feedback_tracker'),
-        get_string('settings:dateformatinfo', 'report_feedback_tracker'),
-        $dateformatdefault, PARAM_RAW, 15));
-
     $settings->add(new admin_setting_configtext('report_feedback_tracker/warningdays',
         get_string('settings:warningdays', 'report_feedback_tracker'),
         get_string('settings:warningdaysinfo', 'report_feedback_tracker'),
