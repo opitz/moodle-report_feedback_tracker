@@ -89,40 +89,31 @@ class helper {
      * @param int $feedbackduedate
      * @param int $submissiondate
      * @return array
-     * @throws coding_exception
      */
     public static function get_feedback_badge(stdClass $gradeitem, int $feedbackduedate, int $submissiondate): array {
 
-        // If there is no general feedback date and no submission or
-        // the grade has not (yet) been released there is no feedback.
-        if ((!isset($gradeitem->gfdate) && $submissiondate == 0) ||
-            ($gradeitem->hiddengrade === 1) || ($gradeitem->hiddengrade > time())
-        ) {
+        // If a grade item has not (yet) been released do not show a badge.
+        if (($gradeitem->hiddengrade === 1) || ($gradeitem->hiddengrade > time())) {
             return [];
         }
 
-        // Feedback is available even if there is no due date or when only cohort feedback is given.
-        if ((!$feedbackduedate && isset($gradeitem->finalgrade)) || (isset($gradeitem->gfdate) && ($gradeitem->gfdate > 0))) {
-            return ['released' => 'released'];
-        }
+        // If there is a custom feedback released date it will take precedence over an individual feedback date.
+        $feedbackdate = $gradeitem->gfdate ?: $gradeitem->feedbackdate;
 
-        // Feedback was given in time.
-        if (isset($gradeitem->finalgrade) && ($gradeitem->feedbackdate <= $feedbackduedate)) {
-            return ['released' => 'released'];
-        }
-
-        // Feedback was given after the feedback due date.
-        if (isset($gradeitem->finalgrade) && ($gradeitem->feedbackdate > $feedbackduedate)) {
-            return ['late' => 'late'];
-        }
-
-        // NO feedback was given, and it is beyond the feedback due date.
-        if (!isset($gradeitem->finalgrade) && $feedbackduedate < time()) {
+        // There is a feedback date.
+        if ($feedbackdate) {
+            // If there is no due date or the due date has not yet passed, feedback was released in time.
+            if (!$feedbackduedate || $feedbackduedate >= $feedbackdate) {
+                return ['released' => 'released'];
+            } else { // Otherwise the feedback is late.
+                return ['late' => 'late'];
+            }
+        } else if ($submissiondate && $feedbackduedate && $feedbackduedate < time()) {
+            // There is a submission date, no feedback and the feedback due date has passed, then feedback is overdue.
             return ['overdue' => 'overdue'];
+        } else { // No submission or no feedback due date or still within feedback period - show nothing.
+            return [];
         }
-
-        // The feedback is due within the due time - so do nothing.
-        return [];
     }
 
     /**

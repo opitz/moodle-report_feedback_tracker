@@ -404,7 +404,7 @@ class user {
         $data->grade = self::get_grade($gradeitem);
         $data->student = $gradeitem->student;
         $data->grader = $gradeitem->grader;
-        $data->feedbackdate = $gradeitem->feedbackdate ? $gradeitem->feedbackdate : $gradeitem->gfdate;
+        $data->feedbackdate = $gradeitem->gfdate ?: $gradeitem->feedbackdate;
         $data->feedback = helper::get_feedback_badge($gradeitem, $feedbackduedate, $submissiondate);
         $data->method = $gradeitem->method;
         $data->responsibility = html_writer::div($gradeitem->responsibility);
