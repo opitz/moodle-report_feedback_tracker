@@ -56,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && confirm_sesskey()) {
     $params['feedbackreleaseddate'] = optional_param('feedbackreleaseddate', null, PARAM_TEXT);
     $params['reason'] = optional_param('reason', null, PARAM_TEXT);
     $params['previousfeedbackduedate'] = optional_param('previousfeedbackduedate', null, PARAM_TEXT);
-    $params['assessmenttype'] = optional_param('assessmenttype', null, PARAM_INT);
+    $params['assesstype'] = optional_param('assesstype', null, PARAM_INT);
     $params['cohortfeedback'] = optional_param('cohortfeedback', null, PARAM_INT);
     $params['customfeedbackduedatecheckbox'] = optional_param('customfeedbackduedatecheckbox', null, PARAM_INT);
     $params['customfeedbackreleaseddatecheckbox'] = optional_param('customfeedbackreleaseddatecheckbox', null, PARAM_INT);

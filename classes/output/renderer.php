@@ -26,6 +26,7 @@ namespace report_feedback_tracker\output;
 
 use context_course;
 use grade_item;
+use local_assess_type\assess_type;
 use plugin_renderer_base;
 use report_feedback_tracker\local\admin;
 use report_feedback_tracker\local\helper;
@@ -101,7 +102,6 @@ class renderer extends plugin_renderer_base {
         $modinfo = get_fast_modinfo($courseid);
 
         $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
-        $assessmenttypes = helper::get_assessment_types($courseid);
 
         // Get all grade items for the course.
         $gradeitems = grade_item::fetch_all(['courseid' => $courseid]);
@@ -113,13 +113,14 @@ class renderer extends plugin_renderer_base {
         $data->outputedit = true;
         $data->items = [];
 
+        $assesstypes = helper::get_assessment_types($courseid);
         $data->dropdownstudents = helper::get_course_students($courseid);
 
         // Create records for manual grade items and supported course modules.
         foreach ($gradeitems as $gradeitem) {
             if (($gradeitem->itemtype === 'mod') &&
-                helper::is_supported_module($gradeitem->itemmodule) &&
-                $item = admin::get_module_data($gradeitem, $modinfo, $assessmenttypes)) {
+                    helper::is_supported_module($gradeitem->itemmodule) &&
+                    $item = admin::get_module_data($gradeitem, $modinfo)) {
                 if ($gradeitem->itemmodule === 'turnitintooltwo') {
                     $tttparts = helper::get_turnitin_parts($gradeitem);
 
@@ -144,13 +145,13 @@ class renderer extends plugin_renderer_base {
                         }
 
                         // Get additional information for each part record.
-                        self::add_additional_data($tttitem);
+                        self::add_additional_data($tttitem, $assesstypes);
 
                         $data->items[] = $tttitem;
                     }
                 } else {
                     // Get additional information for the record.
-                    self::add_additional_data($item);
+                    self::add_additional_data($item, $assesstypes);
 
                     $data->items[] = $item;
                 }
@@ -165,7 +166,7 @@ class renderer extends plugin_renderer_base {
                 $item->url = "$CFG->wwwroot/grade/report/singleview/index.php?id=$gradeitem->courseid&" .
                     "item=grade&itemid=$gradeitem->id&gpr_type=report&gpr_plugin=grader&gpr_courseid=$gradeitem->courseid";
                 // Get additional information for each part record.
-                self::add_additional_data($item);
+                self::add_additional_data($item, $assesstypes);
 
                 $data->items[] = $item;
             }
@@ -182,43 +183,54 @@ class renderer extends plugin_renderer_base {
     /**
      * Add additional data for the grade item where available.
      *
-     * @param stdClass $data
+     * @param stdClass $item
+     * @param array $assesstypes
      * @return void
      */
-    private static function add_additional_data(stdClass $data): void {
+    private static function add_additional_data(stdClass $item, array $assesstypes): void {
         global $DB;
 
         $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
-        $params = ['gradeitem' => $data->gradeitemid];
-        if ($data->partid) {
-            $params['partid'] = $data->partid;
+        $params = ['gradeitem' => $item->gradeitemid];
+        if ($item->partid) {
+            $params['partid'] = $item->partid;
         }
+
+        // Assessment type.
+        helper::append_assess_type_to_gradeitem($item, $assesstypes);
+        $item->formative = (int) $item->assesstype === assess_type::ASSESS_TYPE_FORMATIVE;
+        $item->summative = (int) $item->assesstype === assess_type::ASSESS_TYPE_SUMMATIVE;
+        $item->dummy = (int) $item->assesstype === assess_type::ASSESS_TYPE_DUMMY;
+
+        $item->notset = !$item->formative && !$item->summative && !$item->dummy;
+
+        $item->hiddenfromreport = $item->dummy; // Dummy assessments are always hidden from the student report.
 
         // There should be only one record - make sure nevertheless...
         if ($record = $DB->get_record('report_feedback_tracker', $params, '*', IGNORE_MULTIPLE)) {
-            $data->method = $record->method;
-            $data->contact = $record->responsibility;
-            $data->generalfeedback = $record->generalfeedback;
+            $item->method = $record->method;
+            $item->contact = $record->responsibility;
+            $item->generalfeedback = $record->generalfeedback;
 
             if ($record->feedbackduedate) {
-                $data->customfeedbackduedate = date('Y-m-d', $record->feedbackduedate);
-                $data->feedbackduedateraw = $record->feedbackduedate;
-                $data->feedbackduedate = userdate($record->feedbackduedate, $dateformat);
+                $item->customfeedbackduedate = date('Y-m-d', $record->feedbackduedate);
+                $item->feedbackduedateraw = $record->feedbackduedate;
+                $item->feedbackduedate = userdate($record->feedbackduedate, $dateformat);
 
                 // Get a custom feedback due date reason entry for the grade item where available.
-                $data->feedbackduedatereason = self::get_reason($data->gradeitemid, $data->feedbackduedate);
+                $item->feedbackduedatereason = self::get_reason($item->gradeitemid, $item->feedbackduedate);
             }
 
             // Check if there is additional data to show.
-            if ($data->generalfeedback || $data->method || $data->contact) {
-                $data->additionaldata = true;
+            if ($item->generalfeedback || $item->method || $item->contact) {
+                $item->additionaldata = true;
             }
 
             if ($record->gfdate) {
-                $data->customfeedbackreleaseddate = date('Y-m-d', $record->gfdate);
+                $item->customfeedbackreleaseddate = date('Y-m-d', $record->gfdate);
             }
 
-            $data->hiddenfromreport = (isset($data->hiddenfromreport) && $data->hiddenfromreport) || $record->hidden;
+            $item->hiddenfromreport = (isset($item->hiddenfromreport) && $item->hiddenfromreport) || $record->hidden;
         }
     }
 

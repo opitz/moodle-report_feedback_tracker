@@ -457,8 +457,45 @@ class helper {
      * @return array
      */
     public static function get_assessment_types(int $courseid): array {
-        // Get all summative assessment type records from the assess type plugin.
-        return assess_type::get_assess_type_records_by_courseid($courseid);
+        $assesstypes['cmid'] = [];
+        $assesstypes['gradeitemid'] = [];
+
+        $labels = self::get_assesstype_labels();
+
+        foreach (assess_type::get_assess_type_records_by_courseid($courseid) as $record) {
+            $record->label = isset($labels[$record->type]) ? $labels[$record->type] : '';
+
+            if ($record->cmid) {
+                $assesstypes['cmid'][$record->cmid] = $record;
+            }
+
+            if ($record->gradeitemid) {
+                $assesstypes['gradeitemid'][$record->gradeitemid] = $record;
+            }
+        }
+
+        $assesstypes['notfound'] = new stdClass();
+        $assesstypes['notfound']->type = -1;
+        $assesstypes['notfound']->locked = false;
+
+        return $assesstypes;
+    }
+
+    /**
+     * Get the assessment type labels
+     *
+     * @return array For example:
+     * * [
+     * *   0 => 'Formative - does not contribute to course mark',
+     * *   ⋮
+     * * ]
+     */
+    private static function get_assesstype_labels(): array {
+        return [
+            assess_type::ASSESS_TYPE_FORMATIVE => get_string('formativeoption', 'local_assess_type'),
+            assess_type::ASSESS_TYPE_SUMMATIVE => get_string('summativeoption', 'local_assess_type'),
+            assess_type::ASSESS_TYPE_DUMMY => get_string('dummyoption', 'local_assess_type'),
+        ];
     }
 
     /**
@@ -814,25 +851,6 @@ class helper {
     }
 
     /**
-     * Get the label of the selected assessment type.
-     *
-     * @param int $selection
-     * @return string
-     * @throws coding_exception
-     */
-    public static function get_selected_assess_type_label(int $selection): string {
-
-        $options = self::get_assesstype_options();
-
-        foreach ($options as $option) {
-            if ($option->value === $selection) {
-                return $option->label;
-            }
-        }
-        return '';
-    }
-
-    /**
      * Get the assessment type options.
      *
      * @return object[]
@@ -877,66 +895,21 @@ class helper {
      * Try to get the assessment type of the grade item and append it where found.
      *
      * @param stdClass $gradeitem
-     * @param array $assessmenttypes
+     * @param array $assesstypes
      * @return void
      */
-    public static function append_assessment_type_to_gradeitem(stdClass $gradeitem, array $assessmenttypes): void {
-        foreach ($assessmenttypes as $assessmenttype) {
-            // A course module with a part ID (e.g. turnitintooltwo).
-            // Currently the part ID is not used for checking different parts until it is supported by local_assess_type.
-            if (isset($gradeitem->cmid) && isset($gradeitem->partid) &&
-                ($assessmenttype->cmid === $gradeitem->cmid)
-            ) {
-                $gradeitem->assessmenttype = $assessmenttype->type;
-                $gradeitem->locked = $assessmenttype->locked;
-                break;
-            } else if ( // A course module w/o a part.
-                isset($gradeitem->cmid) && !isset($gradeitem->partid) &&
-                ($assessmenttype->cmid === $gradeitem->cmid)
-            ) {
-                $gradeitem->assessmenttype = $assessmenttype->type;
-                $gradeitem->locked = $assessmenttype->locked;
-                break;
-            } else if ( // A grade item w/o a course module.
-                !isset($gradeitem->cmid) && isset($gradeitem->itemid) &&
-                ($assessmenttype->gradeitemid === $gradeitem->itemid)
-            ) {
-                $gradeitem->assessmenttype = $assessmenttype->type;
-                $gradeitem->locked = $assessmenttype->locked;
-                break;
-            }
+    public static function append_assess_type_to_gradeitem(stdClass $gradeitem, array $assesstypes): void {
+        if (isset($gradeitem->cmid) && isset($assesstypes['cmid'][$gradeitem->cmid])) {
+            $assesstype = $assesstypes['cmid'][$gradeitem->cmid];
+        } else if (isset($assesstypes['gradeitemid'][$gradeitem->gradeitemid])) {
+            $assesstype = $assesstypes['gradeitemid'][$gradeitem->gradeitemid];
+        } else {
+            $assesstype = $assesstypes['notfound'];
         }
-    }
 
-    /**
-     * Get the assessment type and lock status for a course module and its optional part.
-     *
-     * @param stdClass $data
-     * @param array $assessmenttypes
-     * @return array
-     */
-    public static function get_assessment_type(stdClass $data, array $assessmenttypes): array {
-        foreach ($assessmenttypes as $assessmenttype) {
-            // A course module with a part ID (e.g. turnitintooltwo).
-            // Currently, the part ID is not used for checking different parts until it is supported by local_assess_type.
-            if (
-                isset($data->cmid) && isset($data->partid) &&
-                ($assessmenttype->cmid === $data->cmid)
-            ) {
-                return ['type' => $assessmenttype->type, 'locked' => $assessmenttype->locked];
-            } else if ( // A course module w/o a part.
-                isset($data->cmid) && !isset($data->partid) &&
-                ($assessmenttype->cmid === $data->cmid)
-            ) {
-                return ['type' => $assessmenttype->type, 'locked' => $assessmenttype->locked];
-            } else if ( // A grade item w/o a course module.
-                !isset($data->cmid) && isset($data->itemid) &&
-                ($assessmenttype->gradeitemid === $data->itemid)
-            ) {
-                return ['type' => $assessmenttype->type, 'locked' => $assessmenttype->locked];
-            }
-        }
-        return ['type' => -1, 'locked' => false];
+        $gradeitem->assesstype = $assesstype->type;
+        $gradeitem->locked = $assesstype->locked;
+        $gradeitem->selectedassesstypelabel = isset($assesstype->label) ? $assesstype->label : "";
     }
 
     /**

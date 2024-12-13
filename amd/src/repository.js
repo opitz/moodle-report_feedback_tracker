@@ -6,7 +6,7 @@ export const updateModule = (
     contact,
     method,
     hidden,
-    assessmenttype,
+    assesstype,
     feedbackduedate,
     generalfeedback,
 ) => ajax([{
@@ -17,7 +17,7 @@ export const updateModule = (
         contact: contact,
         method: method,
         hidden: hidden,
-        assessmenttype: assessmenttype,
+        assesstype: assesstype,
         feedbackduedate: feedbackduedate,
         generalfeedback: generalfeedback
     },

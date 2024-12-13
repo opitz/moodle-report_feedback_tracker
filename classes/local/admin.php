@@ -37,13 +37,11 @@ class admin {
      *
      * @param grade_item $gradeitem
      * @param course_modinfo $modinfo
-     * @param array $assessmenttypes
      * @return false|stdClass
      */
     public static function get_module_data(
         grade_item $gradeitem,
-        course_modinfo $modinfo,
-        array $assessmenttypes
+        course_modinfo $modinfo
     ): false|stdClass {
 
         if ($cm = self::get_cm_from_gradeitem($gradeitem)) {
@@ -64,22 +62,11 @@ class admin {
         $data->cmid = $module->id;
         $data->partid = false;
 
-        // Assessment type.
-        $assessmenttype = helper::get_assessment_type($data, $assessmenttypes);
-        $data->assessmenttype = $assessmenttype['type'];
-        $data->selectedassessmenttypelabel = helper::get_selected_assess_type_label($data->assessmenttype);
-        $data->locked = $assessmenttype['locked'];
-        $data->formative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_FORMATIVE;
-        $data->summative = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_SUMMATIVE;
-        $data->dummy = (int) $assessmenttype['type'] === assess_type::ASSESS_TYPE_DUMMY;
-        $data->notset = !$data->formative && !$data->summative && !$data->dummy;
-
         // Hiding attributes.
         $data->hiddenfromstudents = !$module->visible;
-        $data->hiddenfromreport = $data->dummy; // Dummy assessments are always hidden from the student report.
 
         $data->hiddendisabled = true;
-        $data->assesstypes = helper::get_assess_types(isset($data->assessmenttype) ? $data->assessmenttype : null);
+        $data->assesstypes = helper::get_assess_types(isset($data->assesstype) ? $data->assesstype : null);
 
         $data->modname = $module->modname;
 
@@ -172,7 +159,7 @@ class admin {
         $feedbackreleaseddate = $params['feedbackreleaseddate'];
         $reason = $params['reason'];
         $previousfeedbackduedate = $params['previousfeedbackduedate'];
-        $assessmenttype = $params['assessmenttype'];
+        $assesstype = $params['assesstype'];
         $cohortfeedback = $params['cohortfeedback'];
         $customfeedbackduedatecheckbox = $params['customfeedbackduedatecheckbox'];
         $customfeedbackreleaseddatecheckbox = $params['customfeedbackreleaseddatecheckbox'];
@@ -246,11 +233,11 @@ class admin {
             // Update course module records.
             if ($gradeitem->itemtype === 'mod') {
                 if ($cm = get_coursemodule_from_instance($gradeitem->itemmodule, $gradeitem->iteminstance)) {
-                    assess_type::update_type($gradeitem->courseid, $assessmenttype, $cm->id);
+                    assess_type::update_type($gradeitem->courseid, $assesstype, $cm->id);
                 }
             } else {
                 // Update the gradebook grade item and category.
-                assess_type::update_type($gradeitem->courseid, $assessmenttype, 0, $itemid);
+                assess_type::update_type($gradeitem->courseid, $assesstype, 0, $itemid);
             }
         }
     }

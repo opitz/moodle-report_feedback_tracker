@@ -48,19 +48,19 @@
 
     {{! Assessment type.}}
     <fieldset>
-        <legend class="h6">{{#str}} header:assessmenttype, report_feedback_tracker {{/str}}</legend>
+        <legend class="h6">{{#str}} header:assesstype, report_feedback_tracker {{/str}}</legend>
         <div class="form-group py-1">
-            <label for="assessmenttype" class="sr-only">{{#str}} header:assessmenttype, report_feedback_tracker {{/str}}</label>
+            <label for="assesstype" class="sr-only">{{#str}} header:assesstype, report_feedback_tracker {{/str}}</label>
 
             {{#locked}}
                 <input type="hidden" id="locked" name="locked" value="{{.}}">
-                <div>{{assessmenttypelabel}}</div>
+                <div>{{assesstypelabel}}</div>
             {{/locked}}
             {{^locked}}
-                <select id="assessmenttype" name="assessmenttype" class="form-control">
-                    {{#assessmenttypes}}
+                <select id="assesstype" name="assesstype" class="form-control">
+                    {{#assesstypes}}
                         <option value="{{value}}" {{#isselected}}selected{{/isselected}}>{{label}}</option>
-                    {{/assessmenttypes}}
+                    {{/assesstypes}}
                 </select>
             {{/locked}}
         </div>

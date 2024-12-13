@@ -55,7 +55,7 @@
                 <br><div class="badge badge-warning" data-hiddenfromreport="{{hiddenfromreport}}"><i class="fa-regular fa-eye-slash"></i> {{#str}} badge:hiddenfromreport, report_feedback_tracker {{/str}}</div>
             {{/hiddenfromreport}}
 
-            <span data-assessmenttype="{{assessmenttype}}" data-locked="{{locked}}" data-label="{{selectedassessmenttypelabel}}">
+            <span data-assesstype="{{assesstype}}" data-locked="{{locked}}" data-label="{{selectedassesstypelabel}}">
                 {{#summative}}
                     <br><div class="badge badge-primary">{{#str}} assesstype:summative, report_feedback_tracker {{/str}}</div>
                 {{/summative}}
@@ -163,7 +163,7 @@
 
                     <div class="col-2 text-right">
                         {{#outputedit}}
-                            <button class="js-edit-tracker-data btn btn-outline-secondary" data-cmid="{{cmid}}" data-courseid="{{courseid}}" data-gradeitemid="{{gradeitemid}}" data-partid="{{partid}}" data-action="report_feedback_tracker/editmodule">
+                            <button class="js-edit-tracker-data btn btn-outline-secondary" data-cmid="{{cmid}}" data-gradeitemid="{{gradeitemid}}" data-partid="{{partid}}" data-action="report_feedback_tracker/editmodule">
                                 Edit <span class="sr-only">{{{name}}}</span>
                             </button>
                         {{/outputedit}}

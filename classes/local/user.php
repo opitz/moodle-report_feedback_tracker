@@ -155,7 +155,7 @@ class user {
         $sql = "
     select
         ROW_NUMBER() OVER (ORDER BY gi.id) AS uniqueid,
-        gi.id as itemid,
+        gi.id as gradeitemid,
         gi.courseid,
         gi.itemname,
         gi.itemtype,
@@ -211,7 +211,7 @@ class user {
         $params['userid'] = $userid;
         $gradeitems = $DB->get_records_sql($sql, $params);
 
-        $assessmenttypes = helper::get_assessment_types($course->id);
+        $assesstypes = helper::get_assessment_types($course->id);
 
         $courseobject = new stdClass();
         $courseobject->courseid = $course->id;
@@ -234,7 +234,7 @@ class user {
             $gradeitem->hiddengrade = (int) $gradeitem->hiddengrade;
             // Check if the gradeitem module is supported
             // and make sure only one (turnitintooltwo) assessment record is listed even if there are multiple parts.
-            if (!helper::module_is_supported($gradeitem) || in_array($gradeitem->itemid, $itemlist)) {
+            if (!helper::module_is_supported($gradeitem) || in_array($gradeitem->gradeitemid, $itemlist)) {
                 continue;
             }
 
@@ -269,14 +269,14 @@ class user {
             // All good - now get and store the feedback record.
             // TurnitinToolTwo special treatment as one grading item may have several parts.
             if ($gradeitem->itemmodule == 'turnitintooltwo') {
-                self::get_user_turnitin_records($course, $gradeitem, $userid, $assessmenttypes, $data, $courseobject);
+                self::get_user_turnitin_records($course, $gradeitem, $userid, $assesstypes, $data, $courseobject);
             } else {
-                if ($record = self::get_user_feedback_record($course, $userid, $gradeitem, $assessmenttypes)) {
+                if ($record = self::get_user_feedback_record($course, $userid, $gradeitem, $assesstypes)) {
                     $data->items[] = $record;
                     $courseobject->items[] = $record;
                 }
             }
-            $itemlist[] = $gradeitem->itemid;
+            $itemlist[] = $gradeitem->gradeitemid;
         }
 
         // Sort the courseobject records by due date.
@@ -295,12 +295,12 @@ class user {
      * @param stdClass $course
      * @param int $userid
      * @param stdClass $gradeitem
-     * @param array $assessmenttypes
+     * @param array $assesstypes
      * @return stdClass|bool
      */
-    protected static function get_user_feedback_record($course, $userid, $gradeitem, $assessmenttypes): stdClass|bool {
+    protected static function get_user_feedback_record($course, $userid, $gradeitem, $assesstypes): stdClass|bool {
         $gradeitem->partid = 0; // Only turnitintooltwo assessments may have parts.
-        return self::compile_user_data($course, $userid, $gradeitem, $assessmenttypes);
+        return self::compile_user_data($course, $userid, $gradeitem, $assesstypes);
     }
 
     /**
@@ -309,7 +309,7 @@ class user {
      * @param stdClass $course
      * @param stdClass $gradeitem
      * @param int $userid
-     * @param array $assessmenttypes
+     * @param array $assesstypes
      * @param stdClass $data
      * @param stdClass $courseobject
      * @return void
@@ -320,14 +320,14 @@ class user {
       $course,
       $gradeitem,
       $userid,
-      $assessmenttypes,
+      $assesstypes,
       $data,
       $courseobject
     ): void {
 
         $tttparts = helper::get_turnitin_records($course->id);
 
-        foreach ($tttparts[$gradeitem->itemid] as $tttpart) {
+        foreach ($tttparts[$gradeitem->gradeitemid] as $tttpart) {
             if (!$tttpart->hidden) {
                 // Each ttt assessment may have its own attributes.
                 $gradeitem->summative = $tttpart->summative;
@@ -342,7 +342,7 @@ class user {
                 $gradeitem->partid = $tttpart->id;
                 $gradeitem->partname = helper::get_partname($gradeitem->partid);
 
-                if ($item = self::compile_user_data($course, $userid, $gradeitem, $assessmenttypes)) {
+                if ($item = self::compile_user_data($course, $userid, $gradeitem, $assesstypes)) {
                     $data->items[] = $item;
                     $courseobject->items[] = $item;
                 }
@@ -356,16 +356,16 @@ class user {
      * @param stdClass $course
      * @param int $userid
      * @param stdClass $gradeitem
-     * @param array $assessmenttypes
+     * @param array $assesstypes
      * @return stdClass|bool
      */
-    protected static function compile_user_data($course, $userid, $gradeitem, $assessmenttypes): stdClass|bool {
+    protected static function compile_user_data($course, $userid, $gradeitem, $assesstypes): stdClass|bool {
 
         // Append the assessment type information where available.
-        helper::append_assessment_type_to_gradeitem($gradeitem, $assessmenttypes);
+        helper::append_assess_type_to_gradeitem($gradeitem, $assesstypes);
 
         // Exclude assessments of type DUMMY.
-        if (isset($gradeitem->assessmenttype) && ((int)$gradeitem->assessmenttype === assess_type::ASSESS_TYPE_DUMMY)) {
+        if (isset($gradeitem->assesstype) && ((int)$gradeitem->assesstype === assess_type::ASSESS_TYPE_DUMMY)) {
             return false;
         }
 
@@ -383,16 +383,16 @@ class user {
         $data->submissionstatus = helper::get_submission_status($gradeitem, $submissiondate, $warningperiod);
         $data->courseid = $course->id;
         $data->coursename = $course->fullname;
-        $data->cmid = $gradeitem->itemid;
+        $data->cmid = $gradeitem->gradeitemid;
         $data->assessment = helper::get_item_link($gradeitem);
-        $data->assessmenttype = isset($gradeitem->assessmenttype) ? (int) $gradeitem->assessmenttype : null;
+        $data->assesstype = isset($gradeitem->assesstype) ? (int) $gradeitem->assesstype : null;
         $data->moduletypeicon = helper::get_module_type_icon($gradeitem);
         $data->module = helper::get_item_module($gradeitem);
-        $data->formative = isset($data->assessmenttype) &&
-            $data->assessmenttype === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
-        $data->summative = isset($data->assessmenttype) &&
-            $data->assessmenttype === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
-        $data->assesstypelabel = helper::get_assesstype_label($data->assessmenttype);
+        $data->formative = isset($data->assesstype) &&
+            $data->assesstype === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
+        $data->summative = isset($data->assesstype) &&
+            $data->assesstype === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
+        $data->assesstypelabel = helper::get_assesstype_label($data->assesstype);
         $data->duedate = $gradeitem->duedate == 0 ?
             get_string('datenotset', 'report_feedback_tracker') :
             userdate($gradeitem->duedate, $dateformat);
@@ -412,7 +412,7 @@ class user {
         $data->gfurl = $gradeitem->gfurl;
         $data->contact = $gradeitem->responsibility;
         $data->additionaldata = $data->generalfeedback || $data->method || $data->contact;
-        $data->isdummy = isset($data->assessmenttype) && $data->assessmenttype == assess_type::ASSESS_TYPE_DUMMY;
+        $data->isdummy = isset($data->assesstype) && $data->assesstype == assess_type::ASSESS_TYPE_DUMMY;
 
         return $data;
     }

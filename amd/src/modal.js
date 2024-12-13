@@ -1,6 +1,6 @@
 export const init = async() => {
 
-    const assessmentTypeSelector = document.getElementById('assessmenttype');
+    const assessmentTypeSelector = document.getElementById('assesstype');
     const hidingCheckbox = document.getElementById('hidden');
     const customFeedbackDuedateCheckbox = document.getElementById('customfeedbackduedatecheckbox');
     const feedbackduedateform = document.getElementById('js-feedbackduedate');

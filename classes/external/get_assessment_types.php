@@ -58,11 +58,11 @@ class get_assessment_types extends external_api {
      * @return string
      */
     public static function execute($selection) {
-        $assessmenttypes = helper::get_assess_types($selection);
+        $assesstypes = helper::get_assess_types($selection);
         if ($selection < 0) { // Only if no selection has been made yet, add a 'not set' option.
             $unselected = ['value' => -1, 'label' => 'Assessment type not set', 'isselected' => true];
-            array_unshift($assessmenttypes, $unselected); // Put unselected option on top.
+            array_unshift($assesstypes, $unselected); // Put unselected option on top.
         }
-        return json_encode($assessmenttypes);
+        return json_encode($assesstypes);
     }
 }

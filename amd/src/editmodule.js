@@ -22,9 +22,9 @@ export const init = async() => {
             const module = e.target.closest('.module');
             const icon = module.querySelector('[data-icon]').innerHTML;
             const name = module.querySelector('[data-name]').innerHTML;
-            const assessmenttype = module.querySelector('[data-assessmenttype]').getAttribute('data-assessmenttype');
+            const assesstype = module.querySelector('[data-assesstype]').getAttribute('data-assesstype');
             const locked = module.querySelector('[data-locked]').getAttribute('data-locked') * 1;
-            const assessmenttypelabel = module.querySelector('[data-label]').getAttribute('data-label');
+            const assesstypelabel = module.querySelector('[data-label]').getAttribute('data-label');
 
             const formattedduedate = module.querySelector('[data-customfeedbackduedate]') ?
                 module.querySelector('[data-customfeedbackduedate]').
@@ -47,8 +47,8 @@ export const init = async() => {
             const hidden = hiddenElement ? hiddenElement.getAttribute('data-hiddenfromreport') : null;
 
             // Get the assessment type options with the current selection.
-            const selection = assessmenttype * 1; // Make sure it is an integer.
-            const assessmenttypes = JSON.parse(await getAssessmentTypes(selection));
+            const selection = assesstype * 1; // Make sure it is an integer.
+            const assesstypes = JSON.parse(await getAssessmentTypes(selection));
 
             // If assessment type is either dummy or summative set by SITS disable 'hide from student report' option.
             const assessTypeDummy = 2; // This is assess_type::ASSESS_TYPE_DUMMY.
@@ -79,11 +79,11 @@ export const init = async() => {
                         generalfeedback: generalfeedback,
                         hidden: hidden,
                         hiddendisabled: hiddendisabled,
-                        assessmenttype: assessmenttype,
-                        assessmenttypelabel: assessmenttypelabel,
+                        assesstype: assesstype,
+                        assesstypelabel: assesstypelabel,
                         locked: locked,
                         formattedduedate: formattedduedate,
-                        assessmenttypes: assessmenttypes,
+                        assesstypes: assesstypes,
                         formattedreleaseddate: formattedreleaseddate,
                         feedbackduedatereason: feedbackduedatereason,
                         today: formattedtoday

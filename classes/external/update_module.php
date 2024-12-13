@@ -43,7 +43,7 @@ class update_module extends external_api {
             'contact' => new external_value(PARAM_TEXT, 'An optional contact'),
             'method' => new external_value(PARAM_TEXT, 'An optional method'),
             'hidden' => new external_value(PARAM_BOOL, 'Hidden from report'),
-            'assessmenttype' => new external_value(PARAM_INT, 'The assessment type'),
+            'assesstype' => new external_value(PARAM_INT, 'The assessment type'),
             'feedbackduedate' => new external_value(PARAM_RAW, 'The feedback due date'),
             'generalfeedback' => new external_value(PARAM_TEXT, 'An optional feedback for all participants'),
         ]);
@@ -66,7 +66,7 @@ class update_module extends external_api {
      * @param string $contact
      * @param string $method
      * @param bool $hidden
-     * @param int $assessmenttype
+     * @param int $assesstype
      * @param int|null $feedbackduedate
      * @param string $generalfeedback
      * @return string
@@ -74,7 +74,7 @@ class update_module extends external_api {
      * @throws \dml_exception
      */
     public static function execute(int $gradeitemid, int $partid, string $contact, string $method, bool $hidden,
-                                   int $assessmenttype, int|null $feedbackduedate, string $generalfeedback): string {
+                                   int $assesstype, int|null $feedbackduedate, string $generalfeedback): string {
         global $DB;
 
         if ($record = $DB->get_record('report_feedback_tracker', ['gradeitem' => $gradeitemid, 'partid' => $partid])) {
@@ -102,11 +102,11 @@ class update_module extends external_api {
             // Update course module records.
             if ($gradeitem->itemtype === 'mod') {
                 if ($cm = get_coursemodule_from_instance($gradeitem->itemmodule, $gradeitem->iteminstance)) {
-                    assess_type::update_type($gradeitem->courseid, $assessmenttype, $cm->id);
+                    assess_type::update_type($gradeitem->courseid, $assesstype, $cm->id);
                 }
             } else {
                 // Update the gradebook grade item and category.
-                assess_type::update_type($gradeitem->courseid, $assessmenttype, 0, $gradeitemid);
+                assess_type::update_type($gradeitem->courseid, $assesstype, 0, $gradeitemid);
             }
         }
 
