@@ -149,7 +149,7 @@ class user {
      * @throws dml_exception
      */
     public static function get_user_course_gradings($course, $userid, stdClass &$data): void {
-        global $DB;
+        global $DB, $USER;
 
         // Note: the uniqueid seems to be necessary for a correct query using Postgres SQL.
         $sql = "
@@ -255,7 +255,14 @@ class user {
                 if (is_array($customdata)
                         && array_key_exists($itemmodule, $duedates)
                         && isset($customdata[$duedates[$itemmodule]])) {
-                    $gradeitem->duedate = $customdata[$duedates[$itemmodule]];
+                    // Due to a core bug $customdata will always contain data for $USER->id, regardless of $userid given.
+                    // See MDL-83121.
+                    if ($USER->id === $userid) {
+                        $gradeitem->duedate = $customdata[$duedates[$itemmodule]];
+                    } else {
+                        // Use a custom method to get the override for a student user shown in an admin report.
+                        $gradeitem->duedate = self::get_duedate($gradeitem, $userid);
+                    }
                 }
             }
 
@@ -285,6 +292,61 @@ class user {
         }
 
         $data->courses[] = $courseobject;
+    }
+
+    /**
+     * Get a due date including overrides for a user.
+     *
+     * @param stdClass $gradeitem
+     * @param int $userid
+     * @return int|mixed
+     * @throws dml_exception
+     */
+    private static function get_duedate($gradeitem, $userid) {
+        global $DB;
+        switch ($gradeitem->itemmodule) {
+            case 'assign':
+                // Return individual override when available.
+                $params = ['assignid' => $gradeitem->iteminstance, 'userid' => $userid];
+                $override = $DB->get_record('assign_overrides', $params);
+                if (isset($override->duedate) && ($override->duedate > 0)) {
+                    return $override->duedate;
+                }
+
+                // Return group override when available.
+                $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
+                if (count($usergroups[0]) > 0) {
+                    $overridedate = 0;
+                    foreach ($usergroups[0] as $usergroupid) {
+                        $params = ['assignid' => $gradeitem->iteminstance, 'groupid' => $usergroupid];
+                        $override = $DB->get_record('assign_overrides', $params);
+                        if (isset($override->duedate) && ($override->duedate > $overridedate)) {
+                            $overridedate = $override->duedate;
+                        }
+                    }
+                    if ($overridedate > 0) {
+                        return $overridedate;
+                    }
+                }
+                break;
+            case 'lesson':
+                $params = ['lessonid' => $gradeitem->iteminstance, 'userid' => $userid];
+                $override = $DB->get_record('lesson_overrides', $params);
+                if (isset($override->deadline) && $override->deadline > 0) {
+                    return $override->deadline;
+                }
+                break;
+            case 'quiz':
+                $params = ['quiz' => $gradeitem->iteminstance, 'userid' => $userid];
+                $override = $DB->get_record('quiz_overrides', $params);
+                if (isset($override->timeclose) && $override->timeclose > 0) {
+                    return $override->timeclose;
+                }
+                break;
+            default:
+                break;
+        }
+        return $gradeitem->duedate;
     }
 
     /**
