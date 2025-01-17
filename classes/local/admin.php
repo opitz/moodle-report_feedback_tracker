@@ -101,36 +101,33 @@ class admin {
     }
 
     /**
-     * Get the due date of a course module.
+     * Get the due date of a course module of type assign, lesson, quiz or workshop.
      *
      * @param cm_info $cm
      * @return int
      */
-    private static function get_duedate(cm_info $cm): int {
-        global $DB;
+    public static function get_duedate(cm_info $cm): int {
+        // Check mod has custom data.
+        if (!$cm->customdata) {
+            return 0;
+        }
 
         switch ($cm->modname) {
             case 'assign':
-                $record = $DB->get_record('assign', ['id' => $cm->instance], 'duedate');
-                $duedate = $record->duedate;
-                break;
+                // Check customdata has duedate.
+                return isset($cm->customdata['duedate']) ? $cm->customdata['duedate'] : 0;
             case 'lesson':
-                $record = $DB->get_record('lesson', ['id' => $cm->instance], 'deadline');
-                $duedate = $record->deadline;
-                break;
+                // Check customdata has deadline.
+                return isset($cm->customdata['deadline']) ? $cm->customdata['deadline'] : 0;
             case 'quiz':
-                $record = $DB->get_record('quiz', ['id' => $cm->instance], 'timeclose');
-                $duedate = $record->timeclose;
-                break;
+                // Check customdata has timeclose.
+                return isset($cm->customdata['timeclose']) ? $cm->customdata['timeclose'] : 0;
             case 'workshop':
-                $record = $DB->get_record('workshop', ['id' => $cm->instance], 'submissionend');
-                $duedate = $record->submissionend;
-                break;
+                // Check customdata has submissionend.
+                return isset($cm->customdata['submissionend']) ? $cm->customdata['submissionend'] : 0;
             default:
-                $duedate = 0;
+                return 0;
         }
-
-        return $duedate;
     }
 
     /**
@@ -204,8 +201,6 @@ class admin {
      * @return int
      */
     private static function count_submissions(cm_info $cm): int {
-        global $DB;
-
         if ($cm) {
             if ($cm->modname === 'assign') {
                 $context = context_module::instance($cm->id);
@@ -265,9 +260,8 @@ class admin {
      * @param grade_item $gradeitem
      * @param cm_info $cm
      * @return int
-     * @throws dml_exception
      */
-    private static function count_missing_grades(grade_item $gradeitem, cm_info $cm): int {
+    public static function count_missing_grades(grade_item $gradeitem, cm_info $cm): int {
         global $DB;
 
         // Assignments provide a way to count submissions that needs grading.
@@ -327,11 +321,9 @@ class admin {
      * Get a URL to marking.
      *
      * @param cm_info $module
-     * @return string
+     * @return moodle_url
      */
-    private static function get_markingurl(cm_info $module): string {
-        global $CFG;
-
+    public static function get_markingurl(cm_info $module): moodle_url {
         switch ($module->modname) {
             case 'assign':
                 return new moodle_url('/mod/assign/view.php', ['id' => $module->id, 'action' => 'grading']);

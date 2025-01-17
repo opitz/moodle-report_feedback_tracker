@@ -461,20 +461,14 @@ class helper {
 
     /**
      *
-     * @param stdClass $gradeitem
+     * @param int $cmid
      * @return array
-     * @throws dml_exception
      */
-    public static function get_turnitin_parts($gradeitem) {
+    public static function get_turnitin_parts($cmid) {
         global $DB;
 
-        $sql = "SELECT * FROM {turnitintooltwo_parts} WHERE turnitintooltwoid = :iteminstance";
-        $params = ['iteminstance' => $gradeitem->iteminstance];
-        // Execute the query.
-        $tttparts = $DB->get_records_sql($sql, $params);
-
-        return $tttparts;
-
+        return $DB->get_records('turnitintooltwo_parts', ['turnitintooltwoid' => $cmid], '',
+        'id, partname, dtdue');
     }
 
     /**
@@ -864,8 +858,6 @@ class helper {
      * @return int
      */
     public static function get_assign_submission_plugins(int $cmid): int {
-        global $DB;
-
         // Load the course module and assignment instance.
         $cm = get_coursemodule_from_id('assign', $cmid, 0, false, MUST_EXIST);
         $context = context_module::instance($cm->id);

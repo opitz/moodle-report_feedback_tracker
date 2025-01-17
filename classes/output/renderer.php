@@ -45,19 +45,15 @@ class renderer extends plugin_renderer_base {
      * @param int $userid
      * @param int $courseid optional course id to limit output.
      * @return string
-     * @throws \moodle_exception
      */
-    public function render_feedback_tracker_user_report($userid, $courseid = 0): string {
-        global $USER;
+    public function render_feedback_tracker_user_report($userid, $courseid): string {
 
-        // Course ID 1 is not a standard Moodle course and is excluded.
-        if ($courseid < 2) {
-            $courseid = 0;
-        }
         // Get the table data.
         $feedbacktrackerdata = user::get_feedback_tracker_user_data($userid, $courseid);
 
-        if ($courseid) { // Render a student view of single course as an editor.
+        if ($courseid === SITEID) { // Render all courses for a student.
+            return $this->render_all_student_courses($feedbacktrackerdata);
+        } else { // Render a student view of a single course as an editor.
             $context = context_course::instance($courseid);
             $feedbacktrackerdata->courseid = $courseid;
             $feedbacktrackerdata->canedit = has_capability('moodle/grade:edit', $context);
@@ -66,29 +62,37 @@ class renderer extends plugin_renderer_base {
 
             return $this->output->render_from_template('report_feedback_tracker/course/course',
                 $feedbacktrackerdata);
-        } else { // Render all courses for a student.
-            $feedbacktrackerdata->canedit = false;
-            // While there are more than one courses, remove the ones without assessments.
-            // If there is only one course without assessments show it nevertheless.
-            if ($feedbacktrackerdata->courses) {
-                $coursesremoved = false;
-                foreach ($feedbacktrackerdata->courses as $key => $course) {
-                    // If there is only one course (left) do not remove it.
-                    if (count($feedbacktrackerdata->courses) < 2) {
-                        break;
-                    }
-                    if (empty($course->items)) { // If a course has no grade records, remove it from the report.
-                        unset($feedbacktrackerdata->courses[$key]);
-                        $coursesremoved = true;
-                    }
+        }
+    }
+
+    /**
+     * Render all courses for a student.
+     *
+     * @param stdClass $feedbacktrackerdata
+     * @return string
+     */
+    private function render_all_student_courses(stdClass $feedbacktrackerdata): string {
+        $feedbacktrackerdata->canedit = false;
+        // While there are more than one courses, remove the ones without assessments.
+        // If there is only one course without assessments show it nevertheless.
+        if ($feedbacktrackerdata->courses) {
+            $coursesremoved = false;
+            foreach ($feedbacktrackerdata->courses as $key => $course) {
+                // If there is only one course (left) do not remove it.
+                if (count($feedbacktrackerdata->courses) === 1) {
+                    break;
                 }
-                // If any courses have been removed, re-index the array.
-                if ($coursesremoved) {
-                    $feedbacktrackerdata->courses = array_values($feedbacktrackerdata->courses);
+                if (empty($course->items)) { // If a course has no grade records, remove it from the report.
+                    unset($feedbacktrackerdata->courses[$key]);
+                    $coursesremoved = true;
                 }
             }
-            return $this->output->render_from_template('report_feedback_tracker/user/courses', $feedbacktrackerdata);
+            // If any courses have been removed, re-index the array.
+            if ($coursesremoved) {
+                $feedbacktrackerdata->courses = array_values($feedbacktrackerdata->courses);
+            }
         }
+        return $this->output->render_from_template('report_feedback_tracker/user/courses', $feedbacktrackerdata);
     }
 
     /**
@@ -98,8 +102,6 @@ class renderer extends plugin_renderer_base {
      * @return string
      */
     public function render_feedback_tracker_course_report(int $courseid): string {
-        global $CFG, $USER;
-
         $modinfo = get_fast_modinfo($courseid);
 
         $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
@@ -123,7 +125,7 @@ class renderer extends plugin_renderer_base {
                     helper::is_supported_module($gradeitem->itemmodule) &&
                     $item = admin::get_module_data($gradeitem, $modinfo)) {
                 if ($gradeitem->itemmodule === 'turnitintooltwo') {
-                    $tttparts = helper::get_turnitin_parts($gradeitem);
+                    $tttparts = helper::get_turnitin_parts($gradeitem->iteminstance);
 
                     foreach ($tttparts as $tttpart) {
                         // Each part of a turnitintooltwo assessment starts as a clone of the module

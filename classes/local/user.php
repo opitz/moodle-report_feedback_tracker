@@ -83,17 +83,17 @@ class user {
      * @param int $userid
      * @param int $courseid
      * @return stdClass
-     * @throws coding_exception
      */
-    public static function get_feedback_tracker_user_data($userid, $courseid = 0): stdClass {
+    public static function get_feedback_tracker_user_data($userid, $courseid): stdClass {
         $data = new stdClass();
         $data->items = [];
         $data->courses = [];
         $enrolledcourses = enrol_get_users_courses($userid);
         // Get the academic years of the user.
-        if ($academicyears = self::get_user_academic_years($enrolledcourses)) {
+        $academicyears = self::get_user_academic_years($enrolledcourses);
+
+        if (!empty($academicyears)) {
             $data->academicyearoptions = $academicyears;
-            $data->hasyears = true;
         }
 
         // Get the user information.
@@ -112,13 +112,10 @@ class user {
             }
         }
 
-        // If a course ID is given return data for that course only
+        // If a valid course ID is given return data for that course only
         // otherwise return data for all courses a user is enrolled in.
-        if ($courseid) {
-            unset($data->hasyears); // Do not show academic year options when showing a single course.
-            $course = get_course($courseid);
-            self::get_user_course_gradings($course, $userid, $data);
-        } else {
+        if ($courseid === SITEID) {
+            $data->hasyears = true; // Only show academic year options when showing all courses.
             foreach ($enrolledcourses as $course) {
                 $academicyear = helper::get_academic_year($course->id);
 
@@ -126,13 +123,14 @@ class user {
                     self::get_user_course_gradings($course, $userid, $data);
                 }
             }
-        }
 
-        // Sort the courses by name.
-        if (is_array($data->courses)) {
+            // Sort the courses by name.
             usort($data->courses, function($a, $b) {
                 return strcmp($a->fullname, $b->fullname);
             });
+        } else {
+            $course = get_course($courseid);
+            self::get_user_course_gradings($course, $userid, $data);
         }
 
         return $data;
@@ -148,7 +146,7 @@ class user {
      * @throws coding_exception
      * @throws dml_exception
      */
-    public static function get_user_course_gradings($course, $userid, stdClass &$data): void {
+    public static function get_user_course_gradings($course, $userid, stdClass $data): void {
         global $DB, $USER;
 
         // Note: the uniqueid seems to be necessary for a correct query using Postgres SQL.
@@ -304,49 +302,41 @@ class user {
      */
     private static function get_duedate($gradeitem, $userid) {
         global $DB;
+
         switch ($gradeitem->itemmodule) {
             case 'assign':
                 // Return individual override when available.
                 $params = ['assignid' => $gradeitem->iteminstance, 'userid' => $userid];
-                $override = $DB->get_record('assign_overrides', $params);
-                if (isset($override->duedate) && ($override->duedate > 0)) {
-                    return $override->duedate;
-                }
+                $overridedate = $DB->get_field('assign_overrides', 'duedate', $params);
 
-                // Return group override when available.
-                $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
-                if (count($usergroups[0]) > 0) {
-                    $overridedate = 0;
-                    foreach ($usergroups[0] as $usergroupid) {
-                        $params = ['assignid' => $gradeitem->iteminstance, 'groupid' => $usergroupid];
-                        $override = $DB->get_record('assign_overrides', $params);
-                        if (isset($override->duedate) && ($override->duedate > $overridedate)) {
-                            $overridedate = $override->duedate;
+                // If there is no individual override return group override where available.
+                if (!$overridedate) {
+                    $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
+                    if (count($usergroups[0]) > 0) {
+                        foreach ($usergroups[0] as $usergroupid) {
+                            $params = ['assignid' => $gradeitem->iteminstance, 'groupid' => $usergroupid];
+                            $duedate = $DB->get_field('assign_overrides', 'duedate', $params);
+
+                            if ($duedate > $overridedate) {
+                                $overridedate = $duedate;
+                            }
                         }
-                    }
-                    if ($overridedate > 0) {
-                        return $overridedate;
                     }
                 }
                 break;
             case 'lesson':
                 $params = ['lessonid' => $gradeitem->iteminstance, 'userid' => $userid];
-                $override = $DB->get_record('lesson_overrides', $params);
-                if (isset($override->deadline) && $override->deadline > 0) {
-                    return $override->deadline;
-                }
+                $overridedate = $DB->get_field('lesson_overrides', 'deadline', $params);
                 break;
             case 'quiz':
                 $params = ['quiz' => $gradeitem->iteminstance, 'userid' => $userid];
-                $override = $DB->get_record('quiz_overrides', $params);
-                if (isset($override->timeclose) && $override->timeclose > 0) {
-                    return $override->timeclose;
-                }
+                $overridedate = $DB->get_field('quiz_overrides', 'timeclose', $params);
                 break;
             default:
                 break;
         }
-        return $gradeitem->duedate;
+        return  $overridedate ?: $gradeitem->duedate;
+
     }
 
     /**
