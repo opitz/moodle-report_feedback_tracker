@@ -16,7 +16,6 @@
 
 namespace report_feedback_tracker\local;
 use assign;
-use coding_exception;
 use context_module;
 use course_modinfo;
 use dml_exception;
@@ -91,7 +90,7 @@ class admin {
         $data->submissions = self::count_submissions($module);
 
         // Grades and markings.
-        $data->requiredfeedbacks = self::count_missing_grades($gradeitem, $module);
+        $data->requiredfeedbacks = self::count_missing_grades($module, $gradeitem->id);
         $data->feedbackpercentage = $data->submissions ?
             round(($data->submissions - $data->requiredfeedbacks) / $data->submissions * 100, 0) : 0;
         $data->url = $module->get_url();
@@ -257,14 +256,14 @@ class admin {
     /**
      * Count the missing grades for a given grade item.
      *
-     * @param grade_item $gradeitem
      * @param cm_info $cm
+     * @param int|null $gradeitemid
      * @return int
      */
-    public static function count_missing_grades(grade_item $gradeitem, cm_info $cm): int {
-        global $DB;
+    public static function count_missing_grades(cm_info $cm, ?int $gradeitemid = null ): int {
+        global $CFG, $DB;
 
-        // Assignments provide a way to count submissions that needs grading.
+        // Assignments provide a method to count submissions that need grading.
         if ($cm->modname === 'assign') {
             // Get the group submission status.
             $context = context_module::instance($cm->id);
@@ -274,13 +273,26 @@ class admin {
 
         // For modules other than assignments get the student IDs that have submissions.
         if ($submissions = self::get_module_submissions($cm)) {
+            if (!isset($gradeitemid)) {
+                $params = [
+                    'itemtype' => 'mod',
+                    'itemnumber' => 0,
+                    'itemmodule' => $cm->modname,
+                    'iteminstance' => $cm->instance,
+                ];
+
+                // Get the grade item ID.
+                $gradeitemid = $DB->get_field('grade_items', 'id', $params);
+
+            }
+
             $sql = "SELECT DISTINCT gg.userid
                     FROM {grade_grades} gg
                     WHERE gg.itemid = :gradeitemid AND gg.finalgrade > :finalgrade";
-            $params = ['gradeitemid' => $gradeitem->id, 'finalgrade' => -1];
+            $params = ['gradeitemid' => $gradeitemid, 'finalgrade' => -1];
 
-            // Execute the query.
             $studentids = $DB->get_fieldset_sql($sql, $params);
+
             // Count and return all student IDs in submission that are not (yet) to be found in gradings.
             $missinggrades = 0;
             foreach ($submissions as $submitterid) {
