@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['academicyear'] = 'Academic Year';
+$string['academicyear'] = 'Academic year';
 $string['additionalinformationhint'] = 'Additional information shown in feedback tracker to all students for this assessment.';
 $string['assessment:has_been_updated'] = 'Assessment data has been updated.';
 $string['assesstype:dummy'] = 'Dummy';
@@ -52,6 +52,7 @@ $string['contact'] = 'Contact';
 $string['course'] = 'Course';
 $string['courseadmin'] = 'Course admin';
 $string['coursereport'] = 'Course report';
+$string['currentpage'] = 'current page';
 $string['dateformat:default'] = "d M Y";
 $string['datenotset'] = 'Date not set';
 $string['due'] = 'Due';
@@ -156,6 +157,7 @@ $string['settings:supportworkshop'] = 'Workshops';
 $string['settings:warningdays'] = 'Warning period';
 $string['settings:warningdaysinfo'] = 'Number of calendar days before a due date from when a warning is shown.';
 $string['site:heading'] = 'Feedback tracker site report';
+$string['site:menuguide'] = 'Select a year and term to view the report. The current accademic year and term are shown by default.';
 $string['site:nocourses'] = 'No courses with summative assessments to show for the selected year.';
 $string['site:note'] = 'Note: Postgraduate courses may be under the academic year they began.';
 $string['student'] = 'Student';
@@ -169,11 +171,13 @@ $string['submitted'] = 'submitted';
 $string['summative'] = 'Summative';
 $string['summativekey'] = 'assessments contribute to your course mark.';
 $string['summativekeyadmin'] = 'assessments contribute to a student course mark.';
+
+$string['t1'] = 'Autumn';
+$string['t2'] = 'Spring';
+$string['t3'] = 'Summer';
+$string['t4'] = 'Other';
 $string['term'] = 'Term';
-$string['term:autumn'] = 'Autumn';
-$string['term:other'] = 'Other';
-$string['term:spring'] = 'Spring';
-$string['term:summer'] = 'Summer';
+
 $string['title:name'] = 'Feedback tracker';
 $string['title:site_subtext'] = 'Summative assessments with due dates, feedback dates, and marking progress from your courses in UCL Moodle.';
 $string['title:subtext'] = 'Assessments with due dates, feedback dates, and marks from your courses in Moodle.';
@@ -181,3 +185,4 @@ $string['type'] = 'Assessment type';
 $string['user'] = 'User';
 $string['users:extension'] = '1 extension';
 $string['users:extensions'] = '{$a} extensions';
+$string['year'] = 'Year';

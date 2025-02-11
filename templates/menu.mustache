@@ -1,0 +1,59 @@
+{{!
+    This file is part the Feedback tracker report plugin for Moodle
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template report_feedback_tracker/menu
+
+    Template for displaying a menu.
+
+    Example context (json):
+    {
+        "type": "Year",
+        "items": [
+            {
+                "value": "22/23",
+                "url": "/report/feedback_tracker/site.php?year=2022&term=1",
+                "selected": false
+            },
+            {
+                "value": "23/24",
+                "url": "/report/feedback_tracker/site.php?year=2023&term=1",
+                "selected": true
+            },
+            {
+                "value": "24/25",
+                "url": "/report/feedback_tracker/site.php?year=2024&term=1",
+                "selected": false
+            }
+        ]
+    }
+}}
+
+<nav class="mt-1" aria-labelledby="nav-{{{type}}}-title">
+    <span id="nav-{{{type}}}-title">{{{type}}}</span>:
+    <ol class="ml-2 d-inline list-inline">
+    {{#items}}
+        {{#selected}}
+        <li class="list-inline-item font-weight-bold bg-warning px-1" aria-current="page">
+            {{value}} <span class="sr-only">{{#str}} currentpage, report_feedback_tracker {{/str}}</span>
+        </li>
+        {{/selected}}
+
+        {{^selected}}
+        <li class="list-inline-item"><a href="{{{url}}}">{{value}}</a></li>
+        {{/selected}}
+    {{/items}}
+    </ol>
+</nav>

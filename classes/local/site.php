@@ -17,24 +17,41 @@
 namespace report_feedback_tracker\local;
 
 use block_portico_enrolments;
-use coding_exception;
 use context_course;
 use course_modinfo;
-use dml_exception;
 use grade_item;
 use local_assess_type\assess_type;
+use moodle_url;
 use stdClass;
 
 /**
- * This file contains the site functions used by the feedback tracker report.
+ * Feedback tracker site level report for non-students.
  *
  * @package    report_feedback_tracker
- * @copyright  2025 UCL <m.opitz@ucl.ac.uk>
+ * @copyright  2025 onwards UCL {@link https://www.ucl.ac.uk/}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class site {
+
     /**
-     * Get the data for the site report.
+     * Autumn academic term.
+     */
+    const TERM_AUTUMN = 1;
+
+    /**
+     * Spring academic term.
+     */
+    const TERM_SPRING = 2;
+
+    /**
+     * Summer academic term.
+     */
+    const TERM_SUMMER = 3;
+
+
+
+    /**
+     * Return the data for the site level report.
      *
      * @return stdClass
      */
@@ -47,49 +64,40 @@ class site {
             $starttime = microtime(true);
         }
 
+        // Template for mustache.
         $data = new stdClass();
         $data->staffdata = true;
-        $data->canedit = true;
-        $data->outputedit = true;
         $data->courses = [];
 
-        $courses = enrol_get_users_courses($USER->id);
-
+        // Year and term menus.
         $year = optional_param('year', null, PARAM_INT);
-        $year = $year ? substr($year, 0, 4) : helper::get_current_academic_year();
-        $data->selectedyear = $year;
+        $term = optional_param('term', null, PARAM_INT);
+        $menus = self::menu($year, $term);
+        $data->menus = $menus->menus;
 
-        // Get the last three academic years.
-        $academicyears = helper::get_last_three_academic_years();
-        // Remove the key of the selected academic year.
-        // This is used by the template to identify the selection.
-        unset($academicyears[$year]->key);
-        $data->academicyearoptions = array_values($academicyears);
-        $data->hasyears = true;
+        // Years.
+        $data->year = $menus->year;
+        $data->yearname = substr($menus->year, -2). "/" . substr($menus->year + 1, -2);
 
-        // Get the terms.
-        $terms = helper::get_terms();
-        $data->termoptions = $terms;
-        $data->hasterms = true;
-
-        $termcode = optional_param('term', null, PARAM_TEXT);
-        $termcode = $termcode ?: helper::get_current_termcode();
-        $data->selectedterm = $termcode;
-
-        // Remove the code of the selected term.
-        // This is used by the template to identify the selection.
-        $delkey = (int)substr($termcode, -1) - 1;
-        unset($terms[$delkey]->code);
+        // Terms.
+        $data->term = $menus->term;
+        $data->termname = get_string('t' . $menus->term, 'report_feedback_tracker');
+        $data->termcode = 't' . $menus->term;
 
         // Courses.
+        $courses = enrol_get_users_courses($USER->id);
         foreach ($courses as $course) {
-            $courseay = helper::get_academic_year($course->id); // Get the academic year from the course custom field.
-            // Only show courses for the selected year visible to students.
-            if ($course->visible && $courseay === $year) {
+            // Skip hidden.
+            if (!$course->visible) {
+                continue;
+            }
+
+            // Only show courses for the selected year.
+            if ((int) helper::get_academic_year($course->id) === $data->year) {
                 // Only show courses for the selected academic year and term and where the user is a teacher.
                 list($courseacademicyears, $courseterms) = self::get_course_academic_years_and_terms($course);
-                if (in_array($year, $courseacademicyears) &&
-                        in_array($termcode, $courseterms[$year]) &&
+                if (in_array($data->year, $courseacademicyears) &&
+                        in_array($data->termcode, $courseterms[$data->year]) &&
                         self::is_teacher($course->id)) {
                     $courseitem = self::build_courseitem($course);
 
@@ -109,6 +117,114 @@ class site {
             $data->executiontime = "Execution time: " . number_format($executiontime, 4) . " seconds\n";
         }
         return $data;
+    }
+
+    /**
+     * Menu data for the report.
+     *
+     * @param int|null $year The selected year.
+     * @param int|null $term The selected term.
+     * @return stdClass The menu data.
+     */
+    public static function menu(?int $year = null, ?int $term = null): stdClass {
+        // Get the current month and year.
+        $clock = \core\di::get(\core\clock::class);
+        $currentmonth = $clock->now()->format('n');
+        $currentyear = $clock->now()->format('Y');
+
+        // Check if we have a year from url, or set a default.
+        $defaultyear = ($currentmonth < 8) ? $currentyear - 1 : $currentyear;
+        $year = $year ?? $defaultyear;
+
+        // Check if we have a term from url, or set a default.
+        $term = $term ?: self::current_term($currentmonth);
+
+        // Template for mustache.
+        $template = new stdClass();
+        $template->year = $year;
+        $template->term = $term;
+
+        // Years menu.
+        $yearmenu = new stdClass();
+        $yearmenu->type = get_string('year', 'report_feedback_tracker');
+        $yearmenu->items = self::years_menu($year, $term);
+
+        // Terms menu.
+        $termmenu = new stdClass();
+        $termmenu->type = get_string('term', 'report_feedback_tracker');
+        $termmenu->items = self::terms_menu($year, $term);
+
+        // Add menus.
+        $template->menus = [$yearmenu, $termmenu];
+
+        return $template;
+    }
+
+    /**
+     * Return the current academic term.
+     *
+     * @param int $month The current month (1-12).
+     * @return int The current term (1-3).
+     */
+    public static function current_term(int $month): int {
+        if ($month <= 3) {
+            return self::TERM_SPRING;
+        }
+        if ($month <= 8) {
+            return self::TERM_SUMMER;
+        }
+        return self::TERM_AUTUMN;
+    }
+
+    /**
+     * Terms menu.
+     *
+     * @param int $year The selected year.
+     * @param int $term The selected term.
+     * @return array The terms menu data.
+     */
+    public static function terms_menu(int $year, int $term): array {
+        $terms = [];
+        for ($i = 1; $i <= 4; $i++) {
+            $template = new stdClass();
+            $template->value = get_string('t'.$i, 'report_feedback_tracker');
+            $template->url = new moodle_url('/report/feedback_tracker/site.php', ['year' => $year, 'term' => $i]);
+            $template->selected = ($term === $i);
+            $terms[] = $template;
+        }
+
+        return $terms;
+    }
+
+    /**
+     * Years menu.
+     *
+     * @param int $year The selected year.
+     * @param int $term The selected term.
+     * @return array The years menu data.
+     */
+    public static function years_menu(int $year, int $term): array {
+        // Get the current month and year.
+        $clock = \core\di::get(\core\clock::class);
+        $currentmonth = $clock->now()->format('n');
+        $currentyear = $clock->now()->format('Y');
+
+        // Menu start year. Note UCL years start in Aug/8th month.
+        $menustart = ($currentmonth < 8) ? $currentyear - 1 : $currentyear;
+
+        $years = [];
+        for ($i = 0; $i < 3; $i++) {
+            $yearstart = $menustart - $i;
+            $yearend = $yearstart + 1;
+
+            $template = new stdClass();
+            $template->value = substr($yearstart, -2) . "/" . substr($yearend, -2);
+            $template->url = new moodle_url('/report/feedback_tracker/site.php', ['year' => $yearstart, 'term' => $term]);
+            $template->selected = ($yearstart === $year);
+            $years[] = $template;
+        }
+
+        return $years;
     }
 
     /**
@@ -243,7 +359,6 @@ class site {
             $ayitem->courseyear = $mapping->mod_occ_year_code;
             $ayitem->rawterms = $mapping->mod_occ_psl_code;
             $ayitem->courseterms = self::parse_mappingtermcode($mapping->mod_occ_psl_code);
-
             $ayitems[] = $ayitem;
         }
         // If Portico does not provide an academic year try to get it from Moodle data.
@@ -290,5 +405,4 @@ class site {
         }
         return $courseterms;
     }
-
 }

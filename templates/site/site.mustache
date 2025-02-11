@@ -47,21 +47,16 @@
 <div id="behat-feedback-area">
     <div class="sub-title">{{#str}} title:site_subtext, report_feedback_tracker {{/str}}</div>
     <hr>
-    <div class="d-flex">
-        {{! Years. }}
-        {{#hasyears}}
-            {{> report_feedback_tracker/site/ayselector }}
-        {{/hasyears}}
-    </div>
-    <div class="d-flex">
-        {{! Terms. }}
-        {{#hasterms}}
-            {{> report_feedback_tracker/site/termselector }}
-        {{/hasterms}}
-    </div>
+
+    <p class="sr-only">{{#str}} site:menuguide, report_feedback_tracker {{/str}}</p>
+    {{#menus}}
+        {{> report_feedback_tracker/menu }}
+    {{/menus}}
+
     <div class="small">{{#str}} site:note, report_feedback_tracker {{/str}}</div>
     <hr>
 
+    <h2 class="h4 mb-3">{{yearname}} {{termname}} {{#str}} courses {{/str}}</h2>
     <div id="courses-area">
         {{#courses}}
             {{> report_feedback_tracker/site/courses }}
