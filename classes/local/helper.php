@@ -498,6 +498,39 @@ class helper {
     }
 
     /**
+     * Return if user has archetype teacher or editingteacher.
+     *
+     * @param stdClass|null $course
+     * @return bool
+     */
+    public static function is_teacher(stdClass|null $course = null): bool {
+        global $DB, $USER;
+        // Get id's from role where archetype is teacher or editingteacher.
+        $params = ['role1' => 'editingteacher', 'role2' => 'teacher'];
+        $roles = $DB->get_fieldset_select('role', 'id', 'archetype IN (:role1, :role2)', $params);
+
+        if ($course) {
+            // Check if user has expected role in the given course.
+            foreach ($roles as $role) {
+                if (user_has_role_assignment($USER->id, (int) $role, $course->ctxid)) {
+                    return true;
+                }
+            }
+            return false;
+
+        } else {
+            // Check if user has editingteacher role on any courses.
+            list($roles, $params) = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED);
+            $params['userid'] = $USER->id;
+            $sql = "SELECT id
+                FROM {role_assignments}
+                WHERE userid = :userid
+                AND roleid $roles";
+            return $DB->record_exists_sql($sql, $params);
+        }
+    }
+
+    /**
      * Return the ability of a user to edit a course.
      *
      * @param int $courseid

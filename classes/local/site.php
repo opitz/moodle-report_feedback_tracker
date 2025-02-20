@@ -18,7 +18,6 @@ namespace report_feedback_tracker\local;
 
 use block_portico_enrolments;
 use core_course\external\course_summary_exporter;
-use context_course;
 use course_modinfo;
 use grade_item;
 use local_assess_type\assess_type;
@@ -99,7 +98,7 @@ class site {
                 list($courseacademicyears, $courseterms) = self::get_course_academic_years_and_terms($course);
                 if (in_array($data->year, $courseacademicyears) &&
                         in_array($data->termcode, $courseterms[$data->year]) &&
-                        self::is_teacher($course->id)) {
+                        helper::is_teacher($course)) {
                     $courseitem = self::build_courseitem($course);
 
                     // Show only courses with assessments to show.
@@ -311,40 +310,6 @@ class site {
                 && !$cm->hiddenfromstudents) {
             // Add separate data for each summative Turnitin part.
             helper::add_ttt_data($courseitem, $gradeitem, $cm, $assesstypes, assess_type::ASSESS_TYPE_SUMMATIVE);
-        }
-    }
-
-    /**
-     * Return if user has archetype editingteacher.
-     *
-     * @param int $courseid
-     * @return bool
-     */
-    public static function is_teacher(int $courseid = 0): bool {
-        global $DB, $USER;
-        // Get id's from role where archetype is teacher or editingteacher.
-        $params = ['role1' => 'editingteacher', 'role2' => 'teacher'];
-        $roles = $DB->get_fieldset_select('role', 'id', 'archetype IN (:role1, :role2)', $params);
-
-        if ($courseid) {
-            // Check if user has expected role in the given course.
-            $context = context_course::instance($courseid);
-            foreach ($roles as $role) {
-                if (user_has_role_assignment($USER->id, (int) $role, $context->id)) {
-                    return true;
-                }
-            }
-            return false;
-
-        } else {
-            // Check if user has editingteacher role on any courses.
-            list($roles, $params) = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED);
-            $params['userid'] = $USER->id;
-            $sql = "SELECT id
-                FROM {role_assignments}
-                WHERE userid = :userid
-                AND roleid $roles";
-            return  $DB->record_exists_sql($sql, $params);
         }
     }
 
