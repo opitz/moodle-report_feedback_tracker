@@ -382,7 +382,7 @@ class user {
         $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
 
         // If there is a manual feedback due date use it, otherwise calculate it from the submission due date where set.
-        $feedbackduedate = helper::get_feedbackduedate($gradeitem);
+        $feedbackduedate = helper::get_feedbackduedate($gradeitem, $gradeitem->duedate);
         // Get the submission date if any.
         $submissiondate = helper::get_submissiondate($userid, $gradeitem);
 

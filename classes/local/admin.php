@@ -75,7 +75,7 @@ class admin {
         $duedate = self::get_duedate($module);
         $data->duedate = $duedate ? userdate($duedate, $dateformat) : false;
         // The raw date is needed for sorting.
-        $data->feedbackduedateraw = $duedate ? helper::calculate_feedback_duedate($gradeitem->courseid, $duedate) : 9999999999;
+        $data->feedbackduedateraw = $duedate ? helper::get_feedbackduedate($gradeitem, $duedate) : 9999999999;
         $data->feedbackduedate = $data->duedate ? userdate($data->feedbackduedateraw, $dateformat) : false;
         $data->markoverdue = false;
 

@@ -601,53 +601,27 @@ class helper {
     /**
      * Get the feedback due date for a grade item.
      *
-     * @param stdClass $gradeitem
+     * @param object $gradeitem
+     * @param int $duedate
      * @return int
      */
-    public static function get_feedbackduedate(stdClass $gradeitem): int {
+    public static function get_feedbackduedate(object $gradeitem, int $duedate): int {
         // If there is a manually set feedback due date use it.
-        if ($gradeitem->feedbackduedate) {
+        if (isset($gradeitem->feedbackduedate)) {
             return $gradeitem->feedbackduedate;
         }
 
-        // If there is a submission due date calculate the feedback due date.
-        if ($gradeitem->duedate) {
-            $academicyear = (int) self::get_academic_year($gradeitem->courseid);
-
-            // For assessments before academic year 2024-25 the feedback due date period was 1 calendar month.
-            // From academic year 2024-25 on the feedback due date period is 20 working days.
-            if ($academicyear < 2024) {
-                return strtotime('+1 month', $gradeitem->duedate);
-            }
-
-            // Compute the due date.
-            return self::compute_feedbackduedate($gradeitem->duedate);
-        }
-
-        // If there is no due date there is no feedback due date.
-        return 0;
-    }
-
-    /**
-     * Calculate the feedback due date based on the submission due date.
-     *
-     * @param int $courseid
-     * @param int $duedate the submission due date
-     * @return int
-     */
-    public static function calculate_feedback_duedate(int $courseid, int $duedate): int {
         // If there is no due date there is no feedback due date.
         if (!$duedate) {
             return 0;
         }
 
-        $academicyear = (int) self::get_academic_year($courseid);
-
         // For assessments before academic year 2024-25 the feedback due date period was 1 calendar month.
-        // From academic year 2024-25 on the feedback due date period is 20 working days.
-        if ($academicyear < 2024) {
+        if ((int) self::get_academic_year($gradeitem->courseid) < 2024) {
             return strtotime('+1 month', $duedate);
         }
+
+        // From academic year 2024-25 on the feedback due date period is 20 working days.
         return self::compute_feedbackduedate($duedate);
     }
 
@@ -662,23 +636,22 @@ class helper {
         $closuredays = self::get_closuredays();
 
         // Initialize the start date.
-        $currentdate = date('Y-m-d', $duedate);
+        $feedbackduedatetime = $duedate;
         $daysadded = 0;
-
         // Loop until the required number of working days.
         while ($daysadded < $feedbackdeadlinedays) {
-            // Increment the current date by one day.
-            $currentdate = date('Y-m-d', strtotime($currentdate . ' +1 day'));
+            // Increment the date by one day.
+            $feedbackduedatetime += DAYSECS;
 
-            // Check if the current date is a weekend.
-            $weekday = date('N', strtotime($currentdate)); // 6 = Saturday, 7 = Sunday
+            // Check if the date is a weekend.
+            $weekday = date('N', $feedbackduedatetime);
 
-            // Skip the day if it's a weekend (6 or 7) or a closure date.
-            if ($weekday < 6 && !in_array($currentdate, $closuredays)) {
+            // Count the day if it's not a weekend day (6 or 7) and not a closure date.
+            if ($weekday < 6 && !in_array(date('Y-m-d', $feedbackduedatetime), $closuredays)) {
                 $daysadded++;
             }
         }
-        return strtotime($currentdate);
+        return $feedbackduedatetime;
     }
 
     /**
@@ -1101,7 +1074,7 @@ class helper {
                 $tttitem->feedbackduedate = false;
                 $tttitem->duedate = false;
             } else {
-                $tttitem->feedbackduedateraw = self::calculate_feedback_duedate($gradeitem->courseid, $duedate);
+                $tttitem->feedbackduedateraw = self::get_feedbackduedate($gradeitem, $duedate);
                 $tttitem->feedbackduedate = userdate($tttitem->feedbackduedateraw, $dateformat);
                 $tttitem->duedate = userdate($duedate, $dateformat);
             }
