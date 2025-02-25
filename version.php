@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2025021100; // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2025022500; // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200; // Requires this Moodle version.
 $plugin->component = 'report_feedback_tracker'; // Full name of the plugin (used for diagnostics).
 
