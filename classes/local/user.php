@@ -38,6 +38,7 @@ class user {
      */
     public static function get_feedback_tracker_user_data($userid, $courseid): stdClass {
         $data = new stdClass();
+        $data->viewasstudent = true;
         $data->items = [];
         $data->courses = [];
         $enrolledcourses = enrol_get_users_courses($userid);
@@ -386,6 +387,7 @@ class user {
         // Get the submission date if any.
         $submissiondate = helper::get_submissiondate($userid, $gradeitem);
 
+        // Data for template.
         $data = new stdClass();
         $data->submissiondate = $submissiondate == 0 ? '--' : userdate($submissiondate, $dateformat);
         $data->submissionstatus = helper::get_submission_status($gradeitem, $submissiondate, $warningperiod);

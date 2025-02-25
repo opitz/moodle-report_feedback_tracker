@@ -188,7 +188,7 @@ class admin {
     private static function get_overrides_url(cm_info $module): string {
         $supportedmodules = ['assign', 'lesson', 'quiz'];
         if (in_array($module->modname, $supportedmodules)) {
-            return "/mod/$module->modname/overrides.php?cmid=$module->id";
+            return new moodle_url("/mod/".$module->modname."/overrides.php" , ["cmid" => $module->id]);
         }
         return "#";
     }

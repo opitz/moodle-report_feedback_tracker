@@ -58,7 +58,7 @@
         <div class="row">
             <div class="col-4">
                 <small>
-                    <span class="d-md-none">{{#str}}header:duedate, report_feedback_tracker{{/str}}:</span>
+                    <span class="d-md-none">{{#str}} due, report_feedback_tracker {{/str}}:</span>
                     <span class="text-nowrap">{{duedate}}</span>
                 </small>
                 <br>
@@ -70,7 +70,7 @@
             <!-- Feedback data. -->
             <div class="col-4">
                 <small>
-                    <span class="d-md-none">{{#str}}feedback:due, report_feedback_tracker{{/str}}:</span>
+                    <span class="d-md-none">{{#str}} feedback:due, report_feedback_tracker {{/str}}:</span>
                     <span class="text-nowrap">{{{feedbackduedate}}}</span>
                 </small>
                 {{#feedback}}
@@ -87,7 +87,7 @@
             </div>
 
             <!-- Mark data. -->
-            <div class="col-4 text-right">
+            <div class="col-4">
                 <small class="d-md-none">{{#str}}header:mark, report_feedback_tracker{{/str}}:</small>
                 {{#grade}} <strong> {{.}} </strong> {{/grade}}
                 {{^grade}} <small> {{#str}}feedback:notreleased, report_feedback_tracker{{/str}} </small> {{/grade}}
@@ -110,6 +110,6 @@
 
 
  {{#additionaldata}}
-        {{> report_feedback_tracker/course/additionaldata }}
+        {{> report_feedback_tracker/additionaldata }}
 {{/additionaldata}}
 <hr>

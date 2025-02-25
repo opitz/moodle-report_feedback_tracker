@@ -14,7 +14,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template report_feedback_tracker/mod
+    @template report_feedback_tracker/course/mod
 
     Template for a module of the Feedback tracker course report.
 
@@ -147,7 +147,7 @@
 
                         {{#overrides}}
                             <div>
-                                <a href="{{{ config.wwwroot }}}{{{overridesurl}}}" class="small">
+                                <a href="{{{overridesurl}}}" class="small">
                                     <i class="fa-solid fa-user-clock mr-2"></i>{{.}}
                                 </a>
                             </div>
@@ -184,7 +184,7 @@
 
     </div>
     {{#additionaldata}}
-        {{> report_feedback_tracker/course/additionaldata }}
+        {{> report_feedback_tracker/additionaldata }}
     {{/additionaldata}}
 
     <hr>

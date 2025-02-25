@@ -14,7 +14,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template report_feedback_tracker/course
+    @template report_feedback_tracker/course/course
 
     Template for a course of the Feedback tracker course report.
 
@@ -35,7 +35,6 @@
 
 
 {{! View as menu. }}
-
 {{#canedit}}
 <form class="mb-2" action="{{{ config.wwwroot }}}/report/feedback_tracker/" method="get">
     <input type="hidden" id="courseid" name="id" value="{{courseid}}">
@@ -53,29 +52,10 @@
 </form>
 {{/canedit}}
 
-{{! Data header. }}
-<div class="row pb-3 mb-3 text-muted border-bottom d-none d-md-flex">
-    <div class="col-5">
-    </div>
+{{! Mods header. }}
+    {{> report_feedback_tracker/mods_header }}
 
-    <div class="col-7">
-        <div class="row no-gutters">
-            {{#viewasstudent}}
-                <div class="col-4">{{#str}}header:duedate, report_feedback_tracker{{/str}}</div>
-                <div class="col-4">{{#str}}header:feedbackdue, report_feedback_tracker{{/str}}</div>
-                <div class="col-4 text-right">{{#str}}header:mark, report_feedback_tracker{{/str}}</div>
-            {{/viewasstudent}}
-
-            {{^viewasstudent}}
-                <div class="col-4">{{#str}}feedback:due, report_feedback_tracker{{/str}}</div>
-                <div class="col-3">{{#str}}header:submitted, report_feedback_tracker{{/str}}</div>
-                <div class="col-3">{{#str}}header:marking, report_feedback_tracker{{/str}}</div>
-            {{/viewasstudent}}
-        </div>
-    </div>
-</div>
-
-{{! Data. }}
+{{! Mods. }}
 {{#items}}
     {{#viewasstudent}}
         {{> report_feedback_tracker/user/mod }}

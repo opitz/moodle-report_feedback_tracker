@@ -14,7 +14,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template report_feedback_tracker/courses
+    @template report_feedback_tracker/site/courses
 
     Template for displaying the feedback records to users/students.
 
@@ -46,7 +46,7 @@
 <div class="pb-4">
     {{> report_feedback_tracker/course_header }}
 
-    {{> report_feedback_tracker/site/modheader }}
+    {{> report_feedback_tracker/mods_header }}
 
     {{#items}}
         {{> report_feedback_tracker/site/mod }}

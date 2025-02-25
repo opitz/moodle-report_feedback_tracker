@@ -14,7 +14,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template report_feedback_tracker/mod
+    @template report_feedback_tracker/site/mod
 
     Template for a module of the Feedback tracker course report.
 
@@ -34,16 +34,16 @@
 
 }}
 
-<div class="module" data-modulename="{{{name}}}">
+<div>
     <div class="row">
         {{! Mod details. }}
         <div class="col-12 col-md-5 my-1">
             <a href="{{{url}}}">
                 {{#manual}}
-                    <span data-icon><i class="icon fa-regular fa-hand-spock"></i></span>
+                   <i class="icon fa-regular fa-hand-spock"></i>
                 {{/manual}}
                 {{^manual}}
-                    <span data-icon><img class='icon mr-0' src='{{{moduletypeiconurl}}}' alt='{{{name}}}'></span>
+                    <img class='icon mr-0' src='{{{moduletypeiconurl}}}' alt='{{{name}}}'>
                 {{/manual}}
                 <span class="module-name" data-name>{{{name}}}</span>
             </a>
@@ -56,7 +56,7 @@
             {{/hiddenfromreport}}
 
             {{#duedate}}
-                <br><div>Due: {{{duedate}}}</div>
+                <br><div>{{#str}} due, report_feedback_tracker {{/str}}: {{{duedate}}}</div>
             {{/duedate}}
         </div>
 
@@ -69,11 +69,11 @@
                     {{/feedbackduedate}}
 
                     {{#customfeedbackduedate}}
-                        <br><div class="badge badge-warning js-customfeedbackduedate" data-customfeedbackduedate="{{customfeedbackduedate}}" data-feedbackduedatereason="{{feedbackduedatereason}}">{{#str}} feedbackduedate:custom, report_feedback_tracker {{/str}}</div>
+                        <br><div class="badge badge-warning" data-customfeedbackduedate="{{customfeedbackduedate}}" data-feedbackduedatereason="{{feedbackduedatereason}}">{{#str}} feedbackduedate:custom, report_feedback_tracker {{/str}}</div>
                     {{/customfeedbackduedate}}
 
                     {{#customfeedbackreleaseddate}}
-                        <br><div class="badge badge-warning js-customfeedbackreleaseddate" data-customfeedbackreleaseddate="{{customfeedbackreleaseddate}}">{{#str}} feedbackreleaseddate:custom, report_feedback_tracker {{/str}}</div>
+                        <br><div class="badge badge-warning" data-customfeedbackreleaseddate="{{customfeedbackreleaseddate}}">{{#str}} feedbackreleaseddate:custom, report_feedback_tracker {{/str}}</div>
                     {{/customfeedbackreleaseddate}}
 
                     {{#markoverdue}}
@@ -81,25 +81,25 @@
                     {{/markoverdue}}
 
                     {{#cohortfeedback}}
-                        <br><div class="badge badge-light js-cohortfeedback" data-cohortfeedback="{{cohortfeedback}}">{{#str}} feedback:cohort, report_feedback_tracker {{/str}}</div>
+                        <br><div class="badge badge-light" data-cohortfeedback="{{cohortfeedback}}">{{#str}} feedback:cohort, report_feedback_tracker {{/str}}</div>
                     {{/cohortfeedback}}
                 </div>
 
-                <div class="col-3">
+                <div class="col">
                     {{#submissions}}
                         {{submissions}} <span class="d-md-none">{{#str}} submitted, report_feedback_tracker {{/str}}</span>
                     {{/submissions}}
 
                     {{#overrides}}
                         <div>
-                            <a href="{{{ config.wwwroot }}}{{{overridesurl}}}" class="small">
+                            <a href="{{{overridesurl}}}" class="small">
                                 <i class="fa-solid fa-user-clock mr-2"></i>{{.}}
                             </a>
                         </div>
                     {{/overrides}}
                 </div>
 
-                <div class="col-3">
+                <div class="col-4">
                     {{#submissions}}
                         {{#requiredfeedbacks}}
                             <a href="{{{markingurl}}}">
@@ -120,7 +120,7 @@
 
     </div>
     {{#additionaldata}}
-        {{> report_feedback_tracker/course/additionaldata }}
+        {{> report_feedback_tracker/additionaldata }}
     {{/additionaldata}}
 
     <hr>

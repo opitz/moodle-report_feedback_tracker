@@ -14,21 +14,13 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template report_feedback_tracker/modheder
+    @template report_feedback_tracker/mods_header
 
     Template for displaying a header for modules listed in a course.
 
-    Classes required for JS:
-    * none
-
-    Data attributes required for JS:
-    * none
-
-    Context variables required for this template:
-    * none
-
     Example context (json):
     {
+        "viewasstudent": false
     }
 
 }}
@@ -37,9 +29,16 @@
     <div class="col-5"></div>
     <div class="col-7">
         <div class="row no-gutters">
-            <div class="col-4">{{#str}} header:duedate, report_feedback_tracker {{/str}}</div>
-            <div class="col-4">{{#str}} feedback:due, report_feedback_tracker {{/str}}</div>
-            <div class="col-4 text-right">{{#str}} header:mark, report_feedback_tracker {{/str}}</div>
+        {{#viewasstudent}}
+            <div class="col-4">{{#str}} due, report_feedback_tracker {{/str}}</div>
+            <div class="col-4">{{#str}} header:feedbackdue, report_feedback_tracker {{/str}}</div>
+            <div class="col text-right">{{#str}} header:mark, report_feedback_tracker {{/str}}</div>
+        {{/viewasstudent}}
+        {{^viewasstudent}}
+            <div class="col-4">{{#str}} header:feedbackdue, report_feedback_tracker {{/str}}</div>
+            <div class="col-4">{{#str}} header:submitted, report_feedback_tracker {{/str}}</div>
+            <div class="col">{{#str}} header:marking, report_feedback_tracker {{/str}}</div>
+        {{/viewasstudent}}
         </div>
     </div>
 </div>
