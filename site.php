@@ -38,7 +38,6 @@ if (!get_config('report_feedback_tracker', 'sitereport')) {
     redirect(new moodle_url('/report/feedback_tracker/user.php'));
 }
 
-
 require_login();
 
 // Set the header and print it.

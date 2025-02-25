@@ -215,7 +215,12 @@ class user {
                         $gradeitem->duedate = $customdata[$duedates[$itemmodule]];
                     } else {
                         // Use a custom method to get the override for a student user shown in an admin report.
-                        $gradeitem->duedate = self::get_duedate($gradeitem, $userid);
+                        $gradeitem->duedate = self::get_duedate(
+                            $gradeitem->courseid,
+                            $gradeitem->itemmodule,
+                            $gradeitem->iteminstance,
+                            $gradeitem->duedate,
+                            $userid);
                     }
                 }
             }
@@ -256,46 +261,50 @@ class user {
     /**
      * Get a due date including overrides for a user.
      *
-     * @param stdClass $gradeitem
+     * @param int $courseid
+     * @param string $moduletype e.g. assign, quiz, etc.
+     * @param int $instance
+     * @param int $duedate
      * @param int $userid
-     * @return int|mixed
+     * @return false|string
      */
-    private static function get_duedate($gradeitem, $userid) {
+    public static function get_duedate($courseid, $moduletype, $instance, $duedate, $userid) {
         global $DB;
 
-        switch ($gradeitem->itemmodule) {
+        switch ($moduletype) {
             case 'assign':
                 // Return individual override when available.
-                $params = ['assignid' => $gradeitem->iteminstance, 'userid' => $userid];
+                $params = ['assignid' => $instance, 'userid' => $userid];
                 $overridedate = $DB->get_field('assign_overrides', 'duedate', $params);
 
                 // If there is no individual override return group override where available.
                 if (!$overridedate) {
-                    $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
+                    $usergroups = groups_get_user_groups($courseid, $userid);
                     if (count($usergroups[0]) > 0) {
                         foreach ($usergroups[0] as $usergroupid) {
-                            $params = ['assignid' => $gradeitem->iteminstance, 'groupid' => $usergroupid];
-                            $duedate = $DB->get_field('assign_overrides', 'duedate', $params);
+                            $params = ['assignid' => $instance, 'groupid' => $usergroupid];
+                            $overrideduedate = $DB->get_field('assign_overrides', 'duedate', $params);
 
-                            if ($duedate > $overridedate) {
-                                $overridedate = $duedate;
+                            if ($overrideduedate > $overridedate) {
+                                $overridedate = $overrideduedate;
                             }
                         }
                     }
                 }
                 break;
             case 'lesson':
-                $params = ['lessonid' => $gradeitem->iteminstance, 'userid' => $userid];
+                $params = ['lessonid' => $instance, 'userid' => $userid];
                 $overridedate = $DB->get_field('lesson_overrides', 'deadline', $params);
                 break;
             case 'quiz':
-                $params = ['quiz' => $gradeitem->iteminstance, 'userid' => $userid];
+                $params = ['quiz' => $instance, 'userid' => $userid];
                 $overridedate = $DB->get_field('quiz_overrides', 'timeclose', $params);
                 break;
             default:
+                $overridedate = false;
                 break;
         }
-        return  $overridedate ?: $gradeitem->duedate;
+        return  $overridedate ?: $duedate;
 
     }
 
@@ -415,7 +424,7 @@ class user {
         $data->student = $gradeitem->student;
         $data->grader = $gradeitem->grader;
         $data->feedbackdate = $gradeitem->gfdate ?: $gradeitem->feedbackdate;
-        $data->feedback = helper::get_feedback_badge($gradeitem, $feedbackduedate, $submissiondate);
+        $data->feedback = helper::get_feedback_state($gradeitem, $feedbackduedate, $submissiondate);
         $data->method = $gradeitem->method;
         $data->responsibility = html_writer::div($gradeitem->responsibility);
         $data->generalfeedback = $gradeitem->generalfeedback;

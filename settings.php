@@ -33,6 +33,7 @@ if ($ADMIN->fulltree) {
     $feedbackextenddaysdefault = 7;
     $dateformatdefault = get_string('dateformat:default', 'report_feedback_tracker');
     $defaultdate = get_string('settings:defaultdate', 'report_feedback_tracker');
+    $currentacademicyear = helper::get_current_academic_year();
 
     // Use site report option.
     // Only available if block_portico_enrollments is installed.
@@ -42,6 +43,25 @@ if ($ADMIN->fulltree) {
     } else {
         set_config('sitereport', false, 'report_feedback_tracker');
     }
+
+    // Data export options.
+    $settings->add(new admin_setting_heading('report_feedback_tracker_export',
+        get_string('settings:exportheading', 'report_feedback_tracker'), ''));
+
+    $settings->add(new admin_setting_configtext('report_feedback_tracker/export_academicyear',
+        get_string('settings:export_academicyear', 'report_feedback_tracker'),
+        get_string('settings:export_academicyearinfo', 'report_feedback_tracker'),
+        '', PARAM_RAW, 5));
+
+    $settings->add(new admin_setting_configtext('report_feedback_tracker/export_path',
+        get_string('settings:export_path', 'report_feedback_tracker'),
+        get_string('settings:export_pathinfo', 'report_feedback_tracker'),
+        '', PARAM_RAW, 50));
+
+    $settings->add(new admin_setting_configtext('report_feedback_tracker/export_limit',
+        get_string('settings:export_limit', 'report_feedback_tracker'),
+        get_string('settings:export_limitinfo', 'report_feedback_tracker'),
+        '', PARAM_RAW, 5));
 
     // Supported modules.
     $settings->add(new admin_setting_heading('report_feedback_tracker_support',

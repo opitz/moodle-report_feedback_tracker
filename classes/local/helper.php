@@ -43,22 +43,17 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
 class helper {
 
     /**
-     * Return all academic years from the custom field.
+     * Return academic years 1 year back and 3 years into the future.
+     *
      * @return array
      */
     public static function get_academic_years() {
-        global $DB;
-
-        $academicyears = [];
-        // Get the field definition for the custom field 'course_year'.
-        if ($field = $DB->get_record('customfield_field', ['shortname' => 'course_year'])) {
-            // Use the field ID to get all records from customfield_data for this field and store the academic year array.
-            if ($records = $DB->get_records('customfield_data', ['fieldid' => $field->id], 'charvalue')) {
-                foreach ($records as $record) {
-                    $academicyears[$record->charvalue] = $record->charvalue;
-                }
-            }
-        }
+        $currentyear = (int) self::get_current_academic_year();
+        $academicyears[] = $currentyear - 1;
+        $academicyears[] = $currentyear;
+        $academicyears[] = $currentyear + 1;
+        $academicyears[] = $currentyear + 2;
+        $academicyears[] = $currentyear + 3;
 
         return $academicyears;
     }
@@ -90,7 +85,7 @@ class helper {
      * @param int $submissiondate
      * @return array
      */
-    public static function get_feedback_badge(stdClass $gradeitem, int $feedbackduedate, int $submissiondate): array {
+    public static function get_feedback_state(stdClass $gradeitem, int $feedbackduedate, int $submissiondate): array {
 
         // If a grade item has not (yet) been released do not show a badge.
         if (($gradeitem->hiddengrade === 1) || ($gradeitem->hiddengrade > time())) {
@@ -1154,7 +1149,7 @@ class helper {
                 WHERE gi.id = :gradeitemid";
         $params = ['gradeitemid' => $gradeitemid];
 
-        return (int) $DB->get_field_sql($sql, $params);
+        return (int)$DB->get_field_sql($sql, $params);
     }
 
 }
