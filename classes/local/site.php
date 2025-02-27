@@ -89,7 +89,7 @@ class site {
         $data->termcode = 't' . $menus->term;
 
         // Courses.
-        $courses = enrol_get_users_courses($USER->id);
+        $courses = enrol_get_all_users_courses($USER->id, false, null, 'fullname');
         foreach ($courses as $course) {
             // Skip hidden.
             if (!$course->visible) {
@@ -268,6 +268,14 @@ class site {
                 }
             }
         }
+
+        // Sort assessments by feedback due date.
+        if (isset($courseitem->items)) {
+            usort($courseitem->items, function($a, $b) {
+                return $a->feedbackduedateraw <=> $b->feedbackduedateraw;
+            });
+        }
+
         return $courseitem;
     }
 
