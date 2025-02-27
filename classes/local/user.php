@@ -54,11 +54,6 @@ class user {
         $data->userfirstname = $user->firstname;
         $data->userlastname = $user->lastname;
 
-        // If the user is a teacher and the site report is enabled provide a link to the site report.
-        if (helper::is_teacher() && get_config('report_feedback_tracker', 'sitereport')) {
-            $data->sitereporturl = new moodle_url('/report/feedback_tracker/site.php');
-        }
-
         $year = optional_param('year', null, PARAM_INT);
         $year = $year ? substr($year, 0, 4) : helper::get_year_to_show($academicyears);
 

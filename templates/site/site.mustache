@@ -48,15 +48,6 @@
 
 {{! Navigation. }}
 <p class="sr-only">{{#str}} site:menuguide, report_feedback_tracker {{/str}}</p>
-{{#userreporturl}}
-    <div>
-        <p>
-            <i class="icon fa-solid fa-table-list"></i>
-            <a href="{{.}}">{{#str}} userreport, report_feedback_tracker {{/str}}</a>
-        </p>
-    </div>
-{{/userreporturl}}
-
 {{#menus}}
     {{> report_feedback_tracker/menu }}
 {{/menus}}
