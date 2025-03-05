@@ -26,15 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $functions = [
 
-    'report_feedback_tracker_update_module' => [
-        'classname'         => 'report_feedback_tracker\external\update_module',
-        'description'       => 'Update additional information for a module via ajax',
-        'type'              => 'write',
-        'readonlysession'   => true,
-        'ajax'              => true,
-        'capabilities'      => 'report/feedback_tracker:grade',
-    ],
-
     'report_feedback_tracker_get_assessment_types' => [
         'classname'         => 'report_feedback_tracker\external\get_assessment_types',
         'description'       => 'Get the assessment type options',
