@@ -30,6 +30,11 @@ use stdClass;
 class user {
 
     /**
+     * @var array array of roles a student may have.
+     */
+    private static array $studentroles;
+
+    /**
      * Get the Feedback tracker data for one or all courses of a given user.
      *
      * @param int $userid
@@ -44,6 +49,8 @@ class user {
         $enrolledcourses = enrol_get_users_courses($userid);
         // Get the academic years of the user.
         $academicyears = helper::get_academic_years_from_courses($enrolledcourses);
+
+        self::$studentroles = self::get_student_role_ids();
 
         if (!empty($academicyears)) {
             $data->academicyearoptions = $academicyears;
@@ -70,6 +77,11 @@ class user {
         if ($courseid === SITEID) {
             $data->hasyears = true; // Only show academic year options when showing all courses.
             foreach ($enrolledcourses as $course) {
+
+                // Show only courses where the user is a student.
+                if (!self::is_course_student($course)) {
+                    continue;
+                }
                 $academicyear = helper::get_academic_year($course->id);
 
                 if ($academicyear === $year) {
@@ -87,6 +99,40 @@ class user {
         }
 
         return $data;
+    }
+
+    /**
+     * Return if user has required student role in given course.
+     *
+     * @param stdClass $course
+     * @return bool
+     */
+    private static function is_course_student(stdClass $course): bool {
+        global $USER;
+
+        // Check if user has a student role in the given course.
+        foreach (self::$studentroles as $role) {
+            if (user_has_role_assignment($USER->id, (int)$role, $course->ctxid)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the student role IDs.
+     *
+     * @return array
+     */
+    private static function get_student_role_ids(): array {
+        global $DB;
+
+        return $DB->get_fieldset_select('role', 'id',
+            'archetype IN (:role1)',
+            [
+                'role1' => 'student',
+            ]
+        );
     }
 
     /**
