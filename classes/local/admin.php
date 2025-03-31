@@ -38,13 +38,11 @@ class admin {
      *
      * @param course_modinfo $modinfo
      * @param grade_item $gradeitem
-     * @param array $enrolleduserids
      * @return false|stdClass
      */
     public static function get_module_data(
         course_modinfo $modinfo,
-        grade_item $gradeitem,
-        array $enrolleduserids
+        grade_item $gradeitem
     ): false|stdClass {
 
         if ($cm = self::get_cm_from_gradeitem($gradeitem)) {
@@ -67,9 +65,7 @@ class admin {
 
         // Hiding attributes.
         $data->hiddenfromstudents = !$module->visible;
-
         $data->hiddendisabled = true;
-        $data->assesstypes = helper::get_assess_types(isset($data->assesstype) ? $data->assesstype : null);
 
         $data->modname = $module->modname;
 
@@ -89,11 +85,11 @@ class admin {
             $data->overrides = get_string('users:extensions', 'report_feedback_tracker', $overrides);
         }
         $data->overridesurl = self::get_overrides_url($module);
-        $submissions = self::get_module_submissions($module, $enrolleduserids);
-        $data->submissions = count($submissions);
+        $submitterids = self::get_module_submitterids($module);
+        $data->submissions = count($submitterids);
 
         // Grades and markings.
-        $data->requiredfeedbacks = self::count_missing_grades($module, $submissions, $gradeitem->id);
+        $data->requiredfeedbacks = self::count_missing_grades($module, $submitterids, $gradeitem->id);
         $data->feedbackpercentage = $data->submissions ?
             round(($data->submissions - $data->requiredfeedbacks) / $data->submissions * 100, 1) : 0;
 
@@ -198,76 +194,108 @@ class admin {
     }
 
     /**
-     * Get an array of distinct student IDs with submissions for lessons, quizzes, turnitin and workshop assessments.
+     * Get an array of submissions from enrolled students for the given course module.
      *
-     * @param cm_info $cm
-     * @param array $enrolleduserids
+     * @param int $courseid
+     * @param string $modname
+     * @param int $instance
      * @return array
      */
-    public static function get_module_submissions(cm_info $cm, array $enrolleduserids): array {
+    public static function get_module_submissions(int $courseid, string $modname, int $instance): array {
         global $DB;
 
-        $teamsubmission = false;
-        switch ($cm->modname) {
-            case 'assign':
-                $teamsubmission = $DB->get_field('assign', 'teamsubmission', ['id' => $cm->instance]);
-                if ($teamsubmission) {
-                    // Get the group submissions.
-                    $sql = "SELECT DISTINCT groupid FROM {assign_submission}
-                            WHERE assignment = :assignid
-                            AND userid = 0
-                            AND status <> 'new'";
-                } else {
-                    // Get the individual submissions.
-                    $sql = "SELECT DISTINCT userid FROM {assign_submission}
-                            WHERE assignment = :assignid
-                            AND userid > 0
-                            AND status <> 'new'";
-                }
-                $params = ['assignid' => $cm->instance];
-                break;
+        // Array to store enrolled users per course.
+        static $courseenrolledusers = [];
 
-            case 'lesson':
-                $sql = "SELECT DISTINCT userid FROM {lesson_attempts} WHERE lessonid = :lessonid";
-                $params = ['lessonid' => $cm->instance, 'correct' => 1];
+        // Check if enrolled users for this course are already cached.
+        if (!isset($courseenrolledusers[$courseid])) {
+            $enrolledusers = get_enrolled_users(context_course::instance($courseid));
+            $courseenrolledusers[$courseid] = array_map(fn($user) => $user->id, $enrolledusers);
+        }
+
+        $enrolleduserids = $courseenrolledusers[$courseid];
+        $teamsubmission = false;
+
+        switch ($modname) {
+            case 'assign' :
+                $teamsubmission = $DB->get_field('assign', 'teamsubmission', ['id' => $instance]);
+                if ($teamsubmission) {
+                    // Get group submissions.
+                    $sql = "SELECT id, groupid, userid, timemodified AS submissiondatetime
+                        FROM {assign_submission}
+                        WHERE assignment = $instance
+                        AND userid = 0
+                        AND status = 'submitted'";
+                } else {
+                    // Get user submissions.
+                    $sql = "SELECT id, userid, timemodified AS submissiondatetime
+                        FROM {assign_submission}
+                        WHERE assignment = $instance
+                        AND userid > 0
+                        AND status = 'submitted'";
+                }
                 break;
-            case 'quiz':
-                $sql = "SELECT DISTINCT userid FROM {quiz_attempts} WHERE quiz = :quiz AND preview = 0";
-                $params = ['quiz' => $cm->instance];
+            case 'lesson' :
+                $sql = "SELECT id, userid, timeseen AS submissiondatetime
+                        FROM {lesson_attempts}
+                        WHERE lessonid = $instance";
                 break;
-            case 'turnitintooltwo':
-                $sql = "SELECT DISTINCT userid FROM {turnitintooltwo_submissions} WHERE turnitintooltwoid = :turnitintooltwoid";
-                $params = ['turnitintooltwoid' => $cm->instance];
+            case 'quiz' :
+                $sql = "SELECT id, userid, timefinish AS submissiondatetime
+                        FROM {quiz_attempts}
+                        WHERE quiz = $instance AND preview = 0";
                 break;
-            case 'scorm':
-                return [];
-            case 'workshop':
-                $sql = "SELECT DISTINCT authorid FROM {workshop_submissions} WHERE workshopid = :workshopid";
-                $params = ['workshopid' => $cm->instance];
+            case 'turnitintooltwo' :
+                $sql = "SELECT id, userid, submission_modified AS submissiondatetime
+                        FROM {turnitintooltwo_submissions}
+                        WHERE turnitintooltwoid = $instance";
+                break;
+            case 'workshop' :
+                $sql = "SELECT id, authorid AS userid, timemodified AS submissiondatetime
+                        FROM {workshop_submissions}
+                        WHERE workshopid = $instance";
                 break;
             default:
                 return [];
         }
 
-        $submitterids = $DB->get_fieldset_sql($sql, $params);
+        $records = $DB->get_records_sql($sql);
 
-        if ($teamsubmission) {
-            return $submitterids;
+        // If it is a group/team submission return the group IDs.
+        if (($modname == 'assign') && $teamsubmission) {
+            return $records;
         } else {
-            // Return only students that do have a submission and are (still) enrolled into the course.
-            return array_intersect($submitterids, $enrolleduserids);
+            // Return only submissions from students that are (still) enrolled into the course.
+            return array_filter($records, function ($record) use ($enrolleduserids) {
+                return in_array($record->userid, $enrolleduserids);
+            });
         }
+    }
+
+    /**
+     * Get an array of IDs of enrolled students or groups that have submitted to the given module.
+     *
+     * @param cm_info $module
+     * @return array
+     */
+    public static function get_module_submitterids(cm_info $module): array {
+        global $DB;
+
+        if ($submissions = self::get_module_submissions($module->course, $module->modname, $module->instance)) {
+            return array_map(fn($submission) => $submission->userid, $submissions);
+        }
+        return [];
     }
 
     /**
      * Count the missing grades for a given grade item.
      *
      * @param cm_info $cm
-     * @param array $submissions
+     * @param array $submitterids
      * @param int|null $gradeitemid
      * @return int
      */
-    public static function count_missing_grades(cm_info $cm, array $submissions, ?int $gradeitemid = null): int {
+    public static function count_missing_grades(cm_info $cm, array $submitterids, ?int $gradeitemid = null): int {
         global $DB;
 
         // Assignments provide a method to count submissions that need grading.
@@ -279,7 +307,7 @@ class admin {
         }
 
         // For modules other than assignments get the student IDs that have submissions.
-        if ($submissions) {
+        if ($submitterids) {
             if (!isset($gradeitemid)) {
                 $params = [
                     'itemtype' => 'mod',
@@ -297,17 +325,13 @@ class admin {
                     WHERE gg.itemid = :gradeitemid AND gg.finalgrade > :finalgrade";
             $params = ['gradeitemid' => $gradeitemid, 'finalgrade' => -1];
 
-            $studentids = $DB->get_fieldset_sql($sql, $params);
+            $gradedids = $DB->get_fieldset_sql($sql, $params);
 
             // Count and return all student IDs in submission that are not (yet) to be found in gradings.
-            $missinggrades = 0;
-            foreach ($submissions as $submitterid) {
-                if (!in_array($submitterid, $studentids)) {
-                    $missinggrades++;
-                }
-            }
-            return $missinggrades;
+            return count(array_diff($submitterids, $gradedids));
+
         }
+
         // No submissions - no missing grades.
         return 0;
     }

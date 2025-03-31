@@ -463,7 +463,7 @@ class user {
             $data->assesstype === assess_type::ASSESS_TYPE_FORMATIVE ? true : false;
         $data->summative = isset($data->assesstype) &&
             $data->assesstype === assess_type::ASSESS_TYPE_SUMMATIVE ? true : false;
-        $data->assesstypelabel = helper::get_assesstype_label($data->assesstype);
+        $data->assesstypelabel = $assesstype->label;
         $data->duedate = $gradeitem->duedate == 0 ?
             get_string('datenotset', 'report_feedback_tracker') :
             userdate($gradeitem->duedate, $dateformat);

@@ -25,7 +25,7 @@
 namespace report_feedback_tracker\task;
 
 use core\task\scheduled_task;
-use moodle_url;
+use report_feedback_tracker\local\admin;
 use report_feedback_tracker\local\helper;
 use report_feedback_tracker\local\user;
 use stdClass;
@@ -104,7 +104,7 @@ class export_data extends scheduled_task {
 
         // Get courses for academic year.
         $courses = $DB->get_records_select('course',
-            '((startdate >= :start1 AND startdate <= :end1) OR (enddate >= :start2 AND enddate <= :end2)) AND id != 1',
+            '((startdate >= :start1 AND startdate <= :end1) OR (enddate >= :start2 AND enddate <= :end2)) AND id <> 1',
             ['start1' => $aystartdate, 'end1' => $ayenddate, 'start2' => $aystartdate, 'end2' => $ayenddate]
         );
 
@@ -146,58 +146,15 @@ class export_data extends scheduled_task {
 
             // Get the submissions for the summative assessments.
             foreach ($coursemodules as $summativecm) {
-                switch ($summativecm->modname) {
-                    case 'assign' :
-                        $sql = "SELECT
-                                    id,
-                                    userid,
-                                    timemodified AS submissiondatetime
-                                FROM {assign_submission}
-                                WHERE assignment = $summativecm->instance AND status = 'submitted'";
-                        break;
-                    case 'lesson' :
-                        $sql = "SELECT
-                                    id,
-                                    userid,
-                                    timeseen AS submissiondatetime
-                                FROM {lesson_attempts}
-                                WHERE lessonid = $summativecm->instance";
-                        break;
-                    case 'quiz' :
-                        $sql = "SELECT
-                                    id,
-                                    userid,
-                                    timefinish AS submissiondatetime
-                                FROM {quiz_attempts}
-                                WHERE quiz = $summativecm->instance";
-                        break;
-                    case 'turnitintooltwo' :
-                        $sql = "SELECT
-                                    id,
-                                    userid,
-                                    submission_modified AS submissiondatetime
-                                FROM {turnitintooltwo_submissions}
-                                WHERE turnitintooltwoid = $summativecm->instance";
-                        break;
-                    case 'workshop' :
-                        $sql = "SELECT
-                                    id,
-                                    authorid AS userid,
-                                    timemodified AS submissiondatetime
-                                FROM {workshop_submissions}
-                                WHERE workshopid = $summativecm->instance";
-                        break;
-                    default:
-                        $sql = '';
-                        break;
-                }
-                if (!empty($sql) && ($submissions = $DB->get_records_sql($sql))) {
+                if ($submissions = admin::get_module_submissions($course->id, $summativecm->modname, $summativecm->instance)) {
+
                     $datetimeformat = 'Y-m-d H:i:s';
                     foreach ($submissions as $submission) {
                         $record = new stdClass();
                         $record->submissionid = $submission->id;
                         $record->duedatetime = $summativecm->duedatetime;
                         $record->submissionuserid = $submission->userid;
+                        $record->submissiongroupid = $submission->groupid ?? 0;
                         $record->submissiondatetime = $submission->submissiondatetime;
                         $record->cmid = $summativecm->id;
                         $record->cminstance = $summativecm->instance;
@@ -320,7 +277,7 @@ class export_data extends scheduled_task {
 
                 if ($record->submissiondatetime && $record->feedbackduedatetime &&
                         $record->feedbackduedatetime < time()) {
-                    // There is a submission date, no feedback and the feedback due date has passed,
+                    // If there is a submission date, no feedback and the feedback due date has passed,
                     // then feedback is overdue.
                     $record->releasestatus = 'overdue';
                     $record->releasedintime = 0;

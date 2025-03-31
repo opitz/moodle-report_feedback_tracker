@@ -118,15 +118,13 @@ class renderer extends plugin_renderer_base {
         $data->items = [];
 
         $assesstypes = helper::get_assessment_types($courseid);
-        $enrolledusers = get_enrolled_users(context_course::instance($courseid));
-        $enrolleduserids = array_map(fn($user) => $user->id, $enrolledusers);
         $data->dropdownstudents = helper::get_course_students($courseid);
 
         // If present create records for manual grade items and supported course modules.
         foreach ($gradeitems as $gradeitem) {
             if (($gradeitem->itemtype === 'mod') &&
                     helper::is_supported_module($gradeitem->itemmodule) &&
-                    $item = admin::get_module_data($modinfo, $gradeitem, $enrolleduserids)) {
+                    $item = admin::get_module_data($modinfo, $gradeitem)) {
                 if ($gradeitem->itemmodule === 'turnitintooltwo') {
                     // Add separate data for Turnitin parts.
                     helper::add_ttt_data($data, $gradeitem, $item, $assesstypes);

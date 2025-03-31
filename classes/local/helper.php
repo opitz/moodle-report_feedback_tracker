@@ -402,6 +402,7 @@ class helper {
         $assesstypes['notfound'] = new stdClass();
         $assesstypes['notfound']->type = -1;
         $assesstypes['notfound']->locked = false;
+        $assesstypes['notfound']->label = '';
 
         return $assesstypes;
     }
@@ -748,63 +749,6 @@ class helper {
      */
     public static function get_course_url(int $courseid) {
         return new moodle_url('/course/view.php', ['id' => $courseid]);
-    }
-
-    /**
-     * Get the assessment types.
-     *
-     * @param int|null $selection
-     * @return array|object[]
-     */
-    public static function get_assess_types($selection) {
-
-        $options = self::get_assesstype_options();
-
-        // Prepare the options with selection logic.
-        return array_map(function($option) use ($selection) {
-            // Check if the current option value matches the selected value.
-            $option->isselected = ($option->value === $selection);
-            return $option;
-        }, $options);
-    }
-
-    /**
-     * Get the assessment type options.
-     *
-     * @return object[]
-     */
-    public static function get_assesstype_options() {
-        return [
-            (object)['value' => assess_type::ASSESS_TYPE_FORMATIVE,
-                'label' => get_string('formativeoption', 'local_assess_type')],
-            (object)['value' => assess_type::ASSESS_TYPE_SUMMATIVE,
-                'label' => get_string('summativeoption', 'local_assess_type')],
-            (object)['value' => assess_type::ASSESS_TYPE_DUMMY,
-                'label' => get_string('dummyoption', 'local_assess_type')],
-        ];
-    }
-
-    /**
-     * Get the assessment type label of a given value.
-     *
-     * @param int|null $value
-     * @return string
-     */
-    public static function get_assesstype_label(int|null $value): string {
-        $notfoundlabel = get_string('assesstype:notset', 'report_feedback_tracker');
-
-        if ($value === null) {
-            return $notfoundlabel;
-        }
-
-        $options = self::get_assesstype_options();
-        foreach ($options as $option) {
-            if ($option->value === $value) {
-                return $option->label;
-            }
-        }
-
-        return $notfoundlabel;
     }
 
     /**

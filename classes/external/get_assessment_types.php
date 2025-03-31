@@ -19,8 +19,7 @@ namespace report_feedback_tracker\external;
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_value;
-use report_feedback_tracker\local\helper;
-use stdClass;
+use local_assess_type\assess_type;
 
 /**
  * External API for getting assessment type options.
@@ -58,11 +57,32 @@ class get_assessment_types extends external_api {
      * @return string
      */
     public static function execute($selection) {
-        $assesstypes = helper::get_assess_types($selection);
+        $assesstypes = self::get_assess_types($selection);
         if ($selection < 0) { // Only if no selection has been made yet, add a 'not set' option.
             $unselected = ['value' => -1, 'label' => 'Assessment type not set', 'isselected' => true];
             array_unshift($assesstypes, $unselected); // Put unselected option on top.
         }
         return json_encode($assesstypes);
     }
+
+    /**
+     * Get the assessment types.
+     *
+     * @param int|null $selection
+     * @return array
+     */
+    private static function get_assess_types($selection) {
+        return [
+            (object)['value' => assess_type::ASSESS_TYPE_FORMATIVE,
+                'label' => get_string('formativeoption', 'local_assess_type'),
+                'isselected' => (assess_type::ASSESS_TYPE_FORMATIVE === $selection)],
+            (object)['value' => assess_type::ASSESS_TYPE_SUMMATIVE,
+                'label' => get_string('summativeoption', 'local_assess_type'),
+                'isselected' => (assess_type::ASSESS_TYPE_SUMMATIVE === $selection)],
+            (object)['value' => assess_type::ASSESS_TYPE_DUMMY,
+                'label' => get_string('dummyoption', 'local_assess_type'),
+                'isselected' => (assess_type::ASSESS_TYPE_DUMMY === $selection)],
+        ];
+    }
+
 }

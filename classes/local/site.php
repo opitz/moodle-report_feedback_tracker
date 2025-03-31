@@ -251,21 +251,24 @@ class site {
         $courseitem->fullname = $course->fullname;
         $courseitem->reporturl = new moodle_url("/report/feedback_tracker/", ['id' => $course->id]);
 
-        $enrolledusers = get_enrolled_users(context_course::instance($course->id));
-        $enrolleduserids = array_map(fn($user) => $user->id, $enrolledusers);
-
         foreach ($gradeitems as $gradeitem) {
             // Get course module ID for the grade item where it exists.
             $cmid = helper::get_cmid($gradeitem->id);
             $assesstype = helper::get_assesstype($gradeitem->id,  $cmid, $assesstypes);
 
-            // Process summative modules and manual grade items only.
+            // Process only summative or manual modules that are visible.
             if (((int) $assesstype->type === assess_type::ASSESS_TYPE_SUMMATIVE) &&
-                    (($gradeitem->itemtype == 'mod') || ($gradeitem->itemtype === 'manual'))) {
+                (($gradeitem->itemtype === 'mod') || ($gradeitem->itemtype === 'manual')) &&
+                ($cm = admin::get_module_data($modinfo, $gradeitem)) &&
+                !$cm->hiddenfromstudents) {
                 if ($gradeitem->itemmodule === 'turnitintooltwo') {
-                    self::build_turnitin_gradeitems($courseitem, $gradeitem, $modinfo, $assesstypes, $enrolleduserids);
+                    // Add separate data for each summative Turnitin part.
+                    helper::add_ttt_data($courseitem, $gradeitem, $cm, $assesstypes, assess_type::ASSESS_TYPE_SUMMATIVE);
                 } else {
-                    self::build_gradeitem($courseitem, $gradeitem, $modinfo, $assesstype, $enrolleduserids);
+                    helper::add_assesstype($cm, $assesstype);
+                    helper::add_additional_data($cm);
+
+                    $courseitem->items[] = $cm;
                 }
             }
         }
@@ -278,56 +281,6 @@ class site {
         }
 
         return $courseitem;
-    }
-
-    /**
-     * Build a grade item.
-     *
-     * @param stdClass $courseitem
-     * @param grade_item $gradeitem
-     * @param course_modinfo $modinfo
-     * @param stdClass $assesstype
-     * @param array $enrolleduserids
-     * @return void
-     */
-    private static function build_gradeitem(stdClass $courseitem,
-                                            grade_item $gradeitem,
-                                            course_modinfo $modinfo,
-                                            stdClass $assesstype,
-                                            array $enrolleduserids
-    ): void {
-        // Get the corresponding course module where it exists.
-        if (($cm = admin::get_module_data($modinfo, $gradeitem, $enrolleduserids))
-                && !$cm->hiddenfromstudents) {
-            helper::add_assesstype($cm, $assesstype);
-            helper::add_additional_data($cm);
-
-            $courseitem->items[] = $cm;
-        }
-    }
-
-    /**
-     * Build grade items from Turnitin parts.
-     *
-     * @param stdClass $courseitem
-     * @param grade_item $gradeitem
-     * @param course_modinfo $modinfo
-     * @param array $assesstypes
-     * @param array $enrolleduserids
-     * @return void
-     */
-    private static function build_turnitin_gradeitems(stdClass $courseitem,
-                                            grade_item $gradeitem,
-                                            course_modinfo $modinfo,
-                                            array $assesstypes,
-                                            array $enrolleduserids
-    ): void {
-        // Get the corresponding course module where it exists.
-        if (($cm = admin::get_module_data($modinfo, $gradeitem, $enrolleduserids))
-                && !$cm->hiddenfromstudents) {
-            // Add separate data for each summative Turnitin part.
-            helper::add_ttt_data($courseitem, $gradeitem, $cm, $assesstypes, assess_type::ASSESS_TYPE_SUMMATIVE);
-        }
     }
 
     /**
