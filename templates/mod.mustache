@@ -48,15 +48,16 @@
     <div class="row">
         {{! Mod details. }}
         <div class="col-12 col-md-5 my-1">
-            <a href="{{{url}}}">
-                {{#manual}}
-                    <i class="icon fa-regular fa-hand-spock"></i>
-                {{/manual}}
-                {{^manual}}
+            {{^moduletypeiconurl}}{{! Manual grade item }}
+                    <i class="fa fa-hand-paper-o" style="color: grey;"></i>
+                    {{{name}}}
+            {{/moduletypeiconurl}}
+            {{#moduletypeiconurl}}
+                <a href="{{{url}}}">
                     <img class='icon mr-0' src='{{{moduletypeiconurl}}}' alt=''>
-                {{/manual}}
-                <span>{{{name}}}</span>
-            </a>
+                    {{{name}}}
+                </a>
+            {{/moduletypeiconurl}}
             {{#hiddenfromstudents}}
                 <br><div class="badge badge-warning"><i class="fa-regular fa-eye-slash"></i> {{#str}} badge:hiddenfromstudents, report_feedback_tracker {{/str}}</div>
             {{/hiddenfromstudents}}

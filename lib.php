@@ -61,7 +61,7 @@ function report_feedback_tracker_extend_navigation_user($navigation, $user, $cou
     $context = context_course::instance($course->id);
     if (has_capability('report/feedback_tracker:view', $context) || true) {
         $navigation->add(get_string('navigationlink', 'report_feedback_tracker'),
-            new moodle_url('/report/feedback_tracker/user.php'), $navigation::TYPE_SETTING);
+            new moodle_url('/report/feedback_tracker/student.php'), $navigation::TYPE_SETTING);
     }
 }
 
@@ -87,7 +87,7 @@ function report_feedback_tracker_myprofile_navigation(core_user\output\myprofile
         return;
     }
 
-    $url = new moodle_url('/report/feedback_tracker/user.php', [
+    $url = new moodle_url('/report/feedback_tracker/student.php', [
         'sesskey' => sesskey(),
     ]);
 

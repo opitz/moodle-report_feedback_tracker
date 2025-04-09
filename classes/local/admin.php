@@ -279,8 +279,6 @@ class admin {
      * @return array
      */
     public static function get_module_submitterids(cm_info $module): array {
-        global $DB;
-
         if ($submissions = self::get_module_submissions($module->course, $module->modname, $module->instance)) {
             return array_map(fn($submission) => $submission->userid, $submissions);
         }

@@ -37,11 +37,11 @@ if (!$courseid) {
     if (helper::is_teacher() && get_config('report_feedback_tracker', 'sitereport')) {
         redirect(new moodle_url('/report/feedback_tracker/site.php'));
     }
-    redirect(new moodle_url('/report/feedback_tracker/user.php'));
+    redirect(new moodle_url('/report/feedback_tracker/student.php'));
 }
 // If there is a userid or the logged-in user has no rights redirect to the user report.
 if ($userid || (!helper::is_course_editor($courseid, $USER->id))) {
-    redirect(new moodle_url('/report/feedback_tracker/user.php', ['id' => $courseid, 'userid' => $userid]));
+    redirect(new moodle_url('/report/feedback_tracker/student.php', ['id' => $courseid, 'userid' => $userid]));
 }
 
 $course = isset($courseid) ? get_course($courseid) : $COURSE;

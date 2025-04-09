@@ -35,7 +35,7 @@ $PAGE->set_pagelayout('report');
 
 // If the site report is not enabled redirect to the user report.
 if (!get_config('report_feedback_tracker', 'sitereport')) {
-    redirect(new moodle_url('/report/feedback_tracker/user.php'));
+    redirect(new moodle_url('/report/feedback_tracker/student.php'));
 }
 
 require_login();
@@ -44,9 +44,9 @@ require_login();
 $PAGE->set_title(get_string('pluginname', 'report_feedback_tracker'));
 $PAGE->set_heading(get_string('site:heading', 'report_feedback_tracker'));
 
-$studenturl = new moodle_url('/report/feedback_tracker/user.php');
+$studenturl = new moodle_url('/report/feedback_tracker/student.php');
 $link = "<a class='btn btn-sm btn-secondary' href='$studenturl'><i class='icon fa-solid fa-repeat'></i>" .
-    get_string('userreport', 'report_feedback_tracker') . "</a>";
+    get_string('studentreport', 'report_feedback_tracker') . "</a>";
 $PAGE->add_header_action($link);
 
 echo $OUTPUT->header();

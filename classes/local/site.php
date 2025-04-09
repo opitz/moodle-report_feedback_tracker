@@ -263,7 +263,7 @@ class site {
                 !$cm->hiddenfromstudents) {
                 if ($gradeitem->itemmodule === 'turnitintooltwo') {
                     // Add separate data for each summative Turnitin part.
-                    helper::add_ttt_data($courseitem, $gradeitem, $cm, $assesstypes, assess_type::ASSESS_TYPE_SUMMATIVE);
+                    helper::add_ttt_data($courseitem, $gradeitem, $cm, $assesstypes, 0, assess_type::ASSESS_TYPE_SUMMATIVE);
                 } else {
                     helper::add_assesstype($cm, $assesstype);
                     helper::add_additional_data($cm);

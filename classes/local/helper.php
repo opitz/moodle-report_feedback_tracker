@@ -78,304 +78,6 @@ class helper {
     }
 
     /**
-     * Get a feedback badge.
-     *
-     * @param stdClass $gradeitem
-     * @param int $feedbackduedate
-     * @param int $submissiondate
-     * @return array
-     */
-    public static function get_feedback_state(stdClass $gradeitem, int $feedbackduedate, int $submissiondate): array {
-
-        // If a grade item has not (yet) been released do not show a badge.
-        if (($gradeitem->hiddengrade === 1) || ($gradeitem->hiddengrade > time())) {
-            return [];
-        }
-
-        // If there is a custom feedback released date it will take precedence over an individual feedback date.
-        $feedbackdate = $gradeitem->gfdate ?: $gradeitem->feedbackdate;
-
-        // There is a feedback date.
-        if ($feedbackdate) {
-            // If there is no due date or the due date has not yet passed, feedback was released in time.
-            if (!$feedbackduedate || $feedbackduedate >= $feedbackdate) {
-                return ['released' => 'released'];
-            } else { // Otherwise the feedback is late.
-                return ['late' => 'late'];
-            }
-        } else if ($submissiondate && $feedbackduedate && $feedbackduedate < time()) {
-            // There is a submission date, no feedback and the feedback due date has passed, then feedback is overdue.
-            return ['overdue' => 'overdue'];
-        } else { // No submission or no feedback due date or still within feedback period - show nothing.
-            return [];
-        }
-    }
-
-    /**
-     * Return a link to the module item where applicable.
-     *
-     * @param stdClass $gradeitem
-     * @return string
-     */
-    public static function get_item_link(stdClass $gradeitem): string {
-        $url = self::get_item_url($gradeitem);
-        $linktext = self::get_item_name($gradeitem);
-        return html_writer::link($url, $linktext);
-    }
-
-    /**
-     * Return the name of the grade item combined with a part name where applicable.
-     *
-     * @param stdClass $gradeitem
-     * @return string
-     */
-    public static function get_item_name(stdClass $gradeitem): string {
-        return (isset($gradeitem->partname) && $gradeitem->partname) ?
-            "$gradeitem->itemname - $gradeitem->partname" : $gradeitem->itemname;
-    }
-
-    /**
-     * Return a URL to the module item where applicable or to the gradebook otherwise.
-     *
-     * @param stdClass $gradeitem
-     * @return string
-     */
-    public static function get_item_url(stdClass $gradeitem): string {
-        global $CFG, $USER;
-
-        if (!isset($gradeitem->cmid)) {
-            return "$CFG->wwwroot/grade/report/user/index.php?id=$gradeitem->courseid&userid=$USER->id";
-        }
-        return "$CFG->wwwroot/mod/$gradeitem->itemmodule/view.php?id=$gradeitem->cmid";
-    }
-
-    /**
-     * Return an icon for a grade item module type where available.
-     *
-     * @param stdClass $gradeitem
-     * @return mixed|string
-     */
-    public static function get_module_type_icon(stdClass $gradeitem): mixed {
-
-        // If there is no itemmodule it is manual feedback.
-        if (!$gradeitem->itemmodule) {
-            return '<i class="icon fa-regular fa-hand-spock"></i>';
-        }
-
-        $path = $gradeitem->modinfo->get_icon_url()->out(false);
-
-        switch ($gradeitem->itemmodule) {
-            case 'assign':
-                $title = get_string('pluginname', 'mod_assign');
-                break;
-            case 'lesson':
-                $title = get_string('pluginname', 'mod_lesson');
-                break;
-            case 'quiz':
-                $title = get_string('pluginname', 'mod_quiz');
-                break;
-            case 'turnitintooltwo':
-                $title = get_string('pluginname', 'mod_turnitintooltwo');
-                break;
-            case 'scorm':
-                $title = get_string('pluginname', 'mod_scorm');
-                break;
-            case 'workshop':
-                $title = get_string('pluginname', 'mod_workshop');
-                break;
-            default:
-                return $gradeitem->itemmodule;
-        }
-
-        return "<img class='icon mr-0' src='$path' alt='$gradeitem->itemmodule' title=$title>";
-    }
-
-    /**
-     * Get the module name for a grade item.
-     *
-     * @param stdClass $gradeitem
-     * @return \lang_string|string
-     */
-    public static function get_item_module(stdClass $gradeitem): \lang_string|string {
-        switch ($gradeitem->itemmodule) {
-            case 'assign':
-                return get_string('pluginname', 'mod_assign');
-            case 'lesson':
-                return get_string('pluginname', 'mod_lesson');
-            case 'quiz':
-                return get_string('pluginname', 'mod_quiz');
-            case 'turnitintooltwo':
-                return get_string('pluginname', 'mod_turnitintooltwo');
-            case 'scorm':
-                return get_string('pluginname', 'mod_scorm');
-            case 'workshop':
-                return get_string('pluginname', 'mod_workshop');
-            default:
-                return "";
-        }
-    }
-
-    /**
-     * Get the submission date for a grade item and student if any.
-     *
-     * @param int $userid
-     * @param stdClass $gradeitem
-     * @return int // The submission date in seconds since 1.1.1970.
-     */
-    public static function get_submissiondate(int $userid, stdClass $gradeitem): int {
-        global $DB;
-
-        $submissiondate = 0;
-        $validstatus = '';
-
-        if ($gradeitem) {
-            switch ($gradeitem->itemmodule) {
-                case 'assign':
-                    $details = [
-                        'table' => 'assign_submission',
-                        'index' => 'assignment',
-                        'user' => 'userid',
-                        'date' => 'timemodified',
-                        'status' => 'status',
-                    ];
-                    $validstatus = 'submitted'; // Only get dates from submissions with a valid status.
-                    break;
-                case 'lesson':
-                    $details = [
-                        'table' => 'lesson_attempts',
-                        'index' => 'lessonid',
-                        'user' => 'userid',
-                        'date' => 'timeseen',
-                        'status' => 'correct',
-                    ];
-                    break;
-                case 'quiz':
-                    $details = [
-                        'table' => 'quiz_attempts',
-                        'index' => 'quiz',
-                        'user' => 'userid',
-                        'date' => 'timefinish',
-                        'status' => 'state',
-                    ];
-                    $validstatus = 'finished'; // Only get dates from submissions with a valid status.
-                    break;
-                case 'turnitintooltwo':
-                    $details = [
-                        'table' => 'turnitintooltwo_submissions',
-                        'index' => 'turnitintooltwoid',
-                        'user' => 'userid',
-                        'date' => 'submission_modified',
-                        'status' => '',
-                    ];
-                    break;
-                case 'scorm':
-                    break;
-                case 'workshop':
-                    $details = [
-                        'table' => 'workshop_submissions',
-                        'index' => 'workshopid',
-                        'user' => 'authorid',
-                        'date' => 'timemodified',
-                        'status' => '',
-                    ];
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        // Compute details.
-        if (isset($details)) {
-            if ($details['status'] != '' && $validstatus != '') {
-                $submissionrecords = $DB->get_records($details['table'],
-                    [
-                        $details['user'] => $userid,
-                        $details['index'] => $gradeitem->iteminstance,
-                        $details['status'] => $validstatus,
-                    ]
-                );
-            } else {
-                $submissionrecords = $DB->get_records($details['table'],
-                    [
-                        $details['user'] => $userid,
-                        $details['index'] => $gradeitem->iteminstance,
-                    ]
-                );
-            }
-
-            if ($submissionrecords) {
-                // Get the latest valid submission only.
-                usort($submissionrecords, function($a, $b) use ($details) {
-                    return $b->{$details['date']} <=> $a->{$details['date']}; // Sorts in descending order.
-                });
-                $submissionrecord = $submissionrecords[0];
-                $datefield = $details['date'];
-                $submissiondate = $submissionrecord->$datefield;
-            }
-            unset($details);
-        }
-        return $submissiondate; // In seconds since 1.1.1970.
-    }
-
-    /**
-     * Get a submission status icon.
-     *
-     * @param stdClass $gradeitem
-     * @param int $submissiondate
-     * @param int $warningperiod
-     * @return string
-     */
-    public static function get_submission_status(stdClass $gradeitem, int $submissiondate, int $warningperiod): string {
-        // If no submission type is available for an assignment there can be no submission
-        // so do not show any submission badge.
-        if (($gradeitem->itemmodule == 'assign') && !$gradeitem->submissiontypes) {
-            return '';
-        }
-
-        $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
-        $duedate = $gradeitem->duedate;
-
-        // Submission was in time.
-        if ($submissiondate && $submissiondate <= $duedate) {
-            return html_writer::span(get_string('submission:success', 'report_feedback_tracker'),
-                "badge badge-success",
-                [
-                    'data-toggle' => 'tooltip',
-                    'data-placement' => 'bottom',
-                    'title' => get_string('submission:success', 'report_feedback_tracker') . " " .
-                        userdate($submissiondate, $dateformat),
-                ]);
-        }
-
-        // Submission was late.
-        if ($duedate && $submissiondate && $submissiondate > $duedate) {
-            return html_writer::span(get_string('submission:late', 'report_feedback_tracker'),
-                "badge badge-warning",
-                [
-                    'data-toggle' => 'tooltip',
-                    'data-placement' => 'bottom',
-                    'title' => get_string('submission:success', 'report_feedback_tracker') . " " .
-                        userdate($submissiondate, $dateformat),
-                ]);
-        }
-
-        // NO submission but approaching due date within warning period. Unused for now.
-        if (!$submissiondate && time() <= $duedate && time() >= $duedate - $warningperiod && false) {
-            return html_writer::span(get_string('submission:warning', 'report_feedback_tracker'),
-                "badge badge-warning");
-        }
-
-        // NO submission and the due date has passed.
-        if ($duedate && !$submissiondate && time() > $duedate ) {
-            return html_writer::span(get_string('submission:overdue', 'report_feedback_tracker'),
-                "badge badge-danger");
-        }
-
-        // The submission is not due yet - so return nothing.
-        return '';
-    }
-
-    /**
      * Return an array of assessment types for a given course.
      *
      * @param int $courseid
@@ -425,34 +127,6 @@ class helper {
     }
 
     /**
-     * Get parts of turnitintooltwo assessments in the specified course.
-     *
-     * @param int $courseid
-     * @return array
-     */
-    public static function get_tttparts($courseid): array {
-        global $DB;
-
-        $sql = "SELECT
-                tttp.*,
-                gi.id AS gradeitemid,
-                rft.summative,
-                rft.hidden,
-                rft.feedbackduedate,
-                rft.method,
-                rft.responsibility,
-                rft.generalfeedback,
-                rft.gfurl,
-                rft.gfdate
-                FROM {turnitintooltwo_parts} tttp
-                JOIN {grade_items} gi ON gi.itemmodule = 'turnitintooltwo' AND gi.iteminstance = tttp.turnitintooltwoid
-                LEFT JOIN {report_feedback_tracker} rft ON rft.gradeitem = gi.id AND rft.partid = tttp.id
-                WHERE gi.courseid = :courseid";
-        $params = ['courseid' => $courseid];
-        return $DB->get_records_sql($sql, $params);
-    }
-
-    /**
      *
      * @param int $cmid
      * @return array
@@ -462,35 +136,6 @@ class helper {
 
         return $DB->get_records('turnitintooltwo_parts', ['turnitintooltwoid' => $cmid], '',
         'id, partname, dtdue');
-    }
-
-    /**
-     * Get Turnitin part records for course indexed by grade item ID.
-     *
-     * @param int $courseid
-     * @return array Array of arrays.  The outer array is indexed by each grade
-     * item ID, the inner array contains each part for that grade item, for
-     * example, for grade item ID = 35 containing a single part:
-     *   Array
-     *   (
-     *       [35] => Array
-     *       (
-     *           [0] => stdClass Object
-     *           (
-     *               [id] => 1
-     *               [turnitintooltwoid] => 1
-     *               [partid] => 1
-     *               ⋮
-     *           )
-     *       )
-     *   )
-     */
-    public static function get_turnitin_records(int $courseid): array {
-        $tttparts = [];
-        foreach (self::get_tttparts($courseid) as $tttpart) {
-            $tttparts[$tttpart->gradeitemid][] = $tttpart;
-        }
-        return $tttparts;
     }
 
     /**
@@ -550,48 +195,6 @@ class helper {
     public static function is_supported_module(string $itemmodule): bool {
         // Maybe chaching this?
         return get_config('report_feedback_tracker', 'support' . $itemmodule);
-    }
-
-    /**
-     * Check if a module is supported for the student report.
-     *
-     * @param stdClass $gradeitem
-     * @return bool
-     */
-    public static function module_is_supported(stdClass $gradeitem): bool {
-        // Note: once the data collection for students will be refactored there will be only
-        // one common method to check if a module is supported.
-        global $PAGE;
-
-        // Course type is not supported.
-        if ($gradeitem->itemtype == 'course') {
-            return false;
-        }
-
-        // Manual feedback is supported if checked in the settings.
-        if ($gradeitem->itemtype == 'manual' && !$gradeitem->itemmodule &&
-            get_config('report_feedback_tracker', 'supportmanual')) {
-            // Do not show hidden manual items unless the user is editing.
-            if ($gradeitem->hidden && !$PAGE->user_is_editing()) {
-                return false;
-            }
-            return true;
-        }
-
-        // Invisible or hidden items are invisible unless you are editing.
-        if (($gradeitem->hidden || !$gradeitem->visible) && !$PAGE->user_is_editing()) {
-            return false;
-        }
-
-        $modulelist = [
-            'assign',
-            'lesson',
-            'turnitintooltwo',
-            'quiz',
-            'workshop',
-        ];
-
-        return in_array($gradeitem->itemmodule, $modulelist) && self::is_supported_module($gradeitem->itemmodule);
     }
 
     /**
@@ -789,27 +392,12 @@ class helper {
     }
 
     /**
-     * Get the part name.
-     *
-     * @param int $partid
-     * @return string
-     */
-    public static function get_partname($partid) {
-        global $DB;
-
-        if ($record = $DB->get_record('turnitintooltwo_parts', ['id' => $partid])) {
-            return $record->partname;
-        }
-        return '';
-    }
-
-    /**
-     * Get the enabled submission types for a given course module
+     * Get the enabled submission types for a given course assignment.
      *
      * @param int $cmid The ID of the course module
      * @return int
      */
-    public static function get_assign_submission_plugins(int $cmid): int {
+    public static function count_assign_submission_plugins(int $cmid): int {
         // Load the course module and assignment instance.
         $cm = get_coursemodule_from_id('assign', $cmid, 0, false, MUST_EXIST);
         $context = context_module::instance($cm->id);
@@ -982,6 +570,7 @@ class helper {
      * @param grade_item $gradeitem
      * @param stdClass $item The assessment row item for the report.
      * @param array $assesstypes Array of valid assessment types
+     * @param int $userid optional user ID to get submission dates
      * @param int|null $assesstypefilter Optional type filter
      * @return void
      */
@@ -990,6 +579,7 @@ class helper {
         grade_item $gradeitem,
         stdClass $item,
         array $assesstypes,
+        int $userid = 0,
         ?int $assesstypefilter = null
     ): void {
         $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
@@ -1021,12 +611,15 @@ class helper {
                 $tttitem->duedate = userdate($duedate, $dateformat);
             }
 
-            self::add_assesstype($tttitem, $assesstype);
-            self::add_additional_data($tttitem);
-
+            if ($userid) {
+                // If there is a user ID add the submission and grading data for that user.
+                student::add_user_data($userid, $tttitem, $gradeitem, $duedate, $tttitem->partid);
+            } else {
+                self::add_assesstype($tttitem, $assesstype);
+                self::add_additional_data($tttitem);
+            }
             $data->items[] = $tttitem;
         }
-
     }
 
     /**
@@ -1051,22 +644,6 @@ class helper {
         // Return the years descending.
         krsort($academicyears);
         return array_values($academicyears);
-    }
-
-    /**
-     * Get the academic year to show.
-     *
-     * @param array $academicyears
-     * @return int|string
-     */
-    public static function get_year_to_show(array $academicyears) {
-        if ($academicyears) {
-            // Return the last academic year the user has been enrolled into a course.
-            return $academicyears[0]->key;
-        } else {
-            // The user has not been enrolled into any course yet so return the current academic year.
-            return self::get_current_academic_year();
-        }
     }
 
     /**

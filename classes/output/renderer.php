@@ -26,13 +26,12 @@ namespace report_feedback_tracker\output;
 
 use context_course;
 use grade_item;
-use local_assess_type\assess_type;
 use moodle_url;
 use plugin_renderer_base;
 use report_feedback_tracker\local\admin;
 use report_feedback_tracker\local\helper;
 use report_feedback_tracker\local\site;
-use report_feedback_tracker\local\user;
+use report_feedback_tracker\local\student;
 use stdClass;
 
 /**
@@ -67,33 +66,59 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * Render all courses for a student.
+     * Render the student report.
      *
-     * @param stdClass $feedbacktrackerdata
+     * @param int $userid
+     * @param int $courseid optional course id to limit output.
      * @return string
      */
-    private function render_all_student_courses(stdClass $feedbacktrackerdata): string {
-        $feedbacktrackerdata->canedit = false;
+    public function render_feedback_tracker_student_report($userid, $courseid): string {
+
+        // Get the table data.
+        $data = student::get_feedback_tracker_student_data($userid, $courseid);
+
+        if ($courseid === SITEID) { // Render all courses for a student.
+            return $this->render_all_student_courses($data);
+        } else { // Render a student view of a single course for the course report.
+            $context = context_course::instance($courseid);
+            $data->courseid = $courseid;
+            $data->canedit = has_capability('moodle/grade:edit', $context);
+            $data->viewasstudent = true;
+            $data->dropdownstudents = helper::get_course_students($courseid, $userid);
+
+            return $this->output->render_from_template('report_feedback_tracker/course/course',
+                $data);
+        }
+    }
+
+    /**
+     * Render all courses for a student.
+     *
+     * @param stdClass $data
+     * @return string
+     */
+    private function render_all_student_courses(stdClass $data): string {
+        $data->canedit = false;
         // While there are more than one courses, remove the ones without assessments.
         // If there is only one course without assessments show it nevertheless.
-        if ($feedbacktrackerdata->courses) {
+        if ($data->courses) {
             $coursesremoved = false;
-            foreach ($feedbacktrackerdata->courses as $key => $course) {
+            foreach ($data->courses as $key => $course) {
                 // If there is only one course (left) do not remove it.
-                if (count($feedbacktrackerdata->courses) === 1) {
+                if (count($data->courses) === 1) {
                     break;
                 }
                 if (empty($course->items)) { // If a course has no grade records, remove it from the report.
-                    unset($feedbacktrackerdata->courses[$key]);
+                    unset($data->courses[$key]);
                     $coursesremoved = true;
                 }
             }
             // If any courses have been removed, re-index the array.
             if ($coursesremoved) {
-                $feedbacktrackerdata->courses = array_values($feedbacktrackerdata->courses);
+                $data->courses = array_values($data->courses);
             }
         }
-        return $this->output->render_from_template('report_feedback_tracker/user/courses', $feedbacktrackerdata);
+        return $this->output->render_from_template('report_feedback_tracker/student/courses', $data);
     }
 
     /**
@@ -141,7 +166,6 @@ class renderer extends plugin_renderer_base {
                 $item->gradeitemid = $gradeitem->id;
                 $item->cmid = 0;
                 $item->partid = 0;
-                $item->manual = true;
                 $item->feedbackduedateraw = 9999999999; // Needed for sorting. Make sure they are listed last.
                 // Add a URL pointing to the gradebook item in single view.
                 $item->url = new moodle_url('/grade/report/singleview/index.php', [

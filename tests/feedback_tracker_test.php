@@ -18,7 +18,7 @@ namespace report_feedback_tracker;
 
 use advanced_testcase;
 use context_course;
-use report_feedback_tracker\local\user;
+use report_feedback_tracker\local\student;
 
 /**
  * PHPUnit report_feedback_tracker tests
@@ -45,11 +45,10 @@ final class feedback_tracker_test extends advanced_testcase {
     /**
      * Test the user/student data.
      *
-     * @covers \get_feedback_tracker_user_data
+     * @covers \get_feedback_tracker_student_data
      * @return void
-     * @throws \coding_exception
      */
-    public function test_get_feedback_tracker_user_data(): void {
+    public function test_get_feedback_tracker_student_data(): void {
 
         // Create a course and prepare the page.
         $course = $this->getDataGenerator()->create_course();
@@ -70,23 +69,16 @@ final class feedback_tracker_test extends advanced_testcase {
         $this->setup_dummy_data($course, $teacher, $student1, $student2);
 
         // Get the user data.
-        $userdata = user::get_feedback_tracker_user_data($student1->id, $course->id);
+        $studentdata = student::get_feedback_tracker_student_data($student1->id, $course->id);
+        list($submissionlate, $feedbacklate, $feedbackextended, $feedbackreleased) = $studentdata->items;
 
-        $items = $userdata->items;
-        $feedbackreleased = $items[0];
-        $feedbackextended = $items[1];
-        $feedbacklate = $items[2];
-        $submissionlate = $items[3];
-
-        $this->assertEquals($student1->username, $feedbackreleased->student, "Assert submission is by student 1");
-        $this->assertTrue(strstr($feedbackreleased->submissionstatus, get_string('submission:success',
-                'report_feedback_tracker')) > 0, "Assert submission is in time");
+        $this->assertEquals($student1->username, $studentdata->student, "Assert submission is by student 1");
+        $this->assertTrue(isset($feedbackreleased->submissionstatus['success']), "Assert submission is in time");
         $this->assertEquals('80/100', $feedbackreleased->grade, "Assert grade is shown correctly");
-        $this->assertTrue(isset($feedbackreleased->feedback['released']), "Assert feedback is released");
-        $this->assertTrue(isset($feedbackextended->feedback['late']), "Assert feedback is late");
-        $this->assertTrue(isset($feedbacklate->feedback['late']), "Assert feedback is late");
-        $this->assertTrue(strstr($submissionlate->submissionstatus,
-                get_string('submission:late', 'report_feedback_tracker')) > 0, "Assert late submission");
+        $this->assertTrue(isset($feedbackreleased->feedbackstatus['released']), "Assert feedback is released");
+        $this->assertTrue(isset($feedbackextended->feedbackstatus['late']), "Assert feedback is late");
+        $this->assertTrue(isset($feedbacklate->feedbackstatus['late']), "Assert feedback is late");
+        $this->assertTrue(isset($submissionlate->submissionstatus['late']), "Assert late submission");
     }
 
     /**
@@ -97,7 +89,6 @@ final class feedback_tracker_test extends advanced_testcase {
      * @param \stdClass $student1
      * @param \stdClass $student2
      * @return void
-     * @throws \coding_exception
      */
     private function setup_dummy_data($course, $teacher, $student1, $student2): void {
         global $CFG, $DB;
@@ -210,7 +201,6 @@ final class feedback_tracker_test extends advanced_testcase {
      * @param int $studentid
      * @param int $submissiondate
      * @return void
-     * @throws \dml_exception
      */
     private function update_submission($module, $studentid, $submissiondate) {
         global $DB;

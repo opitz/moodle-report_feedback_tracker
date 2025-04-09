@@ -14,9 +14,9 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template report_feedback_tracker/usertable
+    @template report_feedback_tracker/student/mod
 
-    Template for displaying the feedback items to users/students.
+    Template for displaying the feedback for a course module to students.
 
     Classes required for JS:
     * none
@@ -29,28 +29,72 @@
 
     Example context (json):
     {
-        "items": [
+        "moduletypeiconurl": "#",
+        "viewasstudent": true,
+        "studentdata": true,
+        "items": [],
+        "courses": [
             {
-                "course": "",
-                "assessment": "",
-                "type": "",
-                "duedate": "0",
-                "submissiondate": "0",
-                "feedbackduedate": "0",
-                "feedback": [
-                    {"overdue": "overdue"}
+                "url": {},
+                "image": false,
+                "fullname": "Group Testing Course",
+                "items": [
+                    {
+                        "cmid": "120",
+                        "gradeitemid": "18",
+                        "modname": "assign",
+                        "name": "Group Assessment - groups required",
+                        "url": "http:\/\/localhost\/mod\/assign\/view.php?id=120",
+                        "moduletypeiconurl": "#",
+                        "partid": null,
+                        "formative": false,
+                        "summative": true,
+                        "dummy": false,
+                        "duedate": "21 Mar 2025",
+                        "feedbackduedateraw": 1745366399,
+                        "feedbackduedate": "23 Apr 2025",
+                        "markoverdue": false,
+                        "submissiondate": "14 Mar 2025",
+                        "submissionstatus": {
+                            "success": "success"
+                        },
+                        "grade": "80\/100",
+                        "notset": false,
+                        "hiddenfromreport": false,
+                        "feedbackstatus": {
+                            "released": "released"
+                        }
+                    }
                 ]
             }
-        ]
+        ],
+        "userfirstname": "Peppa",
+        "userlastname": "Pig",
+        "student": "peppapig",
+        "hasyears": true,
+        "academicyearoptions": [
+            {
+                "value": "2024-25"
+            }
+        ],
+        "canedit": false
     }
-
 }}
 
 <div class="row">
 
     <!-- Mod name. -->
     <div class="col-12 col-md-5 mb-3 mb-md-0">
-        {{{moduletypeicon}}} {{{assessment}}}
+        {{^moduletypeiconurl}}{{! Manual grade item }}
+            <i class="fa fa-hand-paper-o" style="color: grey;"></i>
+            {{{name}}}
+        {{/moduletypeiconurl}}
+        {{#moduletypeiconurl}}
+            <a href="{{{url}}}">
+                <img class='icon mr-0' src='{{{moduletypeiconurl}}}' alt=''>
+                {{{name}}}
+            </a>
+        {{/moduletypeiconurl}}
     </div>
 
     <!-- Mod metadata. -->
@@ -63,7 +107,15 @@
                 </small>
                 <br>
                 {{#submissionstatus}}
-                    {{{submissionstatus}}}
+                    {{#success}}
+                        <span class="badge badge-success">{{#str}} submission:success, report_feedback_tracker {{/str}}</span>
+                    {{/success}}
+                    {{#late}}
+                        <span class="badge badge-warning">{{#str}} submission:late, report_feedback_tracker {{/str}}</span>
+                    {{/late}}
+                    {{#overdue}}
+                        <span class="badge badge-danger">{{#str}} submission:overdue, report_feedback_tracker {{/str}}</span>
+                    {{/overdue}}
                 {{/submissionstatus}}
             </div>
 
@@ -73,7 +125,7 @@
                     <span class="d-md-none">{{#str}} feedback:due, report_feedback_tracker {{/str}}:</span>
                     <span class="text-nowrap">{{{feedbackduedate}}}</span>
                 </small>
-                {{#feedback}}
+                {{#feedbackstatus}}
                     <br>
                     {{#released}}
                         <span class="badge badge-success">{{#str}} feedback:released, report_feedback_tracker {{/str}}</span>
@@ -83,7 +135,8 @@
                     {{/late}}
                     {{#overdue}}
                         <span class="badge badge-danger">{{#str}} feedback:overdue, report_feedback_tracker {{/str}}</span>
-                    {{/overdue}}                {{/feedback}}
+                    {{/overdue}}
+                {{/feedbackstatus}}
             </div>
 
             <!-- Mark data. -->
@@ -108,8 +161,7 @@
     </div>
 </div>
 
-
- {{#additionaldata}}
-        {{> report_feedback_tracker/additionaldata }}
+{{#additionaldata}}
+    {{> report_feedback_tracker/additionaldata }}
 {{/additionaldata}}
 <hr>
