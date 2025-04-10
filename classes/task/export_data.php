@@ -27,7 +27,6 @@ namespace report_feedback_tracker\task;
 use core\task\scheduled_task;
 use report_feedback_tracker\local\admin;
 use report_feedback_tracker\local\helper;
-use report_feedback_tracker\local\user;
 use stdClass;
 
 /**
@@ -177,6 +176,9 @@ class export_data extends scheduled_task {
                         // Convert UNIX timestamps.
                         self::convert_timestamps($datetimeformat, $record);
 
+                        // Add turnaround days.
+                        $record->turnarounddays = self::compute_turnaround_days($record);
+
                         $records[] = $record;
 
                         // If a limit is set stop when it has been reached.
@@ -206,13 +208,33 @@ class export_data extends scheduled_task {
     }
 
     /**
+     * Compute turnaround days.
+     *
+     * @param stdClass $record
+     * @return int
+     */
+    private static function compute_turnaround_days(stdClass $record): int {
+        // If there is no user due date, there are no turnaround days.
+        if (!$record->userduedatetime) {
+            return 0;
+        }
+        // If feedback was given, return the days between user due date and feedback date.
+        if ($record->feedbackdatetime) {
+            $ttime = $record->feedbackdatetime - $record->userduedatetime;
+        } else { // If no feedback was (yet) given, return the days between user due date and today.
+            $ttime = time() - $record->userduedatetime;
+        }
+        return floor($ttime / DAYSECS);
+    }
+
+    /**
      * Set a user specific submission due date and related feedback due date.
      *
      * @param stdClass $record
      * @return void
      */
-    public static function set_duedates($record) {
-        $record->userduedatetime = user::get_duedate(
+    private static function set_duedates($record) {
+        $record->userduedatetime = self::get_duedate(
             $record->courseid,
             $record->assessmentmod,
             $record->cminstance,
@@ -223,27 +245,98 @@ class export_data extends scheduled_task {
     }
 
     /**
+     * Get the due date for a user including optional extensions and/or overrides.
+     *
+     * @param int $courseid
+     * @param string $moduletype
+     * @param int $instance
+     * @param int $duedate
+     * @param int $userid
+     * @return false|int|mixed
+     */
+    private static function get_duedate(int $courseid, string $moduletype, int $instance, int $duedate, int $userid) {
+        global $DB;
+
+        switch ($moduletype) {
+            case 'assign':
+                // Get individual override where available.
+                $params = ['assignid' => $instance, 'userid' => $userid];
+                $overridedate = $DB->get_field('assign_overrides', 'duedate', $params);
+
+                $usergroups = groups_get_user_groups($courseid, $userid);
+
+                // If there is no individual override check for a group override date.
+                if (!$overridedate) {
+                    $params = ['assignid' => $instance];
+                    foreach ($usergroups[0] as $usergroupid) {
+                        $params['groupid'] = $usergroupid;
+                        $overrideduedate = $DB->get_field('assign_overrides', 'duedate', $params);
+
+                        if ($overrideduedate > $overridedate) {
+                            $overridedate = $overrideduedate;
+                        }
+                    }
+                }
+
+                // Get individual extension where available.
+                $params = ['assignment' => $instance, 'userid' => $userid];
+                $extensiondate = $DB->get_field('assign_user_flags', 'extensionduedate', $params);
+
+                // Use the date that gives the most time to the student.
+                if ($extensiondate > $overridedate) {
+                    $overridedate = $extensiondate;
+                }
+
+                break;
+            case 'lesson':
+                $params = ['lessonid' => $instance, 'userid' => $userid];
+                $overridedate = $DB->get_field('lesson_overrides', 'deadline', $params);
+                break;
+            case 'quiz':
+                $params = ['quiz' => $instance, 'userid' => $userid];
+                $overridedate = $DB->get_field('quiz_overrides', 'timeclose', $params);
+                break;
+            default:
+                $overridedate = false;
+                break;
+        }
+        return  $overridedate ?: $duedate;
+
+    }
+
+    /**
      * Set categories, faculties and departments.
      *
      * @param stdClass $record
      * @return void
      */
-    public static function set_categories_faculties_departments($record) {
+    private static function set_categories_faculties_departments($record) {
         global $DB;
 
         $category = $DB->get_record('course_categories', ['id' => $record->categoryid]);
-        $record->category = $category->name;
+        $record->category = self::strip_square_brackets($category->name);
 
-        // A course has a department as parent.
+        // A course may have a department as parent.
         if ($category->parent > 0) {
             $department = $DB->get_record('course_categories', ['id' => $category->parent]);
-            $record->department = $department->name;
+            $record->department = self::strip_square_brackets($department->name);
 
-            // A department has a faculty as parent.
+            // A department may have a faculty as parent.
             if ($department->parent > 0) {
-                $record->faculty = $DB->get_field('course_categories', 'name', ['id' => $department->parent]);
+                $facultyname = $DB->get_field('course_categories', 'name', ['id' => $department->parent]);
+                $record->faculty = self::strip_square_brackets($facultyname);
             }
         }
+    }
+
+    /**
+     * Remove square brackets and everything that is in between from a string.
+     *
+     * @param string $string
+     * @return string
+     */
+    private static function strip_square_brackets(string $string): string {
+        return preg_replace('/\[.*?\]/', '', $string);
     }
 
     /**
@@ -252,7 +345,7 @@ class export_data extends scheduled_task {
      * @param stdClass $record a submission record
      * @return void
      */
-    public static function set_grading_data(stdClass $record): void {
+    private static function set_grading_data(stdClass $record): void {
 
         $graderecord = self::get_graderecord($record->assessmentmod, $record->cminstance, $record->submissionuserid);
 
