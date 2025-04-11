@@ -121,7 +121,7 @@ class export_data extends scheduled_task {
                         ELSE ''
                     END AS assessname,
                     CASE
-                        WHEN mo.name = 'assign' THEN amod.timemodified
+                        WHEN mo.name = 'assign' THEN amod.duedate
                         WHEN mo.name = 'lesson' THEN lmod.deadline
                         WHEN mo.name = 'quiz' THEN qmod.timeclose
                         WHEN mo.name = 'turnitintooltwo' THEN 0
@@ -142,7 +142,6 @@ class export_data extends scheduled_task {
 
             $params = ['courseid' => $course->id];
             $coursemodules = $DB->get_records_sql($sql, $params);
-
             // Get the submissions for the summative assessments.
             foreach ($coursemodules as $summativecm) {
                 if ($submissions = admin::get_module_submissions($course->id, $summativecm->modname, $summativecm->instance)) {
