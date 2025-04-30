@@ -76,8 +76,7 @@ class student {
                 $data->academicyearoptions = $academicyears;
             }
 
-            $year = optional_param('year', null, PARAM_INT);
-            $year = $year ? substr($year, 0, 4) : self::get_default_academicyear($academicyears);
+            $year = optional_param('year', self::get_default_academicyear($academicyears), PARAM_INT);
 
             // Remove the key of the academic year to show.
             // This is used by the template to identify the year selected.
@@ -512,9 +511,9 @@ class student {
      * Get the academic year to show to the student by default.
      *
      * @param array $academicyears
-     * @return int|string
+     * @return int
      */
-    private static function get_default_academicyear(array $academicyears) {
+    private static function get_default_academicyear(array $academicyears): int {
         if ($academicyears) {
             // Return the last academic year the user has been enrolled into a course.
             return $academicyears[0]->key;

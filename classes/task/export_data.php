@@ -94,7 +94,7 @@ class export_data extends scheduled_task {
 
         $academicyear = get_config('report_feedback_tracker', 'export_academicyear') ?: helper::get_current_academic_year();
         $aystartdate = strtotime($academicyear . '-10-01');
-        $ayenddate = strtotime(( (int)$academicyear + 1) . '-09-30');
+        $ayenddate = strtotime(($academicyear + 1) . '-09-30');
 
         // NO limit in number of records unless specified in settings.
         $limit = get_config('report_feedback_tracker', 'export_limit') ?: 0;

@@ -96,7 +96,7 @@ class site {
             }
 
             // Only show courses for the selected year.
-            if ((int) helper::get_academic_year($course->id) === $data->year) {
+            if (helper::get_academic_year($course->id) === $data->year) {
                 // Only show courses for the selected academic year and term and where the user is a teacher.
                 list($courseacademicyears, $courseterms) = self::get_course_academic_years_and_terms($course);
                 if (in_array($data->year, $courseacademicyears) &&

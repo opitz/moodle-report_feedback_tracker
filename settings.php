@@ -30,10 +30,7 @@ if ($ADMIN->fulltree) {
     // Default settings.
     $warningdaysdefault = 14;
     $feedbackdeadlinedaysdefault = 20;
-    $feedbackextenddaysdefault = 7;
-    $dateformatdefault = get_string('dateformat:default', 'report_feedback_tracker');
     $defaultdate = get_string('settings:defaultdate', 'report_feedback_tracker');
-    $currentacademicyear = helper::get_current_academic_year();
 
     // Use site report option.
     // Only available if block_portico_enrollments is installed.

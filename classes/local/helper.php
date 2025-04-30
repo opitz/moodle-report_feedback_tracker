@@ -48,7 +48,7 @@ class helper {
      * @return array
      */
     public static function get_academic_years() {
-        $currentyear = (int) self::get_current_academic_year();
+        $currentyear = self::get_current_academic_year();
         $academicyears[] = $currentyear - 1;
         $academicyears[] = $currentyear;
         $academicyears[] = $currentyear + 1;
@@ -62,19 +62,17 @@ class helper {
      * Get course academic year from custom course fields.
      *
      * @param int $courseid
-     * @return string
+     * @return int
      */
-    public static function get_academic_year(int $courseid): string {
-        $academicyear = '';
-
+    public static function get_academic_year(int $courseid): ?int {
         $handler = course_handler::create();
         $data = $handler->get_instance_data($courseid, true);
         foreach ($data as $dta) {
             if ($dta->get_field()->get('shortname') === "course_year") {
-                $academicyear = $dta->get_value() ?? $academicyear;
+                return $dta->get_value();
             }
         }
-        return $academicyear;
+        return null;
     }
 
     /**
@@ -216,7 +214,7 @@ class helper {
         }
 
         // For assessments before academic year 2024-25 the feedback due date period was 1 calendar month.
-        if ((int) self::get_academic_year($gradeitem->courseid) < 2024) {
+        if (self::get_academic_year($gradeitem->courseid) < 2024) {
             return strtotime('+1 month', $duedate);
         }
 
@@ -627,7 +625,7 @@ class helper {
         $academicyears = [];
         foreach ($courses as $course) {
             if ($academicyear = self::get_academic_year($course->id)) {
-                $y1y2 = $academicyear . '-' . ((int)substr($academicyear, -2) + 1);
+                $y1y2 = $academicyear . '-' . substr($academicyear + 1, -2);
                 if (!isset($academicyears[$y1y2])) {
                     $obj = new stdClass();
                     $obj->key = $academicyear;
@@ -644,9 +642,9 @@ class helper {
     /**
      * Get the current academic year.
      *
-     * @return string
+     * @return int
      */
-    public static function get_current_academic_year(): string {
+    public static function get_current_academic_year(): int {
         $currentyear = date('Y');
         $currentmonth = date('m');
         return $currentmonth >= 8 ? $currentyear : $currentyear - 1; // Academic Year begins 1st of August.
