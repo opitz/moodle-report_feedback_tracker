@@ -62,14 +62,14 @@ class helper {
      * Get course academic year from custom course fields.
      *
      * @param int $courseid
-     * @return int
+     * @return int|null
      */
     public static function get_academic_year(int $courseid): ?int {
         $handler = course_handler::create();
         $data = $handler->get_instance_data($courseid, true);
         foreach ($data as $dta) {
             if ($dta->get_field()->get('shortname') === "course_year") {
-                return $dta->get_value();
+                return $dta->get_value() ?: null;
             }
         }
         return null;
