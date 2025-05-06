@@ -137,14 +137,10 @@ class student {
         $courseitem->fullname = $course->fullname;
 
         foreach ($gradeitems as $gradeitem) {
-            // Get course module ID for the grade item where it exists.
-            $cmid = helper::get_cmid($gradeitem->id);
-            $assesstype = helper::get_assesstype($gradeitem->id,  $cmid, self::$assesstypes);
-
             // Process modules and manual grade items only.
             if (((($gradeitem->itemtype === 'mod') && helper::is_supported_module($gradeitem->itemmodule)) ||
                     (($gradeitem->itemtype === 'manual') && helper::is_supported_module($gradeitem->itemtype))) &&
-                    $item = self::build_moduleitem($modinfo, $gradeitem, $userid)) {
+                    $item = self::build_gradeitem($modinfo, $gradeitem, $userid)) {
 
                 // Skip hidden items.
                 if ($item->hiddenfromreport) {
@@ -170,95 +166,114 @@ class student {
     }
 
     /**
-     * Build a module item.
+     * Build a module item or a manual item.
      *
      * @param course_modinfo $modinfo
      * @param grade_item $gradeitem
      * @param int $userid
      * @return false|stdClass
      */
-    private static function build_moduleitem(course_modinfo $modinfo, grade_item $gradeitem, int $userid): false|stdClass {
-        global $USER;
+    private static function build_gradeitem(course_modinfo $modinfo, grade_item $gradeitem, int $userid): false|stdClass {
+        global $DB, $USER;
 
-        // Manual grade items are different.
+        $data = new stdClass();
+
         if ($gradeitem->itemtype === "manual") {
-            return self::build_manualitem($gradeitem, $userid);
-        }
+            if ($gradeitem->is_hidden()) {
+                return false;
+            }
 
-        if ($cm = admin::get_cm_from_gradeitem($gradeitem)) {
+            // Manual grade items have no module and therefore no direct link.
+            $data->url = new moodle_url('/course/user.php',
+                ['mode' => 'grade', 'id' => $gradeitem->courseid, 'user' => $userid]);
+            $duedate = 0;
+            $data->cmid = 0;
+            $data->submissiondate = 0;
+        } else if ($cm = admin::get_cm_from_gradeitem($gradeitem)) {
             // Get the module and check if it is visible.
             $module = $modinfo->get_cm($cm->cmid);
             if (!$module->visible) {
                 return false;
             }
+
+            // Assignment modules may have NO submission type - if so don't show them here.
+            if ($module->modname === 'assign' && !helper::count_assign_submission_plugins($module->id)) {
+                return false;
+            }
+
+            $data->url = self::get_module_url($module);
+            $data->moduletypeiconurl = $module->get_icon_url()->out(false);
+            $data->cmid = $cm->cmid;
+
+            // Due dates.
+
+            // Different modules use different field names for the due date.
+            $duedates = [
+                'assign' => 'duedate',
+                'lesson' => 'deadline',
+                'quiz' => 'timeclose',
+            ];
+            $customdata = $module->customdata;
+
+            if (is_array($customdata)
+                && array_key_exists($module->modname, $duedates)
+                && isset($customdata[$duedates[$module->modname]])) {
+                // Due to a core bug $customdata will always contain data for $USER->id, regardless of $userid given.
+                // See MDL-83121.
+                // The module customdata does not contain any optional assignment extensions so using custom method.
+                if ($USER->id === $userid && $module->modname !== 'assign') {
+                    $duedate = $customdata[$duedates[$module->modname]];
+                } else {
+                    // Use a custom method to get the override for a student user shown in an admin report.
+                    $duedate = self::get_user_duedate($gradeitem, $userid) ?: admin::get_duedate($module);
+                }
+            } else {
+                $duedate = admin::get_duedate($module);
+            }
+
+            if ($duedate) {
+                $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
+                $data->duedate = userdate($duedate, $dateformat);
+                $data->feedbackduedateraw = helper::get_feedbackduedate($gradeitem, $duedate);
+                $data->feedbackduedate = userdate($data->feedbackduedateraw, $dateformat);
+            }
+
+            // Add submission and grading for the user.
+            self::add_user_data($userid, $data, $gradeitem, $duedate);
         } else { // There is no course module for the grade item.
             return false;
         }
 
-        $customdata = $module->customdata;
-
-        // Assignment modules may have NO submission type - if so don't show them here.
-        if ($module->modname === 'assign' && !helper::count_assign_submission_plugins($module->id)) {
-            return false;
-        }
-
-        $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
-
-        // Build the module data.
-        $data = new stdClass();
-        $data->cmid = $module->id;
         $data->gradeitemid = $gradeitem->id;
-        $data->modname = $module->modname;
-        $data->name = $gradeitem->itemname; // The grade item name has more details than the module name.
-        $data->url = self::get_module_url($module);
-        $data->moduletypeiconurl = $module->get_icon_url()->out(false);
-
+        $data->name = $gradeitem->itemname;
         $data->partid = null;
+        $data->markoverdue = false;
 
         // Assessment type.
-        $assesstype = helper::get_assesstype($gradeitem->id, $module->id, self::$assesstypes);
+        $assesstype = helper::get_assesstype($gradeitem->id, $data->cmid, self::$assesstypes);
         $data->formative = ($assesstype->type == assess_type::ASSESS_TYPE_FORMATIVE);
         $data->summative = ($assesstype->type == assess_type::ASSESS_TYPE_SUMMATIVE);
         $data->dummy = ($assesstype->type == assess_type::ASSESS_TYPE_DUMMY);
 
-        // Due dates.
-
-        // Different modules use different field names for the due date.
-        $duedates = [
-            'assign' => 'duedate',
-            'lesson' => 'deadline',
-            'quiz' => 'timeclose',
-        ];
-
-        if (is_array($customdata)
-            && array_key_exists($module->modname, $duedates)
-            && isset($customdata[$duedates[$module->modname]])) {
-            // Due to a core bug $customdata will always contain data for $USER->id, regardless of $userid given.
-            // See MDL-83121.
-            // The module customdata does not contain any optional assignment extensions so using custom method.
-            if ($USER->id === $userid && $module->modname !== 'assign') {
-                $duedate = $customdata[$duedates[$module->modname]];
-            } else {
-                // Use a custom method to get the override for a student user shown in an admin report.
-                $duedate = self::get_user_duedate($gradeitem, $userid) ?: admin::get_duedate($module);
-            }
-        } else {
-            $duedate = admin::get_duedate($module);
-        }
-
-        if ($duedate) {
-            $data->duedate = userdate($duedate, $dateformat);
-            $data->feedbackduedateraw = helper::get_feedbackduedate($gradeitem, $duedate);
-            $data->feedbackduedate = userdate($data->feedbackduedateraw, $dateformat);
-        } else {
-            $data->duedate = get_string('datenotset', 'report_feedback_tracker');
+        if (!$duedate) {
+            $data->duedate = ($gradeitem->itemtype === "manual") ? "" : get_string('datenotset', 'report_feedback_tracker');
             $data->feedbackduedateraw = 9999999999;
             $data->feedbackduedate = get_string('datenotset', 'report_feedback_tracker');
         }
-        $data->markoverdue = false;
 
-        // Add submission and grading for the user.
-        self::add_user_data($userid, $data, $gradeitem, $duedate);
+        // Grading.
+        $gradingrecord = $DB->get_record('grade_grades', ['itemid' => $gradeitem->id, 'userid' => $userid]);
+        if (!$gradingrecord || $gradeitem->is_hidden()) {
+            // No grading record or grade not (yet) released.
+            $data->grade = null;
+        } else {
+            $data->grade = self::get_grading($gradingrecord);
+        }
+        $feedbackdate = $gradingrecord->timemodified ?? 0;
+
+        helper::add_additional_data($data);
+        $data->feedbackstatus = self::get_feedback_status($gradeitem, $data->submissiondate, $data->feedbackduedateraw,
+            $feedbackdate);
 
         return $data;
     }
@@ -274,22 +289,8 @@ class student {
      * @return void
      */
     public static function add_user_data(int $userid, stdClass $data, grade_item $gradeitem, int $duedate, int $part = 0) {
-        global $DB;
-
-        $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
-
-        // Submission.
-        $submissiondate = self::get_submissiondate($userid, $gradeitem->itemmodule, $gradeitem->iteminstance, $part);
-        $data->submissiondate = $submissiondate == 0 ? '--' : userdate($submissiondate, $dateformat);
-        $data->submissionstatus = self::get_submission_status($duedate, $submissiondate);
-
-        // Grading.
-        $gradingrecord = $DB->get_record('grade_grades', ['itemid' => $gradeitem->id, 'userid' => $userid]);
-        $data->grade = $gradingrecord ? self::get_grading($gradingrecord) : null;
-        $feedbackdate = $gradingrecord->timemodified ?? 0;
-        // Add manual set dates and additional data.
-        helper::add_additional_data($data);
-        $data->feedbackstatus = self::get_feedback_status($gradeitem, $submissiondate, $data->feedbackduedateraw, $feedbackdate);
+        $data->submissiondate = self::get_submissiondate($userid, $gradeitem->itemmodule, $gradeitem->iteminstance, $part);
+        $data->submissionstatus = self::get_submission_status($duedate, $data->submissiondate);
     }
 
     /**
@@ -387,53 +388,6 @@ class student {
 
         // The submission is not due yet - so return nothing.
         return [];
-    }
-
-    /**
-     * Build a manual grade item.
-     *
-     * @param grade_item $gradeitem
-     * @param int $userid
-     * @return stdClass|false
-     */
-    private static function build_manualitem(grade_item $gradeitem, int $userid): stdClass|false {
-        global $DB;
-
-        // If a manual grade item has not (yet) been released do not show it.
-        if (($gradeitem->hidden == 1) || ($gradeitem->hidden > time())) {
-            return false;
-        }
-
-        $data = new stdClass();
-        $data->gradeitemid = $gradeitem->id;
-        $data->name = $gradeitem->itemname;
-
-        // Manual grade items have no module and therefore no direct link.
-        $data->url = new moodle_url('/course/user.php',
-            ['mode' => 'grade', 'id' => $gradeitem->courseid, 'user' => $userid]);
-        $data->partid = null;
-
-        // Assessment type.
-        $assesstype = helper::get_assesstype($gradeitem->id, 0, self::$assesstypes);
-        $data->formative = ($assesstype->type == assess_type::ASSESS_TYPE_FORMATIVE);
-        $data->summative = ($assesstype->type == assess_type::ASSESS_TYPE_SUMMATIVE);
-        $data->dummy = ($assesstype->type == assess_type::ASSESS_TYPE_DUMMY);
-
-        // Due dates.
-        $data->duedate = '';
-        // The raw date is needed for sorting.
-        $data->feedbackduedateraw = 9999999999;
-        $data->feedbackduedate = get_string('datenotset', 'report_feedback_tracker');
-        $data->markoverdue = false;
-
-        // Grading.
-        $gradingrecord = $DB->get_record('grade_grades', ['itemid' => $gradeitem->id, 'userid' => $userid]);
-        $feedbackdate = $gradingrecord->timemodified ?? 0;
-        $data->grade = $gradingrecord ? self::get_grading($gradingrecord) : null;
-        helper::add_additional_data($data);
-        $data->feedbackstatus = self::get_feedback_status($gradeitem, 0, $data->feedbackduedateraw, $feedbackdate);
-
-        return $data;
     }
 
     /**

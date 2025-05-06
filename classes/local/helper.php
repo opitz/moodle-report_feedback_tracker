@@ -609,8 +609,8 @@ class helper {
                 student::add_user_data($userid, $tttitem, $gradeitem, $duedate, $tttitem->partid);
             } else {
                 self::add_assesstype($tttitem, $assesstype);
-                self::add_additional_data($tttitem);
             }
+            self::add_additional_data($tttitem);
             $data->items[] = $tttitem;
         }
     }
