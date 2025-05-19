@@ -192,7 +192,7 @@ class student {
         } else if ($cm = admin::get_cm_from_gradeitem($gradeitem)) {
             // Get the module and check if it is visible.
             $module = $modinfo->get_cm($cm->cmid);
-            if (!$module->visible) {
+            if (!$module->uservisible) {
                 return false;
             }
 
