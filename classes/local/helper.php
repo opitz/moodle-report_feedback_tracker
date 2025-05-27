@@ -259,7 +259,7 @@ class helper {
      *
      * @return array
      */
-    private static function get_closuredays() {
+    public static function get_closuredays() {
 
         $cache = \cache::make('report_feedback_tracker', 'publicholidays');
         $closuredays = $cache->get('england_and_wales');

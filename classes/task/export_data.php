@@ -212,7 +212,7 @@ class export_data extends scheduled_task {
     }
 
     /**
-     * Compute turnaround days.
+     * Return the number of days between submission and feedback release.
      *
      * @param stdClass $record
      * @return int
@@ -222,13 +222,31 @@ class export_data extends scheduled_task {
         if (!$record->userduedatetime) {
             return 0;
         }
+
         // If feedback was given, return the days between user due date and feedback date.
-        if ($record->feedbackdatetime) {
-            $ttime = $record->feedbackdatetime - $record->userduedatetime;
-        } else { // If no feedback was (yet) given, return the days between user due date and today.
-            $ttime = time() - $record->userduedatetime;
+        // If no feedback was (yet) given, return the days between user due date and today.
+        $feedbackdatetime = $record->feedbackdatetime ?: time();
+        // Count the user due date regardless of time of day.
+        $userduedatetime = strtotime(date('Y-m-d', $record->userduedatetime));
+        // Count the feedback date regardless of time of day.
+        $feedbackdatetime = strtotime(date('Y-m-d', $feedbackdatetime));
+
+        $elapseddays = intdiv($feedbackdatetime - $userduedatetime, DAYSECS);
+
+        // Get the number of non-working days.
+        $closuredays = helper::get_closuredays();
+
+        for ($i = $userduedatetime; $i <= $feedbackdatetime; $i += DAYSECS) {
+            // Check if the date is a weekend.
+            $weekday = date('N', $i);
+
+            // Don't count day if it's a weekend day (6 or 7) or a closure date.
+            if ($weekday > 5 || in_array(date('Y-m-d', $i), $closuredays)) {
+                $elapseddays--;
+            }
         }
-        return floor($ttime / DAYSECS);
+
+        return $elapseddays;
     }
 
     /**
