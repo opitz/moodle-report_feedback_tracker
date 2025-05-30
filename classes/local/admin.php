@@ -289,49 +289,62 @@ class admin {
      * Count the missing grades for a given grade item.
      *
      * @param cm_info $cm
-     * @param array $submitterids
-     * @param int|null $gradeitemid
+     * @param array $submitterids An array of user/group IDs that have submitted
+     * @param int $gradeitemid
      * @return int
      */
-    public static function count_missing_grades(cm_info $cm, array $submitterids, ?int $gradeitemid = null): int {
+    public static function count_missing_grades(cm_info $cm, array $submitterids, int $gradeitemid): int {
         global $DB;
 
-        // Assignments provide a method to count submissions that need grading.
-        if ($cm->modname === 'assign') {
-            // Get the group submission status.
+        if (empty($submitterids)) {
+            // No submissions - no missing grades.
+            return 0;
+        }
+
+        // Assignments provide a method to count user - not team! - submissions that need grading.
+        if ($cm->modname === 'assign' &&
+                $DB->get_field('assign', 'teamsubmission', ['id' => $cm->instance]) == 0) {
             $context = context_module::instance($cm->id);
             $assignment = new assign($context, $cm, $cm->course);
             return $assignment->count_submissions_need_grading();
         }
 
-        // For modules other than assignments get the student IDs that have submissions.
-        if ($submitterids) {
-            if (!isset($gradeitemid)) {
-                $params = [
-                    'itemtype' => 'mod',
-                    'itemnumber' => 0,
-                    'itemmodule' => $cm->modname,
-                    'iteminstance' => $cm->instance,
-                ];
+        $sql = "SELECT DISTINCT userid
+                  FROM {grade_grades}
+                 WHERE itemid = :gradeitemid AND finalgrade > :finalgrade";
+        $params = ['gradeitemid' => $gradeitemid, 'finalgrade' => -1];
 
-                // Get the grade item ID.
-                $gradeitemid = $DB->get_field('grade_items', 'id', $params);
+        $gradedids = $DB->get_fieldset_sql($sql, $params);
+
+        if ($cm->modname === 'assign') {
+            // Must be a team submission if we've got this far.
+
+            // Determine the number of groups that have graded submitters.
+            $markedgroups = 0;
+            $defaultgroup = 0;
+
+            // Get all groups assigned to the module's grouping.
+            $groups = groups_get_all_groups($cm->course, 0, $cm->groupingid);
+
+            foreach ($groups as $group) {
+                $members = groups_get_members($group->id, 'u.id');
+                foreach ($members as $member) {
+                    if (in_array($member->id, $gradedids)) {
+                        // If the user is only a member of a single group count that group.
+                        if (groups_get_user_groups($cm->course, $member->id) === 1) {
+                            $markedgroups++;
+                        } else { // The user is placed into the default group, so count it once.
+                            $defaultgroup = 1;
+                        }
+                        break;
+                    }
+                }
             }
-
-            $sql = "SELECT DISTINCT gg.userid
-                    FROM {grade_grades} gg
-                    WHERE gg.itemid = :gradeitemid AND gg.finalgrade > :finalgrade";
-            $params = ['gradeitemid' => $gradeitemid, 'finalgrade' => -1];
-
-            $gradedids = $DB->get_fieldset_sql($sql, $params);
-
+            return count($submitterids) - $markedgroups - $defaultgroup;
+        } else {
             // Count and return all student IDs in submission that are not (yet) to be found in gradings.
             return count(array_diff($submitterids, $gradedids));
-
         }
-
-        // No submissions - no missing grades.
-        return 0;
     }
 
     /**
