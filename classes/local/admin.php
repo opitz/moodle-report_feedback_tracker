@@ -85,7 +85,7 @@ class admin {
             $data->overrides = get_string('users:extensions', 'report_feedback_tracker', $overrides);
         }
         $data->overridesurl = self::get_overrides_url($module);
-        $submitterids = self::get_module_submitterids($module);
+        $submitterids = array_column(self::get_module_submissions($module, true), 'userid');
         $data->submissions = count($submitterids);
 
         // Grades and markings.
@@ -194,66 +194,67 @@ class admin {
     }
 
     /**
-     * Get an array of submissions from enrolled students for the given course module.
+     * Get an array of submissions from enrolled students or groups for the given course module.
      *
-     * @param int $courseid
-     * @param string $modname
-     * @param int $instance
+     * @param cm_info|stdClass $module
+     * @param bool $countgroups return group submissions if set to true
      * @return array
      */
-    public static function get_module_submissions(int $courseid, string $modname, int $instance): array {
+    public static function get_module_submissions(cm_info|stdClass $module, bool $countgroups = false): array {
         global $DB;
 
         // Array to store enrolled users per course.
         static $courseenrolledusers = [];
 
         // Check if enrolled users for this course are already cached.
-        if (!isset($courseenrolledusers[$courseid])) {
-            $enrolledusers = get_enrolled_users(context_course::instance($courseid));
-            $courseenrolledusers[$courseid] = array_map(fn($user) => $user->id, $enrolledusers);
+        if (!isset($courseenrolledusers[$module->course])) {
+            $enrolledusers = get_enrolled_users(context_course::instance($module->course));
+            $courseenrolledusers[$module->course] = array_map(fn($user) => $user->id, $enrolledusers);
         }
 
-        $enrolleduserids = $courseenrolledusers[$courseid];
+        $enrolleduserids = $courseenrolledusers[$module->course];
         $teamsubmission = false;
 
-        switch ($modname) {
+        switch ($module->modname) {
             case 'assign' :
-                $teamsubmission = $DB->get_field('assign', 'teamsubmission', ['id' => $instance]);
-                if ($teamsubmission) {
+                $teamsubmission = $DB->get_field('assign', 'teamsubmission', ['id' => $module->instance]);
+                if ($teamsubmission && $countgroups) {
                     // Get group submissions.
                     $sql = "SELECT id, groupid, userid, timemodified AS submissiondatetime
                         FROM {assign_submission}
-                        WHERE assignment = $instance
+                        WHERE assignment = $module->instance
                         AND userid = 0
-                        AND status = 'submitted'";
+                        AND status = 'submitted'
+                        AND latest = 1";
                 } else {
                     // Get user submissions.
                     $sql = "SELECT id, userid, timemodified AS submissiondatetime
                         FROM {assign_submission}
-                        WHERE assignment = $instance
+                        WHERE assignment = $module->instance
                         AND userid > 0
-                        AND status = 'submitted'";
+                        AND status = 'submitted'
+                        AND latest = 1";
                 }
                 break;
             case 'lesson' :
                 $sql = "SELECT id, userid, timeseen AS submissiondatetime
                         FROM {lesson_attempts}
-                        WHERE lessonid = $instance";
+                        WHERE lessonid = $module->instance";
                 break;
             case 'quiz' :
                 $sql = "SELECT id, userid, timefinish AS submissiondatetime
                         FROM {quiz_attempts}
-                        WHERE quiz = $instance AND preview = 0";
+                        WHERE quiz = $module->instance AND preview = 0";
                 break;
             case 'turnitintooltwo' :
                 $sql = "SELECT id, userid, submission_modified AS submissiondatetime
                         FROM {turnitintooltwo_submissions}
-                        WHERE turnitintooltwoid = $instance";
+                        WHERE turnitintooltwoid = $module->instance";
                 break;
             case 'workshop' :
                 $sql = "SELECT id, authorid AS userid, timemodified AS submissiondatetime
                         FROM {workshop_submissions}
-                        WHERE workshopid = $instance";
+                        WHERE workshopid = $module->instance";
                 break;
             default:
                 return [];
@@ -261,28 +262,23 @@ class admin {
 
         $records = $DB->get_records_sql($sql);
 
-        // If it is a group/team submission return the group IDs.
-        if (($modname == 'assign') && $teamsubmission) {
-            return $records;
-        } else {
-            // Return only submissions from students that are (still) enrolled into the course.
-            return array_filter($records, function ($record) use ($enrolleduserids) {
-                return in_array($record->userid, $enrolleduserids);
-            });
-        }
-    }
+        // If it is an assignment group/team submission amend the group IDs.
+        if (($module->modname == 'assign') && $teamsubmission) {
+            foreach ($records as $record) {
+                $record->groupid = $DB->get_field('assign_submission', 'groupid',
+                    ['userid' => 0, 'status' => 'submitted', 'latest' => 1, 'timemodified' => $record->submissiondatetime]);
+            }
 
-    /**
-     * Get an array of IDs of enrolled students or groups that have submitted to the given module.
-     *
-     * @param cm_info $module
-     * @return array
-     */
-    public static function get_module_submitterids(cm_info $module): array {
-        if ($submissions = self::get_module_submissions($module->course, $module->modname, $module->instance)) {
-            return array_map(fn($submission) => $submission->userid, $submissions);
+            if ($countgroups) { // Just return the group records.
+                return $records;
+            }
         }
-        return [];
+
+        // Return only submissions from students that are (still) enrolled into the course.
+        return array_filter($records, function ($record) use ($enrolleduserids) {
+            return in_array($record->userid, $enrolleduserids);
+        });
+
     }
 
     /**

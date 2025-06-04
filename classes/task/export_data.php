@@ -150,43 +150,42 @@ class export_data extends scheduled_task {
 
             // Get the submissions for the summative assessments.
             foreach ($coursemodules as $summativecm) {
-                if ($submissions = admin::get_module_submissions($course->id, $summativecm->modname, $summativecm->instance)) {
-                    foreach ($submissions as $submission) {
-                        $record = new stdClass();
-                        $record->submissionid = $submission->id;
-                        $record->duedatetime = $summativecm->duedatetime;
-                        $record->submissionuserid = $submission->userid;
-                        $record->submissiongroupid = $submission->groupid ?? 0;
-                        $record->submissiondatetime = $submission->submissiondatetime;
-                        $record->cmid = $summativecm->id;
-                        $record->cminstance = $summativecm->instance;
-                        $record->courseid = $course->id;
-                        $record->categoryid = $course->category;
-                        $record->assessmentname = $summativecm->assessname;
-                        $record->academicyear = $courseacademicyear;
-                        $record->coursename = $course->fullname;
-                        $record->assessmentmod = $summativecm->modname;
+                $submissions = admin::get_module_submissions($summativecm);
+                foreach ($submissions as $submission) {
+                    $record = new stdClass();
+                    $record->submissionid = $submission->id;
+                    $record->duedatetime = $summativecm->duedatetime;
+                    $record->submissionuserid = $submission->userid;
+                    $record->submissiongroupid = $submission->groupid ?? 0;
+                    $record->submissiondatetime = $submission->submissiondatetime;
+                    $record->cmid = $summativecm->id;
+                    $record->cminstance = $summativecm->instance;
+                    $record->courseid = $course->id;
+                    $record->categoryid = $course->category;
+                    $record->assessmentname = $summativecm->assessname;
+                    $record->academicyear = $courseacademicyear;
+                    $record->coursename = $course->fullname;
+                    $record->assessmentmod = $summativecm->modname;
 
-                        // Add turnitin part data.
-                        if ($summativecm->modname === 'turnitintooltwo') {
-                            $tttparts = helper::get_turnitin_parts($summativecm->instance);
-                            foreach ($tttparts as $tttpart) {
-                                // Make a clone of the record and fill in the part details.
-                                $tttrecord = clone $record;
-                                $tttrecord->assessmentname .= ' ' . $tttpart->partname;
-                                $tttrecord->duedatetime = $tttpart->dtdue;
-                                self::amend_record_data($tttrecord);
-                                $records[] = $tttrecord;
-                            }
-                        } else {
-                            self::amend_record_data($record);
-                            $records[] = $record;
+                    // Add turnitin part data.
+                    if ($summativecm->modname === 'turnitintooltwo') {
+                        $tttparts = helper::get_turnitin_parts($summativecm->instance);
+                        foreach ($tttparts as $tttpart) {
+                            // Make a clone of the record and fill in the part details.
+                            $tttrecord = clone $record;
+                            $tttrecord->assessmentname .= ' ' . $tttpart->partname;
+                            $tttrecord->duedatetime = $tttpart->dtdue;
+                            self::amend_record_data($tttrecord);
+                            $records[] = $tttrecord;
                         }
+                    } else {
+                        self::amend_record_data($record);
+                        $records[] = $record;
+                    }
 
-                        // If a limit is set stop when it has been reached.
-                        if ($limit && ++$counter >= $limit) {
-                            return $records;
-                        }
+                    // If a limit is set stop when it has been reached.
+                    if ($limit && ++$counter >= $limit) {
+                        return $records;
                     }
                 }
             }
