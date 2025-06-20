@@ -202,7 +202,6 @@ class admin {
      */
     public static function get_module_submissions(cm_info|stdClass $module, bool $countgroups = false): array {
         global $DB;
-
         // Array to store enrolled users per course.
         static $courseenrolledusers = [];
 
@@ -264,13 +263,14 @@ class admin {
 
         // If it is an assignment group/team submission amend the group IDs.
         if (($module->modname == 'assign') && $teamsubmission) {
-            foreach ($records as $record) {
-                $record->groupid = $DB->get_field('assign_submission', 'groupid',
-                    ['userid' => 0, 'status' => 'submitted', 'latest' => 1, 'timemodified' => $record->submissiondatetime]);
-            }
-
             if ($countgroups) { // Just return the group records.
                 return $records;
+            }
+
+            foreach ($records as $record) {
+                $groups = groups_get_all_groups($module->course, $record->userid);
+                // If a user is a member of one group only assign the group ID, otherwise assign the default group.
+                $record->groupid = count($groups) === 1 ? reset($groups)->id : 0;
             }
         }
 
@@ -278,7 +278,6 @@ class admin {
         return array_filter($records, function ($record) use ($enrolleduserids) {
             return in_array($record->userid, $enrolleduserids);
         });
-
     }
 
     /**
