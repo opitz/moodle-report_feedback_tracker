@@ -41,6 +41,11 @@ if ($ADMIN->fulltree) {
         set_config('sitereport', false, 'report_feedback_tracker');
     }
 
+    // Option to show only relevant submissions and markings to markers where applicable (e.g. Courseworks).
+    $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/showusermarkings',
+        get_string('settings:showusermarkings', 'report_feedback_tracker'),
+        get_string('settings:showusermarkingsdescription', 'report_feedback_tracker'), false));
+
     // Data export options.
     $settings->add(new admin_setting_heading('report_feedback_tracker_export',
         get_string('settings:exportheading', 'report_feedback_tracker'), ''));
@@ -66,6 +71,9 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/supportassign',
         get_string('settings:supportassignment', 'report_feedback_tracker'), '', true));
+
+    $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/supportcoursework',
+        get_string('settings:supportcoursework', 'report_feedback_tracker'), '', false));
 
     $settings->add(new admin_setting_configcheckbox('report_feedback_tracker/supportlesson',
         get_string('settings:supportlesson', 'report_feedback_tracker'), '', false));

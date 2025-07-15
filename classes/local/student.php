@@ -215,20 +215,19 @@ class student {
             ];
             $customdata = $module->customdata;
 
+            // Due to a core bug $customdata will always contain data for $USER->id, regardless of $userid given.
+            // See MDL-83121.
+            // Additionally, the customdata for a module does not contain any optional assignment extensions
+            // so in this case we have to use the custom method below.
             if (is_array($customdata)
                 && array_key_exists($module->modname, $duedates)
-                && isset($customdata[$duedates[$module->modname]])) {
-                // Due to a core bug $customdata will always contain data for $USER->id, regardless of $userid given.
-                // See MDL-83121.
-                // The module customdata does not contain any optional assignment extensions so using custom method.
-                if ($USER->id === $userid && $module->modname !== 'assign') {
-                    $duedate = $customdata[$duedates[$module->modname]];
-                } else {
-                    // Use a custom method to get the override for a student user shown in an admin report.
-                    $duedate = self::get_user_duedate($gradeitem, $userid) ?: admin::get_duedate($module);
-                }
+                && isset($customdata[$duedates[$module->modname]])
+                && ($USER->id === $userid && $module->modname !== 'assign')) {
+                $duedate = $customdata[$duedates[$module->modname]];
             } else {
-                $duedate = admin::get_duedate($module);
+                // Use a custom method to get custom due date for a student.
+                $duedate = self::get_user_duedate($gradeitem, $userid) ?: admin::get_duedate($module);
+
             }
 
             if ($duedate) {
@@ -313,6 +312,13 @@ class student {
                         WHERE userid = :userid
                         AND assignment = :instance
                         AND status = 'submitted'";
+                break;
+            case 'coursework':
+                $params = ['userid' => $userid, 'instance' => $instance];
+                $sql = "SELECT MAX(timesubmitted)
+                        FROM {coursework_submissions}
+                        WHERE userid = :userid
+                        AND courseworkid = :instance";
                 break;
             case 'lesson':
                 $params = ['userid' => $userid, 'instance' => $instance];
@@ -527,10 +533,9 @@ class student {
                 $params = ['assignid' => $gradeitem->iteminstance, 'userid' => $userid];
                 $overridedate = $DB->get_field('assign_overrides', 'duedate', $params);
 
-                $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
-
                 // If there is no individual override check for a group override date.
                 if (!$overridedate) {
+                    $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
                     foreach ($usergroups[0] as $usergroupid) {
                         $params = ['assignid' => $gradeitem->iteminstance, 'groupid' => $usergroupid];
                         $overrideduedate = $DB->get_field('assign_overrides', 'duedate', $params);
@@ -550,6 +555,32 @@ class student {
                     $overridedate = $extensiondate;
                 }
 
+                break;
+            case 'coursework':
+                // Get individual override where available.
+                $params = [
+                    'courseworkid' => $gradeitem->iteminstance,
+                    'allocatableid' => $userid,
+                    'allocatabletype' => 'user',
+                    ];
+                $overridedate = $DB->get_field('coursework_person_deadlines', 'personal_deadline', $params);
+
+                // If there is no individual override check for a group override date.
+                if (!$overridedate) {
+                    $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
+                    foreach ($usergroups[0] as $usergroupid) {
+                        $params = [
+                            'courseworkid' => $gradeitem->iteminstance,
+                            'allocatableid' => $usergroupid,
+                            'allocatabletype' => 'group',
+                        ];
+                        $overrideduedate = $DB->get_field('coursework_extensions', 'extended_deadline', $params);
+
+                        if ($overrideduedate > $overridedate) {
+                            $overridedate = $overrideduedate;
+                        }
+                    }
+                }
                 break;
             case 'lesson':
                 $params = ['lessonid' => $gradeitem->iteminstance, 'userid' => $userid];

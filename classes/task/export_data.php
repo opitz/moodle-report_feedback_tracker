@@ -46,21 +46,29 @@ class export_data extends scheduled_task {
      * Execute the task.
      */
     public function execute() {
+        global $DB;
+
         $academicyear = get_config('report_feedback_tracker', 'export_academicyear') ?: helper::get_current_academic_year();
         $previousyear = $academicyear - 1;
         $academicyears = [$previousyear, $academicyear];
 
         foreach ($academicyears as $acyear) {
-            // Get the data to export.
-            if (!$data = self::get_export_data($acyear)) {
-                mtrace(" ==> No data to export for academic year $acyear.");
-                continue;
-            }
+            $sql =
+                "SELECT c.id, c.category, c.fullname
+               FROM {customfield_data} cfd
+               JOIN {context} ctx ON cfd.contextid = ctx.id AND ctx.contextlevel = :contextcourse
+               JOIN {course} c ON c.id = ctx.instanceid
+               JOIN {customfield_field} cff ON cfd.fieldid = cff.id
+              WHERE cff.shortname = 'course_year' AND cfd.value = :academicyear";
+            $params = ['contextcourse' => CONTEXT_COURSE, 'academicyear' => $acyear];
 
-            // Convert data to JSON for writing.
-            $output = json_encode($data, JSON_PRETTY_PRINT);
+            $courses = $DB->get_records_sql($sql, $params);
+            // NO limit in number of records unless specified in settings.
+            $limit = get_config('report_feedback_tracker', 'export_limit') ?: 0;
+            $counter = 0;
+            $firstline = true;
 
-            // Export the output.
+            // Create file and filepath.
             $filename = "feedback_tracker_report_$acyear.json";
 
             // If a path is configured use it.
@@ -71,62 +79,28 @@ class export_data extends scheduled_task {
                 $filepath = make_temp_directory('report_feedback_tracker') . '/' . $filename;
             }
 
-            // Try to write the data to the file and log the outcome.
-            if (file_put_contents($filepath, $output) === false) {
-                mtrace(get_string('data:export_error', 'report_feedback_tracker', $filepath));
-            } else {
-                mtrace(get_string('data:export_count', 'report_feedback_tracker',
-                    (object) ['count' => count($data), 'acyear' => $acyear]));
-                mtrace(get_string('data:export_log', 'report_feedback_tracker', $filepath));
-            }
-        }
-
-        // Trigger an event.
-        $event = \report_feedback_tracker\event\data_export_completed::create([
-            'context' => \context_system::instance(),
-        ]);
-        $event->trigger();
-    }
-
-    /**
-     * Get the data to export - taking steps.
-     *
-     * @param int $academicyear
-     * @return array
-     */
-    public static function get_export_data(int $academicyear): array {
-        global $DB;
-
-        $sql =
-            "SELECT c.id, c.category, c.fullname
-               FROM {customfield_data} cfd
-               JOIN {context} ctx ON cfd.contextid = ctx.id AND ctx.contextlevel = :contextcourse
-               JOIN {course} c ON c.id = ctx.instanceid
-               JOIN {customfield_field} cff ON cfd.fieldid = cff.id
-              WHERE cff.shortname = 'course_year' AND cfd.value = :academicyear";
-        $params = ['contextcourse' => CONTEXT_COURSE, 'academicyear' => $academicyear];
-
-        $courses = $DB->get_records_sql($sql, $params);
-
-        // NO limit in number of records unless specified in settings.
-        $limit = get_config('report_feedback_tracker', 'export_limit') ?: 0;
-        $counter = 0;
-
-        $records = [];
-
-        foreach ($courses as $course) {
-            $courseacademicyear = helper::get_academic_year($course->id);
-            // Only export courses with an academic year matching the selected academic year.
-            if (!$courseacademicyear || $courseacademicyear != $academicyear) {
+            // Open the file.
+            $handle = fopen($filepath, 'w');
+            if ($handle === false) {
+                mtrace(get_string('data:open_file_error', 'report_feedback_tracker', $filepath));
                 continue;
             }
+            fwrite($handle, "[\n");
 
-            // Get the summative course modules.
-            $sql = "SELECT
+            foreach ($courses as $course) {
+                $courseacademicyear = helper::get_academic_year($course->id);
+                // Only export courses with an academic year matching the selected academic year.
+                if (!$courseacademicyear || $courseacademicyear != $acyear) {
+                    continue;
+                }
+
+                // Get the summative course modules.
+                $sql = "SELECT
                     cm.*,
                     mo.name AS modname,
                     CASE
                         WHEN mo.name = 'assign' THEN amod.name
+                        WHEN mo.name = 'coursework' THEN cmod.name
                         WHEN mo.name = 'lesson' THEN lmod.name
                         WHEN mo.name = 'quiz' THEN qmod.name
                         WHEN mo.name = 'turnitintooltwo' THEN tmod.name
@@ -135,6 +109,7 @@ class export_data extends scheduled_task {
                     END AS assessname,
                     CASE
                         WHEN mo.name = 'assign' THEN amod.duedate
+                        WHEN mo.name = 'coursework' THEN cmod.deadline
                         WHEN mo.name = 'lesson' THEN lmod.deadline
                         WHEN mo.name = 'quiz' THEN qmod.timeclose
                         WHEN mo.name = 'turnitintooltwo' THEN 0
@@ -145,60 +120,87 @@ class export_data extends scheduled_task {
                     FROM {course_modules} cm
                     JOIN {local_assess_type} at ON at.cmid = cm.id AND at.type = 1
                     JOIN {modules} mo ON mo.id = cm.module
-                    LEFT JOIN {assign} amod ON (mo.name = 'assign' AND amod.id = cm.instance)
-                    LEFT JOIN {lesson} lmod ON (mo.name = 'lesson' AND lmod.id = cm.instance)
-                    LEFT JOIN {quiz} qmod ON (mo.name = 'quiz' AND qmod.id = cm.instance)
-                    LEFT JOIN {turnitintooltwo} tmod ON (mo.name = 'turnitintooltwo' AND tmod.id = cm.instance)
-                    LEFT JOIN {workshop} wmod ON (mo.name = 'workshop' AND wmod.id = cm.instance)
+                    LEFT JOIN {assign} amod ON mo.name = 'assign' AND amod.id = cm.instance
+                    LEFT JOIN {coursework} cmod ON mo.name = 'coursework' AND cmod.id = cm.instance
+                    LEFT JOIN {lesson} lmod ON mo.name = 'lesson' AND lmod.id = cm.instance
+                    LEFT JOIN {quiz} qmod ON mo.name = 'quiz' AND qmod.id = cm.instance
+                    LEFT JOIN {turnitintooltwo} tmod ON mo.name = 'turnitintooltwo' AND tmod.id = cm.instance
+                    LEFT JOIN {workshop} wmod ON mo.name = 'workshop' AND wmod.id = cm.instance
 
                     WHERE cm.course = :courseid";
 
-            $params = ['courseid' => $course->id];
-            $coursemodules = $DB->get_records_sql($sql, $params);
+                $params = ['courseid' => $course->id];
+                $coursemodules = $DB->get_records_sql($sql, $params);
 
-            // Get the submissions for the summative assessments.
-            foreach ($coursemodules as $summativecm) {
-                $submissions = admin::get_module_submissions($summativecm);
-                foreach ($submissions as $submission) {
-                    $record = new stdClass();
-                    $record->submissionid = $submission->id;
-                    $record->duedatetime = $summativecm->duedatetime;
-                    $record->submissionuserid = $submission->userid;
-                    $record->submissiongroupid = $submission->groupid ?? 0;
-                    $record->submissiondatetime = $submission->submissiondatetime;
-                    $record->cmid = $summativecm->id;
-                    $record->cminstance = $summativecm->instance;
-                    $record->courseid = $course->id;
-                    $record->categoryid = $course->category;
-                    $record->assessmentname = $summativecm->assessname;
-                    $record->academicyear = $courseacademicyear;
-                    $record->coursename = $course->fullname;
-                    $record->assessmentmod = $summativecm->modname;
-
-                    // Add turnitin part data.
-                    if ($summativecm->modname === 'turnitintooltwo') {
-                        $tttparts = helper::get_turnitin_parts($summativecm->instance);
-                        foreach ($tttparts as $tttpart) {
-                            // Make a clone of the record and fill in the part details.
-                            $tttrecord = clone $record;
-                            $tttrecord->assessmentname .= ' ' . $tttpart->partname;
-                            $tttrecord->duedatetime = $tttpart->dtdue;
-                            self::amend_record_data($tttrecord);
-                            $records[] = $tttrecord;
+                // Get the submissions for the summative assessments.
+                foreach ($coursemodules as $summativecm) {
+                    $submissions = admin::get_module_submissions($summativecm);
+                    foreach ($submissions as $submission) {
+                        if ($firstline) {
+                            $firstline = false;
+                        } else {
+                            fwrite($handle, ",\n"); // Add a new line.
                         }
-                    } else {
-                        self::amend_record_data($record);
-                        $records[] = $record;
-                    }
+                        // Build record.
+                        $record = new stdClass();
+                        $record->submissionid = $submission->id;
+                        $record->duedatetime = $summativecm->duedatetime;
+                        $record->submissionuserid = $submission->userid;
+                        $record->submissiongroupid = isset($submission->groupid) ? $submission->groupid : 0;
+                        $record->submissiondatetime = $submission->submissiondatetime;
+                        $record->cmid = $summativecm->id;
+                        $record->cminstance = $summativecm->instance;
+                        $record->courseid = $course->id;
+                        $record->categoryid = $course->category;
+                        $record->assessmentname = $summativecm->assessname;
+                        $record->academicyear = $courseacademicyear;
+                        $record->coursename = $course->fullname;
+                        $record->assessmentmod = $summativecm->modname;
 
-                    // If a limit is set stop when it has been reached.
-                    if ($limit && ++$counter >= $limit) {
-                        return $records;
+                        // Add turnitin part data.
+                        if ($summativecm->modname === 'turnitintooltwo') {
+                            $tttparts = helper::get_turnitin_parts($summativecm->instance);
+                            foreach ($tttparts as $tttpart) {
+                                // Make a clone of the record and fill in the part details.
+                                $tttrecord = clone $record;
+                                $tttrecord->assessmentname .= ' ' . $tttpart->partname;
+                                $tttrecord->duedatetime = $tttpart->dtdue;
+                                self::amend_record_data($tttrecord);
+                                // JSON encode and write immediately.
+                                fwrite($handle, json_encode($tttrecord,
+                                    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                                $counter ++;
+                            }
+                        } else {
+                            self::amend_record_data($record);
+                            // JSON encode and write immediately.
+                            fwrite($handle, json_encode($record,
+                                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                            $counter ++;
+                        }
+
+                        // If a limit is set break when it has been reached.
+                        if ($limit && $counter >= $limit) {
+                            fwrite($handle, "\n]");
+                            mtrace(get_string('data:export_count', 'report_feedback_tracker',
+                                (object) ['count' => $counter, 'acyear' => $acyear]));
+                            fclose($handle);
+                            break 3; // Break to the next academic year.
+                        }
                     }
                 }
             }
+            fwrite($handle, "\n]");
+            mtrace(get_string('data:export_count', 'report_feedback_tracker',
+                (object) ['count' => $counter, 'acyear' => $acyear]));
+            fclose($handle);
         }
-        return $records;
+
+        // Trigger an event.
+        $event = \report_feedback_tracker\event\data_export_completed::create([
+            'context' => \context_system::instance(),
+        ]);
+        $event->trigger();
     }
 
     /**

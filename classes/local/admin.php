@@ -24,6 +24,7 @@ use local_assess_type\assess_type;
 use moodle_url;
 use stdClass;
 use cm_info;
+use mod_coursework\services\submission_figures as coursework_submission_figures;
 
 /**
  * This file contains the admin functions used by the feedback tracker report.
@@ -106,6 +107,13 @@ class admin {
      * @return int
      */
     public static function get_duedate(cm_info $cm): int {
+        global $DB;
+
+        // Coursework does not support customdata, so get the deadline directly.
+        if ($cm->modname === 'coursework') {
+            return $DB->get_field('coursework', 'deadline', ['id' => $cm->instance]);
+        }
+
         // Check mod has custom data.
         if (!$cm->customdata) {
             return 0;
@@ -235,6 +243,17 @@ class admin {
                         AND latest = 1";
                 }
                 break;
+            case 'coursework' :
+                // If option is set show only submissions from students assigned to the current user as assessor.
+                if (get_config('report_feedback_tracker', 'showusermarkings')) {
+                    return coursework_submission_figures::get_submissions_for_assessor($module->instance);
+                }
+                // Otherwise return all finalised submssions regardless of assessor.
+                $sql = "SELECT id, userid, timesubmitted AS submissiondatetime
+                        FROM {coursework_submissions}
+                        WHERE courseworkid = $module->instance
+                        AND finalised = 1";
+                break;
             case 'lesson' :
                 $sql = "SELECT id, userid, timeseen AS submissiondatetime
                         FROM {lesson_attempts}
@@ -286,14 +305,21 @@ class admin {
      * @param cm_info $cm
      * @param array $submitterids An array of user/group IDs that have submitted
      * @param int $gradeitemid
+     * @param bool $markeronly optional - if set return only missing grades for the user as a marker.
      * @return int
      */
-    public static function count_missing_grades(cm_info $cm, array $submitterids, int $gradeitemid): int {
+    public static function count_missing_grades(cm_info $cm, array $submitterids, int $gradeitemid, bool $markeronly = false): int {
         global $DB;
 
         if (empty($submitterids)) {
             // No submissions - no missing grades.
             return 0;
+        }
+
+        // Coursework has its own method to only return missing grades for a marker.
+        if ($cm->modname === 'coursework' && ($markeronly || get_config('report_feedback_tracker', 'showusermarkings'))) {
+            $needsgrading = coursework_submission_figures::calculate_needsgrading_for_assessor($cm->instance);
+            return $needsgrading;
         }
 
         // Assignments provide a method to count user - not team! - submissions that need grading.
