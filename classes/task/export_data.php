@@ -66,7 +66,6 @@ class export_data extends scheduled_task {
             // NO limit in number of records unless specified in settings.
             $limit = get_config('report_feedback_tracker', 'export_limit') ?: 0;
             $counter = 0;
-            $firstline = true;
 
             // Create file and filepath.
             $filename = "feedback_tracker_report_$acyear.json";
@@ -136,11 +135,6 @@ class export_data extends scheduled_task {
                 foreach ($coursemodules as $summativecm) {
                     $submissions = admin::get_module_submissions($summativecm);
                     foreach ($submissions as $submission) {
-                        if ($firstline) {
-                            $firstline = false;
-                        } else {
-                            fwrite($handle, ",\n"); // Add a new line.
-                        }
                         // Build record.
                         $record = new stdClass();
                         $record->submissionid = $submission->id;
@@ -167,15 +161,13 @@ class export_data extends scheduled_task {
                                 $tttrecord->duedatetime = $tttpart->dtdue;
                                 self::amend_record_data($tttrecord);
                                 // JSON encode and write immediately.
-                                fwrite($handle, json_encode($tttrecord,
-                                    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                                $this->write_json_record($handle, $tttrecord, $counter);
                                 $counter ++;
                             }
                         } else {
                             self::amend_record_data($record);
                             // JSON encode and write immediately.
-                            fwrite($handle, json_encode($record,
-                                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                            $this->write_json_record($handle, $record, $counter);
                             $counter ++;
                         }
 
@@ -201,6 +193,21 @@ class export_data extends scheduled_task {
             'context' => \context_system::instance(),
         ]);
         $event->trigger();
+    }
+
+    /**
+     * Write a JSON record
+     *
+     * @param mixed $handle
+     * @param stdClass $record
+     * @param int $index
+     * @return void
+     */
+    private function write_json_record(mixed $handle, stdClass $record, int $index): void {
+        if ($index > 0) {
+            fwrite($handle, ",\n");
+        }
+        fwrite($handle, json_encode($record, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
 
     /**
