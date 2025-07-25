@@ -40,32 +40,6 @@ use stdClass;
 class renderer extends plugin_renderer_base {
 
     /**
-     * Render the user report.
-     *
-     * @param int $userid
-     * @param int $courseid optional course id to limit output.
-     * @return string
-     */
-    public function render_feedback_tracker_user_report($userid, $courseid): string {
-
-        // Get the table data.
-        $feedbacktrackerdata = user::get_feedback_tracker_user_data($userid, $courseid);
-
-        if ($courseid === SITEID) { // Render all courses for a student.
-            return $this->render_all_student_courses($feedbacktrackerdata);
-        } else { // Render a student view of a single course as an editor.
-            $context = context_course::instance($courseid);
-            $feedbacktrackerdata->courseid = $courseid;
-            $feedbacktrackerdata->canedit = has_capability('moodle/grade:edit', $context);
-            $feedbacktrackerdata->viewasstudent = true;
-            $feedbacktrackerdata->dropdownstudents = helper::get_course_students($courseid, $userid);
-
-            return $this->output->render_from_template('report_feedback_tracker/course/course',
-                $feedbacktrackerdata);
-        }
-    }
-
-    /**
      * Render the student report.
      *
      * @param int $userid
