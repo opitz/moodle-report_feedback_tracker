@@ -10,12 +10,12 @@ export const getAssessmentTypes = (
 }])[0];
 
 export const getModuleData = (
-    gradeitemid, partnr,
+    gradeitemid, partid,
 ) => ajax([{
     methodname: 'report_feedback_tracker_get_module_data',
     args: {
         gradeitemid: gradeitemid,
-        partnr: partnr
+        partid: partid
     },
 }])[0];
 

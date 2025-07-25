@@ -9,8 +9,8 @@ export const init = async() => {
         if (e.target.closest('.js-edit-tracker-data')) {
 
             const gradeitemid = e.target.dataset.gradeitemid;
-            const partnr = parseInt(e.target.dataset.partnr, 10);
-            const moduleData = await getModuleData(gradeitemid, partnr);
+            const partid = parseInt(e.target.dataset.partid, 10);
+            const moduleData = await getModuleData(gradeitemid, partid);
 
             const title = `${await getString('edit', 'report_feedback_tracker')} ${moduleData.name}`;
             const locked = moduleData.locked === "1";

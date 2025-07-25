@@ -611,7 +611,7 @@ class helper {
                 self::add_assesstype($tttitem, $assesstype);
             }
             self::add_additional_data($tttitem);
-            $data->items[] = $tttitem;
+            $data->items[$tttitem->partid] = $tttitem;
         }
     }
 

@@ -49,7 +49,7 @@ class get_module_data extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'gradeitemid' => new external_value(PARAM_INT, 'The grade item ID'),
-            'partnr' => new external_value(PARAM_INT, 'The optional part number for turnitin assessments'),
+            'partid' => new external_value(PARAM_INT, 'The optional part ID for turnitin assessments'),
         ]);
     }
 
@@ -80,10 +80,10 @@ class get_module_data extends external_api {
      * Returning editing data for a module.
      *
      * @param int $gradeitemid
-     * @param int $partnr The optional part nr for Turnutin assessments.
+     * @param int $partid The optional part ID for Turnitin assessments.
      * @return external_single_structure
      */
-    public static function execute($gradeitemid, $partnr) {
+    public static function execute($gradeitemid, $partid) {
         $gradeitem = new grade_item(['id' => $gradeitemid]);
         $modinfo = get_fast_modinfo($gradeitem->courseid);
         $assesstypes = helper::get_assessment_types($gradeitem->courseid);
@@ -105,7 +105,7 @@ class get_module_data extends external_api {
             // Add separate data for Turnitin parts.
             helper::add_ttt_data($data, $gradeitem, $item, $assesstypes);
             // Get the selected part as item.
-            $item = $data->items[(int)$partnr - 1];
+            $item = $data->items[$partid];
 
         } else {
             $assesstype = helper::get_assesstype($item->gradeitemid, $item->cmid, $assesstypes);
