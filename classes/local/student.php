@@ -33,11 +33,6 @@ use stdClass;
 class student {
 
     /**
-     * @var array of assessment types.
-     */
-    private static array $assesstypes;
-
-    /**
      * @var array array of roles a student may have.
      */
     private static array $studentroles;
@@ -129,7 +124,7 @@ class student {
         }
 
         $modinfo = get_fast_modinfo($course->id);
-        self::$assesstypes = helper::get_assessment_types($course->id);
+        helper::$assesstypes = helper::get_assessment_types($course->id);
 
         $courseitem = new stdClass();
         $courseitem->url = helper::get_course_url($course->id);
@@ -148,7 +143,7 @@ class student {
                 }
 
                 if ($gradeitem->itemmodule === 'turnitintooltwo') {
-                    helper::add_ttt_data($courseitem, $gradeitem, $item, self::$assesstypes, $userid);
+                    helper::add_ttt_data($courseitem, $gradeitem, $item, $userid);
                 } else {
                     $courseitem->items[] = $item;
                 }
@@ -206,10 +201,10 @@ class student {
             $data->cmid = $cm->cmid;
 
             // Due dates.
-
             // Different modules use different field names for the due date.
+            // Note: the customdata for a module does not contain any optional assignment extensions
+            // so for assignments we have to use the custom method below.
             $duedates = [
-                'assign' => 'duedate',
                 'lesson' => 'deadline',
                 'quiz' => 'timeclose',
             ];
@@ -217,12 +212,10 @@ class student {
 
             // Due to a core bug $customdata will always contain data for $USER->id, regardless of $userid given.
             // See MDL-83121.
-            // Additionally, the customdata for a module does not contain any optional assignment extensions
-            // so in this case we have to use the custom method below.
             if (is_array($customdata)
-                && array_key_exists($module->modname, $duedates)
-                && isset($customdata[$duedates[$module->modname]])
-                && ($USER->id === $userid && $module->modname !== 'assign')) {
+                    && array_key_exists($module->modname, $duedates)
+                    && isset($customdata[$duedates[$module->modname]])
+                    && $USER->id === $userid) {
                 $duedate = $customdata[$duedates[$module->modname]];
             } else {
                 // Use a custom method to get custom due date for a student.
@@ -249,10 +242,8 @@ class student {
         $data->markoverdue = false;
 
         // Assessment type.
-        $assesstype = helper::get_assesstype($gradeitem->id, $data->cmid, self::$assesstypes);
-        $data->formative = ($assesstype->type == assess_type::ASSESS_TYPE_FORMATIVE);
-        $data->summative = ($assesstype->type == assess_type::ASSESS_TYPE_SUMMATIVE);
-        $data->dummy = ($assesstype->type == assess_type::ASSESS_TYPE_DUMMY);
+        $assesstype = helper::get_assesstype($gradeitem->id, $data->cmid);
+        helper::add_assesstype($data, $assesstype);
 
         if (!$duedate) {
             $data->duedate = ($gradeitem->itemtype === "manual") ? "" : get_string('datenotset', 'report_feedback_tracker');
@@ -271,8 +262,8 @@ class student {
         $feedbackdate = $gradingrecord->timemodified ?? 0;
 
         helper::add_additional_data($data);
-        $data->feedbackstatus = self::get_feedback_status($gradeitem, $data->submissiondate, $data->feedbackduedateraw,
-            $feedbackdate);
+        $data->feedbackdate = $feedbackdate;
+        $data->feedbackstatus = helper::get_feedback_status($gradeitem, $data);
 
         return $data;
     }
@@ -416,39 +407,6 @@ class student {
             return $scaleoptions[$gradingrecord->finalgrade - 1];
         } else {
             return round($gradingrecord->finalgrade) . '/' . round($gradingrecord->rawgrademax);
-        }
-    }
-
-    /**
-     * Get a feedback status for a given grade item..
-     *
-     * @param grade_item $gradeitem
-     * @param int $submissiondate
-     * @param int $feedbackduedate
-     * @param int $feedbackdate
-     * @return array
-     */
-    private static function get_feedback_status(grade_item $gradeitem, int $submissiondate, int $feedbackduedate,
-                                                int $feedbackdate): array {
-
-        // If a grade item has not (yet) been released do not show a badge.
-        if (($gradeitem->hidden == 1) || ($gradeitem->hidden > time())) {
-            return [];
-        }
-
-        // There is a feedback date.
-        if ($feedbackdate) {
-            // If there is no due date or the due date has not yet passed, feedback was released in time.
-            if (!$feedbackduedate || $feedbackduedate >= $feedbackdate) {
-                return ['released' => 'released'];
-            } else { // Otherwise the feedback is late.
-                return ['late' => 'late'];
-            }
-        } else if ($submissiondate && $feedbackduedate && $feedbackduedate < time()) {
-            // There is a submission date, no feedback and the feedback due date has passed, then feedback is overdue.
-            return ['overdue' => 'overdue'];
-        } else { // No submission or no feedback due date or still within feedback period - show nothing.
-            return [];
         }
     }
 

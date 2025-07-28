@@ -43,6 +43,11 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
 class helper {
 
     /**
+     * @var array of assessment types.
+     */
+    public static array $assesstypes;
+
+    /**
      * Return academic years 1 year back and 3 years into the future.
      *
      * @return array
@@ -374,19 +379,18 @@ class helper {
      *
      * @param int $gradeitemid
      * @param int $cmid
-     * @param array $assesstypes
      * @return stdClass
      */
-    public static function get_assesstype(int $gradeitemid, int $cmid, array $assesstypes): stdClass {
-        if (isset($cmid) && isset($assesstypes['cmid'][$cmid])) {
-            return $assesstypes['cmid'][$cmid];
+    public static function get_assesstype(int $gradeitemid, int $cmid): stdClass {
+        if (isset(self::$assesstypes['cmid'][$cmid])) {
+            return self::$assesstypes['cmid'][$cmid];
         }
 
-        if (isset($assesstypes['gradeitemid'][$gradeitemid])) {
-            return $assesstypes['gradeitemid'][$gradeitemid];
+        if (isset(self::$assesstypes['gradeitemid'][$gradeitemid])) {
+            return self::$assesstypes['gradeitemid'][$gradeitemid];
         }
 
-        return $assesstypes['notfound'];
+        return self::$assesstypes['notfound'];
     }
 
     /**
@@ -468,6 +472,10 @@ class helper {
 
         $params['gradeitem'] = $item->gradeitemid;
         $params['partid'] = $item->partid ?: null;
+
+        // Assessment type.
+        $assesstype = self::get_assesstype($item->gradeitemid, $item->cmid ?? 0);
+        self::add_assesstype($item, $assesstype);
 
         $item->notset = !$item->formative && !$item->summative && !$item->dummy;
 
@@ -567,7 +575,6 @@ class helper {
      * @param stdClass $data The data to render.
      * @param grade_item $gradeitem
      * @param stdClass $item The assessment row item for the report.
-     * @param array $assesstypes Array of valid assessment types
      * @param int $userid optional user ID to get submission dates
      * @return void
      */
@@ -575,7 +582,6 @@ class helper {
         stdClass $data,
         grade_item $gradeitem,
         stdClass $item,
-        array $assesstypes,
         int $userid = 0
     ): void {
         $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
@@ -584,15 +590,17 @@ class helper {
         foreach ($tttparts as $tttpart) {
             // Each part of a turnitintooltwo assessment starts as a clone of the module
             // and adds data related to each part.
-
             $tttitem = clone $item;
-            $assesstype = self::get_assesstype($tttitem->gradeitemid, $tttitem->cmid, $assesstypes);
-
             $tttitem->name = $gradeitem->itemname . " - " . $tttpart->partname;
             $tttitem->partid = $tttpart->id;
 
             // Get the due date for each part.
             $duedate = $tttpart->dtdue;
+            if ($userid) {
+                // If there is a user ID add the submission and grading data for that user.
+                student::add_user_data($userid, $tttitem, $gradeitem, $duedate, $tttitem->partid);
+            }
+
             // The feedback due date timestamp is needed for sorting.
             if (!$duedate) {
                 $tttitem->feedbackduedateraw = 9999999999;
@@ -602,14 +610,11 @@ class helper {
                 $tttitem->feedbackduedateraw = self::get_feedbackduedate($gradeitem, $duedate);
                 $tttitem->feedbackduedate = userdate($tttitem->feedbackduedateraw, $dateformat);
                 $tttitem->duedate = userdate($duedate, $dateformat);
+                if ($userid) { // Feedback status is for user reports only.
+                    $tttitem->feedbackstatus = self::get_feedback_status($gradeitem, $tttitem);
+                }
             }
 
-            if ($userid) {
-                // If there is a user ID add the submission and grading data for that user.
-                student::add_user_data($userid, $tttitem, $gradeitem, $duedate, $tttitem->partid);
-            } else {
-                self::add_assesstype($tttitem, $assesstype);
-            }
             self::add_additional_data($tttitem);
             $data->items[$tttitem->partid] = $tttitem;
         }
@@ -667,6 +672,40 @@ class helper {
         $params = ['gradeitemid' => $gradeitemid];
 
         return (int)$DB->get_field_sql($sql, $params);
+    }
+
+    /**
+     * Get a feedback status for a given grade item..
+     *
+     * @param grade_item $gradeitem
+     * @param stdClass $record
+     * @return array
+     */
+    public static function get_feedback_status(grade_item $gradeitem, stdClass $record): array {
+
+        // If a grade item has not (yet) been released do not show a badge.
+        if (($gradeitem->hidden == 1) || ($gradeitem->hidden > time())) {
+            return [];
+        }
+
+        $submissiondate = $record->submissiondate;
+        $feedbackduedate = $record->feedbackduedateraw;
+        $feedbackdate = $record->feedbackdate;
+
+        // There is a feedback date.
+        if ($feedbackdate) {
+            // If there is no due date or the due date has not yet passed, feedback was released in time.
+            if (!$feedbackduedate || $feedbackduedate >= $feedbackdate) {
+                return ['released' => 'released'];
+            } else { // Otherwise the feedback is late.
+                return ['late' => 'late'];
+            }
+        } else if ($submissiondate && $feedbackduedate && $feedbackduedate < time()) {
+            // There is a submission date, no feedback and the feedback due date has passed, then feedback is overdue.
+            return ['overdue' => 'overdue'];
+        } else { // No submission or no feedback due date or still within feedback period - show nothing.
+            return [];
+        }
     }
 
 }

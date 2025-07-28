@@ -94,6 +94,7 @@ class site {
             if (!$course->visible) {
                 continue;
             }
+            helper::$assesstypes = helper::get_assessment_types($course->id);
 
             // Only show courses for the selected year.
             if (helper::get_academic_year($course->id) === $data->year) {
@@ -288,7 +289,6 @@ class site {
         }
 
         $modinfo = get_fast_modinfo($course->id);
-        $assesstypes = helper::get_assessment_types($course->id);
         $selectedassesstype = optional_param('type', 2, PARAM_INT) - 1;
         $courseitem = new stdClass();
         $courseitem->url = helper::get_course_url($course->id);
@@ -320,13 +320,13 @@ class site {
                 $cmid = helper::get_cmid($gradeitem->id);
             }
 
-            $assesstype = helper::get_assesstype($gradeitem->id, $cmid, $assesstypes);
-
+            // Show selected assessment type(s) only.
+            $assesstype = helper::get_assesstype($gradeitem->id, $cmid);
             if (($selectedassesstype !== self::ASSESS_TYPE_ALL) && ($assesstype->type != $selectedassesstype)) {
                 continue;
             }
 
-            // Process only summative or manual modules that are visible.
+            // Process only modules that are supported and visible.
             if ((($gradeitem->itemtype === 'manual') && helper::is_supported_module($gradeitem->itemtype)) ||
                     ((($gradeitem->itemtype === 'mod')) &&
                     helper::is_supported_module($gradeitem->itemmodule) &&
@@ -334,9 +334,8 @@ class site {
                     !$item->hiddenfromstudents)) {
                 if ($gradeitem->itemmodule === 'turnitintooltwo') {
                     // Add separate data for each summative Turnitin part.
-                    helper::add_ttt_data($courseitem, $gradeitem, $item, $assesstypes);
+                    helper::add_ttt_data($courseitem, $gradeitem, $item);
                 } else {
-                    helper::add_assesstype($item, $assesstype);
                     helper::add_additional_data($item);
                     $courseitem->items[] = $item;
                 }

@@ -86,7 +86,7 @@ class get_module_data extends external_api {
     public static function execute($gradeitemid, $partid) {
         $gradeitem = new grade_item(['id' => $gradeitemid]);
         $modinfo = get_fast_modinfo($gradeitem->courseid);
-        $assesstypes = helper::get_assessment_types($gradeitem->courseid);
+        helper::$assesstypes = helper::get_assessment_types($gradeitem->courseid);
 
         // Set the page context.
         self::validate_context(context_course::instance($gradeitem->courseid));
@@ -103,13 +103,10 @@ class get_module_data extends external_api {
         if ($gradeitem->itemmodule === 'turnitintooltwo') {
             $data = new stdClass();
             // Add separate data for Turnitin parts.
-            helper::add_ttt_data($data, $gradeitem, $item, $assesstypes);
+            helper::add_ttt_data($data, $gradeitem, $item);
             // Get the selected part as item.
             $item = $data->items[$partid];
-
         } else {
-            $assesstype = helper::get_assesstype($item->gradeitemid, $item->cmid, $assesstypes);
-            helper::add_assesstype($item, $assesstype);
             helper::add_additional_data($item);
         }
         $item->courseid = $gradeitem->courseid;

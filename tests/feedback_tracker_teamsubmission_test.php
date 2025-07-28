@@ -23,6 +23,7 @@ global $CFG;
 require_once("$CFG->dirroot/mod/assign/tests/generator.php");
 
 use advanced_testcase;
+use report_feedback_tracker\local\helper;
 
 /**
  * PHPUnit report_feedback_tracker group tests
@@ -56,6 +57,9 @@ final class feedback_tracker_teamsubmission_test extends advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $group1 = $this->getDataGenerator()->create_group(['courseid' => $course->id]);
         $group2 = $this->getDataGenerator()->create_group(['courseid' => $course->id]);
+
+        // Setup array of course assessment types.
+        helper::$assesstypes = helper::get_assessment_types($course->id);
 
         $assignrecord = $this->getDataGenerator()->get_plugin_generator('mod_assign')->create_instance([
             'course' => $course->id,

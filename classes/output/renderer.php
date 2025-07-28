@@ -104,8 +104,6 @@ class renderer extends plugin_renderer_base {
     public function render_feedback_tracker_course_report(int $courseid): string {
         $modinfo = get_fast_modinfo($courseid);
 
-        $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
-
         // Get all grade items for the course.
         $gradeitems = grade_item::fetch_all(['courseid' => $courseid]) ?: [];
 
@@ -116,7 +114,6 @@ class renderer extends plugin_renderer_base {
         $data->outputedit = true;
         $data->items = [];
 
-        $assesstypes = helper::get_assessment_types($courseid);
         $data->dropdownstudents = helper::get_course_students($courseid);
 
         // If present create records for manual grade items and supported course modules.
@@ -126,12 +123,9 @@ class renderer extends plugin_renderer_base {
                     $item = admin::get_module_data($modinfo, $gradeitem)) {
                 if ($gradeitem->itemmodule === 'turnitintooltwo') {
                     // Add separate data for Turnitin parts.
-                    helper::add_ttt_data($data, $gradeitem, $item, $assesstypes);
+                    helper::add_ttt_data($data, $gradeitem, $item);
                 } else {
-                    $assesstype = helper::get_assesstype($item->gradeitemid, $item->cmid, $assesstypes);
-                    helper::add_assesstype($item, $assesstype);
                     helper::add_additional_data($item);
-
                     $data->items[] = $item;
                 }
             } else if (($gradeitem->itemtype === 'manual') && helper::is_supported_module($gradeitem->itemtype)) {
@@ -151,8 +145,6 @@ class renderer extends plugin_renderer_base {
                     'gpr_courseid' => $gradeitem->courseid,
                 ]);
 
-                $assesstype = helper::get_assesstype($item->gradeitemid, $item->cmid, $assesstypes);
-                helper::add_assesstype($item, $assesstype);
                 helper::add_additional_data($item);
 
                 $data->items[] = $item;

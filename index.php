@@ -75,6 +75,10 @@ $PAGE->set_pagelayout('base'); // No drawers.
 
 $context = context_course::instance($course->id);
 
+// Setup array of course assessment types.
+helper::$assesstypes = helper::get_assessment_types($course->id);
+
+
 // Set the header and print it.
 $PAGE->set_title($course->shortname .': ' . get_string('pluginname', 'report_feedback_tracker'));
 $PAGE->set_heading($course->fullname);
