@@ -204,14 +204,6 @@ class export_data extends scheduled_task {
 
                         // If a limit is set break when it has been reached.
                         if ($limit && ($countersummative + $counterformative) >= $limit) {
-                            fwrite($handleformative, "\n]");
-                            fwrite($handlesummative, "\n]");
-                            mtrace(get_string('data:export_count', 'report_feedback_tracker',
-                                (object) ['assesstype' => $summative, 'count' => $countersummative, 'acyear' => $acyear]));
-                            mtrace(get_string('data:export_count', 'report_feedback_tracker',
-                                (object) ['assesstype' => $formative, 'count' => $counterformative, 'acyear' => $acyear]));
-                            fclose($handleformative);
-                            fclose($handlesummative);
                             break 3; // Break to the next academic year in the loop.
                         }
                     }
@@ -446,8 +438,6 @@ class export_data extends scheduled_task {
      */
     private static function set_grading_data(stdClass $record): void {
 
-        $graderecord = self::get_graderecord($record->assessmentmod, $record->cminstance, $record->submissionuserid);
-
         // Feedback release.
         // If there is a custom feedback released date it will take precedence over an individual feedback date.
         if (isset($record->gfdate) && $record->gfdate) {
@@ -462,8 +452,10 @@ class export_data extends scheduled_task {
                 $record->releasedintime = 0;
             }
         } else {
+            $graderecord = self::get_graderecord($record->assessmentmod, $record->cminstance, $record->submissionuserid);
+
             // If there is no final grade or grade not (yet) released.
-            if (is_null($graderecord->finalgrade) || !$graderecord->finalgrade ||
+            if (!$graderecord || is_null($graderecord->finalgrade) ||
                     $graderecord->hidden === 1 || $graderecord->hidden > time()) {
                 $record->feedbackdatetime = false;
                 $record->marked = "unmarked";
