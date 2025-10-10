@@ -19,6 +19,7 @@ namespace report_feedback_tracker;
 use advanced_testcase;
 use context_course;
 use report_feedback_tracker\local\student;
+use stdClass;
 
 /**
  * PHPUnit report_feedback_tracker tests
@@ -57,22 +58,20 @@ final class feedback_tracker_test extends advanced_testcase {
         $page->set_pagelayout('course');
 
         // Create users and enrol them.
-        $student1 = $this->getDataGenerator()->create_user();
-        $student2 = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
         $teacher = $this->getDataGenerator()->create_user();
 
-        $this->getDataGenerator()->enrol_user($student1->id, $course->id, 'student');
-        $this->getDataGenerator()->enrol_user($student2->id, $course->id, 'student');
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
         $this->getDataGenerator()->enrol_user($teacher->id, $course->id, 'teacher');
 
         // Setup some dummy data.
-        $this->setup_dummy_data($course, $teacher, $student1, $student2);
+        $this->setup_dummy_data($course->id, $student->id, $teacher->id);
 
         // Get the user data.
-        $studentdata = student::get_feedback_tracker_student_data($student1->id, $course->id);
+        $studentdata = student::get_feedback_tracker_student_data($student->id, $course->id);
         list($submissionlate, $feedbacklate, $feedbackextended, $feedbackreleased) = $studentdata->items;
 
-        $this->assertEquals($student1->username, $studentdata->student, "Assert submission is by student 1");
+        $this->assertEquals($student->username, $studentdata->student, "Assert submission is by student 1");
         $this->assertTrue(isset($feedbackreleased->submissionstatus['success']), "Assert submission is in time");
         $this->assertEquals('80/100', $feedbackreleased->grade, "Assert grade is shown correctly");
         $this->assertTrue(isset($feedbackreleased->feedbackstatus['released']), "Assert feedback is released");
@@ -82,15 +81,49 @@ final class feedback_tracker_test extends advanced_testcase {
     }
 
     /**
-     * Setup some dummy grade data.
+     * Test that a student does not see a course w/o an active enrolment.
      *
-     * @param \stdClass $course
-     * @param \stdClass $teacher
-     * @param \stdClass $student1
-     * @param \stdClass $student2
      * @return void
      */
-    private function setup_dummy_data($course, $teacher, $student1, $student2): void {
+    public function test_suspended_student(): void {
+        // Add custom course field for academic year.
+        $catid = $this->getDataGenerator()->create_custom_field_category([])->get('id');
+        $this->getDataGenerator()->create_custom_field(['categoryid' => $catid, 'type' => 'text', 'shortname' => 'course_year']);
+
+        $course = $this->getDataGenerator()->create_course(['customfield_course_year' => '2024']);
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+
+        $this->setup_dummy_data($course->id, $student->id);
+
+        // Mock current year to match course's academic year field.
+        $this->mock_clock_with_frozen(strtotime("2024-10-09"));
+
+        $this->setUser($student);
+
+        // First check there's data when enrolment is not suspended.
+        $data = student::get_feedback_tracker_student_data($student->id, SITEID);
+        $this->assertEquals(1, count($data->courses));
+
+        // Suspend student's enrolment.
+        $instances = enrol_get_instances($course->id, true);
+        $manualinstance = reset($instances);
+        $manualplugin = enrol_get_plugin('manual');
+        $manualplugin->update_user_enrol($manualinstance, $student->id, ENROL_USER_SUSPENDED);
+
+        // Now check there's no data for course when enrolment is suspended.
+        $data = student::get_feedback_tracker_student_data($student->id, SITEID);
+        $this->assertEquals(0, count($data->courses));
+    }
+
+    /**
+     * Setup some dummy grade data.
+     *
+     * @param int $courseid
+     * @param int $studentid
+     * @param int $teacherid
+     * @return void
+     */
+    private function setup_dummy_data($courseid, int $studentid, int $teacherid = 0): void {
         global $CFG, $DB;
 
         // Create an array of modules and their grades.
@@ -99,7 +132,7 @@ final class feedback_tracker_test extends advanced_testcase {
                 'modulename' => 'assign',
                 'name' => "Assign 1",
                 'itemname' => "Grade assign item 1",
-                'user' => $student1->id,
+                'user' => $studentid,
                 'timesubmitted' => strtotime("-6 weeks", time()),
                 'grade' => "80",
                 'duedate' => strtotime("-3 weeks", time()),
@@ -109,7 +142,7 @@ final class feedback_tracker_test extends advanced_testcase {
                 'modulename' => 'assign',
                 'name' => "Assign 2",
                 'itemname' => "Grade assign item 2",
-                'user' => $student1->id,
+                'user' => $studentid,
                 'timesubmitted' => strtotime("-40 days", time()),
                 'grade' => "69",
                 'duedate' => strtotime("-35 days", time()),
@@ -119,7 +152,7 @@ final class feedback_tracker_test extends advanced_testcase {
                 'modulename' => 'assign',
                 'name' => "Assign 3",
                 'itemname' => "Grade assign item 3",
-                'user' => $student1->id,
+                'user' => $studentid,
                 'timesubmitted' => strtotime("-3 days", time()),
                 'grade' => "70",
                 'duedate' => strtotime("-40 days", time()),
@@ -129,7 +162,7 @@ final class feedback_tracker_test extends advanced_testcase {
                 'modulename' => 'assign',
                 'name' => "Assign 4",
                 'itemname' => "Grade assign item 4",
-                'user' => $student1->id,
+                'user' => $studentid,
                 'timesubmitted' => strtotime("-3 weeks", time()),
                 'grade' => "71",
                 'duedate' => strtotime("-6 weeks", time()),
@@ -144,7 +177,7 @@ final class feedback_tracker_test extends advanced_testcase {
             if ($dmodule['modulename'] == 'turnitintooltwo') {
                 if (file_exists($CFG->dirroot . '/mod/turnitintooltwo/tests/generator/lib.php')) {
                     $module = $this->getDataGenerator()->create_module($dmodule['modulename'],
-                        ['course' => $course->id, 'name' => $dmodule['name']]);
+                        ['course' => $courseid, 'name' => $dmodule['name']]);
                 } else {
                     continue;
                 }
@@ -152,7 +185,7 @@ final class feedback_tracker_test extends advanced_testcase {
                 if (isset($dmodule['duedate'])) {
                     $module = $this->getDataGenerator()->create_module($dmodule['modulename'],
                         [
-                            'course' => $course->id,
+                            'course' => $courseid,
                             'name' => $dmodule['name'],
                             'duedate' => $dmodule['duedate'],
                             'assignsubmission_onlinetext_enabled' => true,
@@ -160,18 +193,20 @@ final class feedback_tracker_test extends advanced_testcase {
                 } else {
                     $module = $this->getDataGenerator()->create_module($dmodule['modulename'],
                         [
-                            'course' => $course->id,
+                            'course' => $courseid,
                             'name' => $dmodule['name'],
                             'assignsubmission_onlinetext_enabled' => true,
                         ]);
                 }
             }
 
-            if ($dmodule['modulename'] == 'assign' && $dmodule['timemodified'] > 0) {
-                $coursemodule = get_coursemodule_from_instance($dmodule['modulename'], $module->id, $course->id);
+            $coursemodule = get_coursemodule_from_instance($dmodule['modulename'], $module->id, $courseid);
+
+            // If a teacher ID has been given, create a grade.
+            if ($teacherid && $dmodule['modulename'] == 'assign' && $dmodule['timemodified'] > 0) {
                 // Get the grade item.
                 $gradeitem = $DB->get_record('grade_items', [
-                    'courseid' => $course->id,
+                    'courseid' => $courseid,
                     'iteminstance' => $coursemodule->instance,
                     'itemmodule' => $coursemodule->modname,
                 ]);
@@ -183,7 +218,7 @@ final class feedback_tracker_test extends advanced_testcase {
                     'teamsubmission' => false,
                     'attemptnumber' => 0,
                     'grade' => $dmodule['grade'],
-                    'usermodified' => $teacher->id,
+                    'usermodified' => $teacherid,
                     'timemodified' => $dmodule['timemodified'],
                 ];
                 $this->getDataGenerator()->create_grade_grade($gradegradedata);

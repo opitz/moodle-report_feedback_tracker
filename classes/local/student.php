@@ -63,9 +63,9 @@ class student {
         $data->student = $user->username;
 
         // If a valid course ID is given return data for that course only
-        // otherwise return data for all courses a user is enrolled in.
+        // otherwise return data for all courses with an active enrolment for a user.
         if ($courseid === SITEID) {
-            $courses = enrol_get_all_users_courses($userid, false, null, 'fullname');
+            $courses = enrol_get_all_users_courses($userid, true, null, 'fullname');
 
             // Show academic year options when showing all courses.
             $year = $menus->year;
