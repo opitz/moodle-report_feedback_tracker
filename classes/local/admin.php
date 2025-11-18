@@ -256,7 +256,7 @@ class admin {
                 $sql = "SELECT id, userid, timesubmitted AS submissiondatetime
                         FROM {coursework_submissions}
                         WHERE courseworkid = $module->instance
-                        AND finalised = 1";
+                        AND finalisedstatus = 1";
                 break;
             case 'lesson':
                 $sql = "SELECT id, userid, timeseen AS submissiondatetime
