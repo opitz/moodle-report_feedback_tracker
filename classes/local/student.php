@@ -197,11 +197,6 @@ class student {
                 return false;
             }
 
-            // Assignment modules may have NO submission type - if so don't show them here.
-            if ($module->modname === 'assign' && !helper::count_assign_submission_plugins($module->id)) {
-                return false;
-            }
-
             $data->url = self::get_module_url($module);
             $data->moduletypeiconurl = $module->get_icon_url()->out(false);
             $data->cmid = $cm->cmid;

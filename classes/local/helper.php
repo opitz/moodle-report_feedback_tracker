@@ -435,38 +435,6 @@ class helper {
     }
 
     /**
-     * Get the enabled submission types for a given course assignment.
-     *
-     * @param int $cmid The ID of the course module
-     * @return int
-     */
-    public static function count_assign_submission_plugins(int $cmid): int {
-        // Load the course module and assignment instance.
-        $cm = get_coursemodule_from_id('assign', $cmid, 0, false, MUST_EXIST);
-        $context = context_module::instance($cm->id);
-
-        $assign = new assign($context, $cm, $cm->course);
-
-        // Fetch the list of submission plugins and check their settings.
-        $submissionplugins = $assign->get_submission_plugins();
-
-        $enabledsubmissiontypes = [];
-
-        foreach ($submissionplugins as $plugin) {
-            // Check if the submission plugin is enabled and visible for this assignment.
-
-            if (
-                $plugin->is_enabled() && $plugin->is_visible()
-                && $plugin->allow_submissions()
-            ) {
-                $enabledsubmissiontypes[] = get_class($plugin);
-            }
-        }
-
-        return count($enabledsubmissiontypes);
-    }
-
-    /**
      * Get the students of a course.
      *
      * @param int $courseid
