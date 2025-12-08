@@ -436,10 +436,6 @@ class student {
         // At least one assessment w/o a grade.
         if (in_array(null, array_column($assessments, 'grade'), true)) {
             $badges = [];
-            $successcount = 0;
-            $latecount = 0;
-            $duecount = 0;
-            $overduecount = 0;
 
             foreach ($assessments as $assessment) {
                 $assessmentdate = $assessment->timemodified;
@@ -448,30 +444,18 @@ class student {
 
                 // There is an assessment, and it was in time or there is no due date: success!
                 if ($assessmentdate && ($assessmentdate <= $duedate || !$duedate)) {
-                    $successcount++;
+                    $badges['success'] = isset($badges['success']) ? $badges['success'] + 1 : 1;
                 } else if ($duedate && $assessmentdate > $duedate) {
                     // Assessment was late.
-                    $latecount++;
+                    $badges['late'] = isset($badges['late']) ? $badges['late'] + 1 : 1;
                 } else if ($duedate && !$assessmentdate && time() > $duedate) {
                     // NO assessment and the due date has passed.
-                    $overduecount++;
+                    $badges['overdue'] = isset($badges['overdue']) ? $badges['overdue'] + 1 : 1;
                 } else if (!$assessmentstart || ($assessmentstart < time())) {
                     // No assessment but within time.
                     // If the assessment start date has passed or there is no assessment start date show a reminder.
-                    $duecount++;
+                    $badges['due'] = isset($badges['due']) ? $badges['due'] + 1 : 1;
                 }
-            }
-            if ($successcount) {
-                $badges[] = ['success' => $successcount];
-            }
-            if ($latecount) {
-                $badges[] = ['late' => $latecount];
-            }
-            if ($overduecount) {
-                $badges[] = ['overdue' => $overduecount];
-            }
-            if ($duecount) {
-                $badges[] = ['due' => $duecount];
             }
             return $badges;
         }
