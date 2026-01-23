@@ -658,6 +658,9 @@ class helper {
      */
     public static function get_current_academic_year(): int {
         $clock = \core\di::get(\core\clock::class);
+        if (defined('BEHAT_SITE_RUNNING')) {
+            return $clock->now()->format('Y');
+        }
         $currentyear = $clock->now()->format('Y');
         $currentmonth = $clock->now()->format('n');
         return $currentmonth >= self::AY_START_MONTH ? $currentyear : $currentyear - 1; // Academic Year begins 1st of October.
@@ -682,13 +685,8 @@ class helper {
             $template->term = $params['term'];
         }
 
-        // When running a Behat test assume we are in the current year.
-        if (defined('BEHAT_SITE_RUNNING')) {
-            $defaultyear = $clock->now()->format('Y');
-        } else {
-            // Check if we have a year from url, or set a default.
-            $defaultyear = self::get_current_academic_year();
-        }
+        // Check if we have a year from url, or set a default.
+        $defaultyear = self::get_current_academic_year();
         $params['year'] = optional_param('year', $defaultyear, PARAM_INT);
 
         // Check if we have an assessment type from url, or set summative as default.
