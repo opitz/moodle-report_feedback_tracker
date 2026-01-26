@@ -568,7 +568,7 @@ class student {
                     'allocatableid' => $userid,
                     'allocatabletype' => 'user',
                     ];
-                $overridedate = $DB->get_field('coursework_person_deadlines', 'personal_deadline', $params);
+                $overridedate = $DB->get_field('coursework_person_deadlines', 'personaldeadline', $params);
 
                 // If there is no individual override check for a group override date.
                 if (!$overridedate) {
