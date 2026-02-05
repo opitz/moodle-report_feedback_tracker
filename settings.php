@@ -42,6 +42,8 @@ if ($ADMIN->fulltree) {
     $feedbackdeadlinedaysdefault = 20;
     $defaultdate = get_string('settings:defaultdate', 'report_feedback_tracker');
 
+    $pluginmanager = \core_plugin_manager::instance();
+
     // Use site report option.
     // Only available if block_portico_enrollments is installed.
     if (file_exists($CFG->dirroot . "/blocks/portico_enrolments/version.php")) {
@@ -111,12 +113,15 @@ if ($ADMIN->fulltree) {
         true
     ));
 
-    $settings->add(new admin_setting_configcheckbox(
-        'report_feedback_tracker/supportcoursework',
-        get_string('settings:supportcoursework', 'report_feedback_tracker'),
-        '',
-        false
-    ));
+    // Check if Coursework is installed.
+    if ($pluginmanager->get_plugin_info('mod_coursework')) {
+        $settings->add(new admin_setting_configcheckbox(
+            'report_feedback_tracker/supportcoursework',
+            get_string('settings:supportcoursework', 'report_feedback_tracker'),
+            '',
+            false
+        ));
+    }
 
     $settings->add(new admin_setting_configcheckbox(
         'report_feedback_tracker/supportlesson',
@@ -140,7 +145,7 @@ if ($ADMIN->fulltree) {
     ));
 
     // Check if TurnitinToolTwo is installed.
-    if (file_exists($CFG->dirroot . '/mod/turnitintooltwo/version.php')) {
+    if ($pluginmanager->get_plugin_info('mod_turnitintooltwo')) {
         $settings->add(new admin_setting_configcheckbox(
             'report_feedback_tracker/supportturnitintooltwo',
             get_string('settings:supportturnitintooltwo', 'report_feedback_tracker'),

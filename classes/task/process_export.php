@@ -147,7 +147,7 @@ class process_export extends \core\task\adhoc_task {
      */
     public function get_course_modules(): moodle_recordset {
 
-        global $DB;
+        global $CFG, $DB;
 
         $formative = get_string('formative', 'local_assess_type');
         $summative = get_string('summative', 'local_assess_type');
@@ -184,20 +184,28 @@ class process_export extends \core\task\adhoc_task {
             JOIN {local_assess_type} at ON at.cmid = cm.id AND at.type IN (0, 1)
             JOIN {modules} mo ON mo.id = cm.module
             LEFT JOIN {assign} amod ON mo.name = 'assign' AND amod.id = cm.instance
-            LEFT JOIN {coursework} cmod ON mo.name = 'coursework' AND cmod.id = cm.instance
             LEFT JOIN {lesson} lmod ON mo.name = 'lesson' AND lmod.id = cm.instance
             LEFT JOIN {quiz} qmod ON mo.name = 'quiz' AND qmod.id = cm.instance
-            LEFT JOIN {turnitintooltwo} tmod ON mo.name = 'turnitintooltwo' AND tmod.id = cm.instance
             LEFT JOIN {workshop} wmod ON mo.name = 'workshop' AND wmod.id = cm.instance
             LEFT JOIN {lti} ltimod ON mo.name = 'lti' AND ltimod.id = cm.instance
-            LEFT JOIN {report_feedback_tracker_lti} rftlti ON mo.name = 'lti' AND rftlti.instanceid = cm.instance
-            WHERE cm.course = :courseid";
+            LEFT JOIN {report_feedback_tracker_lti} rftlti ON mo.name = 'lti' AND rftlti.instanceid = cm.instance ";
+
+        $pluginmanager = \core_plugin_manager::instance();
+
+        // Check if Coursework is installed.
+        if ($pluginmanager->get_plugin_info('mod_coursework')) {
+            $sql .= "LEFT JOIN {coursework} cmod ON mo.name = 'coursework' AND cmod.id = cm.instance ";
+        }
+        // Check if TurnitinToolTwo is installed.
+        if ($pluginmanager->get_plugin_info('mod_turnitintooltwo')) {
+            $sql .= "LEFT JOIN {turnitintooltwo} tmod ON mo.name = 'turnitintooltwo' AND tmod.id = cm.instance ";
+        }
+
+        $sql .= "WHERE cm.course = :courseid";
 
         $params = ['courseid' => $this->course->id];
         return $DB->get_recordset_sql($sql, $params);
     }
-
-
 
     /**
      * Amending various data for the export record.
