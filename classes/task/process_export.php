@@ -147,10 +147,45 @@ class process_export extends \core\task\adhoc_task {
      */
     public function get_course_modules(): moodle_recordset {
 
-        global $CFG, $DB;
+        global $DB;
 
         $formative = get_string('formative', 'local_assess_type');
         $summative = get_string('summative', 'local_assess_type');
+
+        // Module names and their duedate column names.
+        $modules = [
+            'assign' => 'assign_mod.duedate',
+            'lesson' => 'lesson_mod.deadline',
+            'quiz' => 'quiz_mod.timeclose',
+            'workshop' => 'workshop_mod.submissionend',
+        ];
+
+        // Check for non-core modules.
+        $pluginmanager = \core_plugin_manager::instance();
+
+        if ($pluginmanager->get_plugin_info('mod_coursework')) {
+            $modules['coursework'] = 'coursework_mod.deadline';
+        }
+
+        if ($pluginmanager->get_plugin_info('mod_turnitintooltwo')) {
+            $modules['turnitintooltwo'] = '0';
+        }
+
+        $modnames = "";
+        $modduedates = "";
+        $modjoins = "";
+
+        foreach ($modules as $mod => $duedate) {
+            $modnames .= " WHEN mo.name = '$mod' THEN {$mod}_mod.name ";
+            $modduedates .= " WHEN mo.name = '$mod' THEN $duedate ";
+            $modjoins .= " LEFT JOIN {{$mod}} {$mod}_mod ON mo.name = '$mod' AND {$mod}_mod.id = cm.instance ";
+        }
+
+        // LTI is an annoying edge case.
+        $modnames .= " WHEN mo.name = 'lti' THEN lti_mod.name ";
+        $modduedates .= " WHEN mo.name = 'lti' THEN rftlti.enddatetime ";
+        $modjoins .= " LEFT JOIN {lti} lti_mod ON mo.name = 'lti' AND lti_mod.id = cm.instance ";
+        $modjoins .= " LEFT JOIN {report_feedback_tracker_lti} rftlti ON mo.name = 'lti' AND rftlti.instanceid = cm.instance ";
 
         // Get the summative and formative course modules.
         $sql = "SELECT
@@ -160,46 +195,22 @@ class process_export extends \core\task\adhoc_task {
                 WHEN at.type = " . assess_type::ASSESS_TYPE_FORMATIVE . " THEN '" . $formative . "'
                 WHEN at.type = " . assess_type::ASSESS_TYPE_SUMMATIVE . " THEN '" . $summative . "'
             END AS assesstype,
-            CASE
-                WHEN mo.name = 'assign' THEN amod.name
-                WHEN mo.name = 'coursework' THEN cmod.name
-                WHEN mo.name = 'lesson' THEN lmod.name
-                WHEN mo.name = 'quiz' THEN qmod.name
-                WHEN mo.name = 'turnitintooltwo' THEN tmod.name
-                WHEN mo.name = 'workshop' THEN wmod.name
-                WHEN mo.name = 'lti' THEN ltimod.name
-                ELSE ''
+            CASE ";
+
+        $sql .= $modnames;
+
+        $sql .= "ELSE ''
             END AS assessname,
-            CASE
-                WHEN mo.name = 'assign' THEN amod.duedate
-                WHEN mo.name = 'coursework' THEN cmod.deadline
-                WHEN mo.name = 'lesson' THEN lmod.deadline
-                WHEN mo.name = 'quiz' THEN qmod.timeclose
-                WHEN mo.name = 'turnitintooltwo' THEN 0
-                WHEN mo.name = 'workshop' THEN wmod.submissionend
-                WHEN mo.name = 'lti' THEN rftlti.enddatetime
-                ELSE 0
+            CASE ";
+
+        $sql .= $modduedates;
+
+        $sql .= "ELSE 0
             END AS duedatetime
             FROM {course_modules} cm
             JOIN {local_assess_type} at ON at.cmid = cm.id AND at.type IN (0, 1)
-            JOIN {modules} mo ON mo.id = cm.module
-            LEFT JOIN {assign} amod ON mo.name = 'assign' AND amod.id = cm.instance
-            LEFT JOIN {lesson} lmod ON mo.name = 'lesson' AND lmod.id = cm.instance
-            LEFT JOIN {quiz} qmod ON mo.name = 'quiz' AND qmod.id = cm.instance
-            LEFT JOIN {workshop} wmod ON mo.name = 'workshop' AND wmod.id = cm.instance
-            LEFT JOIN {lti} ltimod ON mo.name = 'lti' AND ltimod.id = cm.instance
-            LEFT JOIN {report_feedback_tracker_lti} rftlti ON mo.name = 'lti' AND rftlti.instanceid = cm.instance ";
-
-        $pluginmanager = \core_plugin_manager::instance();
-
-        // Check if Coursework is installed.
-        if ($pluginmanager->get_plugin_info('mod_coursework')) {
-            $sql .= "LEFT JOIN {coursework} cmod ON mo.name = 'coursework' AND cmod.id = cm.instance ";
-        }
-        // Check if TurnitinToolTwo is installed.
-        if ($pluginmanager->get_plugin_info('mod_turnitintooltwo')) {
-            $sql .= "LEFT JOIN {turnitintooltwo} tmod ON mo.name = 'turnitintooltwo' AND tmod.id = cm.instance ";
-        }
+            JOIN {modules} mo ON mo.id = cm.module";
+        $sql .= $modjoins;
 
         $sql .= "WHERE cm.course = :courseid";
 
