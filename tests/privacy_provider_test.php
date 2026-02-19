@@ -16,6 +16,7 @@
 
 namespace report_feedback_tracker;
 
+use core_privacy\local\metadata\collection;
 use report_feedback_tracker\privacy\provider;
 
 /**
@@ -32,14 +33,18 @@ final class privacy_provider_test extends \advanced_testcase {
     }
 
     /**
-     * Test get_reason.
+     * Ensure metadata is returned correctly.
      *
-     * @covers \report_feedback_tracker\privacy\provider::get_reason()
-     * @return void
+     * @covers \report_feedback_tracker\privacy\provider::get_metadata()
      */
-    public function test_get_reason(): void {
-        $expected = "The Feedback tracker report plugin does not store any personal data.";
-        $reason = get_string(provider::get_reason(), 'report_feedback_tracker');
-        $this->assertEquals($expected, $reason);
+    public function test_get_metadata(): void {
+        $collection = new collection('report_feedback_tracker');
+
+        $result = provider::get_metadata($collection);
+
+        $this->assertInstanceOf(collection::class, $result);
+
+        $items = $result->get_collection();
+        $this->assertNotEmpty($items);
     }
 }

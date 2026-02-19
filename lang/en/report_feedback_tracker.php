@@ -166,6 +166,11 @@ $string['pleasenote'] = 'Please note:';
 $string['pluginname'] = 'Feedback tracker';
 $string['pluginname:bak'] = 'Feedback tracker report';
 $string['privacy:metadata'] = 'The Feedback tracker report plugin does not store any personal data.';
+$string['privacy:metadata:report_feedback_tracker_duedates'] =
+    'Stores manual feedback due date overrides made by users.';
+$string['privacy:metadata:report_feedback_tracker_lti_usr'] =
+    'Stores LTI submission timestamps linked to users.';
+$string['privacy:metadata:userid'] = 'The ID of the user.';
 
 $string['requiremarking'] = '{$a} require marking';
 $string['responsibility'] = 'Responsibility';
