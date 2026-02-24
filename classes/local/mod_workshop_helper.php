@@ -33,4 +33,17 @@ class mod_workshop_helper extends module_helper {
     public function get_markingurl() {
         return $this->module->get_url();
     }
+
+    /**
+     * Get the due date of the module
+     *
+     * @return int
+     */
+    public function get_duedate() {
+        // Ensure customdata is an array.
+        $customdata = (array) $this->module->customdata;
+
+        // Return custom data where available.
+        return (int) ($customdata['submissionend'] ?? 0);
+    }
 }

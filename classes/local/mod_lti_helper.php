@@ -33,4 +33,24 @@ class mod_lti_helper extends module_helper {
     public function get_markingurl() {
         return $this->module->get_url();
     }
+
+    /**
+     * Get the due date of the module
+     *
+     * @return int
+     */
+    public function get_duedate() {
+        global $DB;
+
+        // Ensure customdata is an array.
+        $customdata = (array) $this->module->customdata;
+
+        // Check LTI record has enddatetime.
+        $enddatetime = $DB->get_field(
+            'report_feedback_tracker_lti',
+            'enddatetime',
+            ['instanceid' => $this->module->instance]
+        );
+        return !empty($enddatetime) ? (int) $enddatetime : 0;
+    }
 }

@@ -46,4 +46,11 @@ abstract class module_helper {
      * @return mixed
      */
     abstract public function get_markingurl();
+
+    /**
+     * Return the due date of the module
+     *
+     * @return mixed
+     */
+    abstract public function get_duedate();
 }

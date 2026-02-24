@@ -28,6 +28,7 @@ namespace report_feedback_tracker;
 
 use advanced_testcase;
 use report_feedback_tracker\local\admin;
+use report_feedback_tracker\local\module_helper_factory;
 
 /**
  * Unit tests for the report_feedback_tracker coursework functionality.
@@ -52,7 +53,7 @@ final class feedback_tracker_coursework_test extends advanced_testcase {
      *  - Missing coursework row → 0
      *  - Present deadline → expected timestamp
      *
-     * @covers \report_feedback_tracker\local\admin::get_duedate
+     * @covers \report_feedback_tracker\local\module_helper::get_duedate
      */
     public function test_admin_get_duedate_coursework_missing_false_and_present(): void {
         global $DB;
@@ -76,7 +77,7 @@ final class feedback_tracker_coursework_test extends advanced_testcase {
 
         $this->assertEquals(
             $expected,
-            admin::get_duedate($cminfo),
+            module_helper_factory::create($cminfo)->get_duedate(),
             'Expected timestamp when coursework deadline is present'
         );
 
@@ -84,7 +85,7 @@ final class feedback_tracker_coursework_test extends advanced_testcase {
         $DB->delete_records('coursework', ['id' => $coursework->id]);
         $this->assertEquals(
             0,
-            admin::get_duedate($cminfo),
+            module_helper_factory::create($cminfo)->get_duedate(),
             'Expected 0 when coursework record is missing'
         );
     }
