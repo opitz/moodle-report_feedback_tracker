@@ -80,7 +80,7 @@ class mod_quiz_helper extends module_helper {
         static $courseenrolledusers = [];
 
         // Check if enrolled users for this course are already cached.
-        if (!isset($courseenrolledusers[$module->course])) {
+        if (!isset($courseenrolledusers[$this->module->course])) {
             $enrolledusers = get_enrolled_users(context_course::instance($this->module->course));
             $courseenrolledusers[$this->module->course] = array_map(fn($user) => $user->id, $enrolledusers);
         }
@@ -90,7 +90,7 @@ class mod_quiz_helper extends module_helper {
         $params = ['instanceid' => (int) $this->module->instance];
         $sql = "SELECT id, userid, timefinish AS submissiondatetime
                         FROM {quiz_attempts}
-                        WHERE quiz = :instanceid 
+                        WHERE quiz = :instanceid
                         AND preview = 0";
 
         $records = $DB->get_records_sql($sql, $params);
@@ -99,5 +99,33 @@ class mod_quiz_helper extends module_helper {
         return array_filter($records, function ($record) use ($enrolleduserids) {
             return in_array($record->userid, $enrolleduserids);
         });
+    }
+
+    /**
+     * Count the missing grades for a given grade item.
+     *
+     * @param int $gradeitemid
+     * @param bool $markeronly optional - if set return only missing grades for the user as a marker.
+     * @return int
+     */
+    public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int {
+        global $DB;
+
+        $submitterids = array_column(module_helper_factory::create($this->module)->get_module_submissions(true), 'userid');
+
+        // No submissions - no missing grades.
+        if (empty($submitterids)) {
+            return 0;
+        }
+
+        $sql = "SELECT DISTINCT userid
+                  FROM {grade_grades}
+                 WHERE itemid = :gradeitemid AND finalgrade > :finalgrade";
+        $params = ['gradeitemid' => $gradeitemid, 'finalgrade' => -1];
+
+        $gradedids = $DB->get_fieldset_sql($sql, $params);
+
+        // Count and return all student IDs in submission that are not (yet) to be found in gradings.
+        return count(array_diff($submitterids, $gradedids));
     }
 }

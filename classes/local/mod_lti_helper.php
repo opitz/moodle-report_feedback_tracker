@@ -108,4 +108,32 @@ class mod_lti_helper extends module_helper {
             return in_array($record->userid, $enrolleduserids);
         });
     }
+
+    /**
+     * Count the missing grades for a given grade item.
+     *
+     * @param int $gradeitemid
+     * @param bool $markeronly optional - if set return only missing grades for the user as a marker.
+     * @return int
+     */
+    public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int {
+        global $DB;
+
+        $submitterids = array_column(module_helper_factory::create($this->module)->get_module_submissions(true), 'userid');
+
+        // No submissions - no missing grades.
+        if (empty($submitterids)) {
+            return 0;
+        }
+
+        $sql = "SELECT DISTINCT userid
+                  FROM {grade_grades}
+                 WHERE itemid = :gradeitemid AND finalgrade > :finalgrade";
+        $params = ['gradeitemid' => $gradeitemid, 'finalgrade' => -1];
+
+        $gradedids = $DB->get_fieldset_sql($sql, $params);
+
+        // Count and return all student IDs in submission that are not (yet) to be found in gradings.
+        return count(array_diff($submitterids, $gradedids));
+    }
 }

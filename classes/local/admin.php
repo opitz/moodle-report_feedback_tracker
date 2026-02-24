@@ -93,7 +93,7 @@ class admin {
         $data->submissions = count($submitterids);
 
         // Grades and markings.
-        $data->requiredfeedbacks = self::count_missing_grades($module, $submitterids, $gradeitem->id);
+        $data->requiredfeedbacks = module_helper_factory::create($module)->count_missing_grades($gradeitem->id);
         $data->feedbackpercentage = $data->submissions ?
             round(($data->submissions - $data->requiredfeedbacks) / $data->submissions * 100, 1) : 0;
 
@@ -101,80 +101,6 @@ class admin {
         $data->markingurl = module_helper_factory::create($module)->get_markingurl();
 
         return $data;
-    }
-
-    /**
-     * Count the missing grades for a given grade item.
-     *
-     * @param cm_info $cm
-     * @param array $submitterids An array of user/group IDs that have submitted
-     * @param int $gradeitemid
-     * @param bool $markeronly optional - if set return only missing grades for the user as a marker.
-     * @return int
-     */
-    public static function count_missing_grades(cm_info $cm, array $submitterids, int $gradeitemid, bool $markeronly = false): int {
-        global $DB;
-
-        if (empty($submitterids)) {
-            // No submissions - no missing grades.
-            return 0;
-        }
-
-        if ($markeronly || get_config('report_feedback_tracker', 'showusermarkings')) {
-            if ($cm->modname === 'assign') {
-                return self::count_assign_marker_submissions($cm->instance);
-            } else if ($cm->modname === 'coursework') {
-                // Coursework has its own method to only return missing grades for a marker.
-                return coursework_submission_figures::calculate_needsgrading_for_assessor($cm->instance);
-            }
-        }
-
-        // Assignments provide a method to count user - not team! - submissions that need grading.
-        if (
-            $cm->modname === 'assign' &&
-            $DB->get_field('assign', 'teamsubmission', ['id' => $cm->instance]) == 0
-        ) {
-            $context = context_module::instance($cm->id);
-            $assignment = new assign($context, $cm, $cm->course);
-            return $assignment->count_submissions_need_grading();
-        }
-
-        $sql = "SELECT DISTINCT userid
-                  FROM {grade_grades}
-                 WHERE itemid = :gradeitemid AND finalgrade > :finalgrade";
-        $params = ['gradeitemid' => $gradeitemid, 'finalgrade' => -1];
-
-        $gradedids = $DB->get_fieldset_sql($sql, $params);
-
-        if ($cm->modname === 'assign') {
-            // Must be a team submission if we've got this far.
-
-            // Determine the number of groups that have graded submitters.
-            $markedgroups = 0;
-            $defaultgroup = 0;
-
-            // Get all groups assigned to the module's grouping.
-            $groups = groups_get_all_groups($cm->course, 0, $cm->groupingid);
-
-            foreach ($groups as $group) {
-                $members = groups_get_members($group->id, 'u.id');
-                foreach ($members as $member) {
-                    if (in_array($member->id, $gradedids)) {
-                        // If the user is only a member of a single group count that group.
-                        if (groups_get_user_groups($cm->course, $member->id) === 1) {
-                            $markedgroups++;
-                        } else { // The user is placed into the default group, so count it once.
-                            $defaultgroup = 1;
-                        }
-                        break;
-                    }
-                }
-            }
-            return count($submitterids) - $markedgroups - $defaultgroup;
-        } else {
-            // Count and return all student IDs in submission that are not (yet) to be found in gradings.
-            return count(array_diff($submitterids, $gradedids));
-        }
     }
 
     /**

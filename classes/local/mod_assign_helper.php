@@ -15,7 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace report_feedback_tracker\local;
+use assign;
 use context_course;
+use context_module;
+use mod_coursework\services\submission_figures as coursework_submission_figures;
 use moodle_url;
 
 /**
@@ -80,7 +83,7 @@ class mod_assign_helper extends module_helper {
         static $courseenrolledusers = [];
 
         // Check if enrolled users for this course are already cached.
-        if (!isset($courseenrolledusers[$module->course])) {
+        if (!isset($courseenrolledusers[$this->module->course])) {
             $enrolledusers = get_enrolled_users(context_course::instance($this->module->course));
             $courseenrolledusers[$this->module->course] = array_map(fn($user) => $user->id, $enrolledusers);
         }
@@ -88,11 +91,12 @@ class mod_assign_helper extends module_helper {
         $enrolleduserids = $courseenrolledusers[$this->module->course];
         $teamsubmission = $DB->get_field('assign', 'teamsubmission', ['id' => $this->module->instance]);
 
+        $params = ['moduleinstance' => $this->module->instance];
         if ($teamsubmission && $countgroups) {
             // Get group submissions.
             $sql = "SELECT id, groupid, userid, timemodified AS submissiondatetime
                         FROM {assign_submission}
-                        WHERE assignment = $this->module->instance
+                        WHERE assignment = :moduleinstance
                         AND userid = 0
                         AND status = 'submitted'
                         AND latest = 1";
@@ -100,13 +104,13 @@ class mod_assign_helper extends module_helper {
             // Get user submissions.
             $sql = "SELECT id, userid, timemodified AS submissiondatetime
                         FROM {assign_submission}
-                        WHERE assignment = $this->module->instance
+                        WHERE assignment = :moduleinstance
                         AND userid > 0
                         AND status = 'submitted'
                         AND latest = 1";
         }
 
-        $records = $DB->get_records_sql($sql);
+        $records = $DB->get_records_sql($sql, $params);
 
         // If it is an assignment group/team submission amend the group IDs.
         if ($teamsubmission) {
@@ -125,5 +129,109 @@ class mod_assign_helper extends module_helper {
         return array_filter($records, function ($record) use ($enrolleduserids) {
             return in_array($record->userid, $enrolleduserids);
         });
+    }
+
+    /**
+     * Count the missing grades for a given grade item.
+     *
+     * @param int $gradeitemid
+     * @param bool $markeronly optional - if set return only missing grades for the user as a marker.
+     * @return int
+     */
+    public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int {
+        global $DB;
+
+        $submitterids = array_column(module_helper_factory::create($this->module)->get_module_submissions(true), 'userid');
+
+        // No submissions - no missing grades.
+        if (empty($submitterids)) {
+            return 0;
+        }
+
+        if ($markeronly || get_config('report_feedback_tracker', 'showusermarkings')) {
+            return self::count_assign_marker_submissions($this->module->instance);
+        }
+
+        // Assignments provide a method to count user - not team! - submissions that need grading.
+        if ($DB->get_field('assign', 'teamsubmission', ['id' => $this->module->instance]) == 0) {
+            $context = context_module::instance($this->module->id);
+            $assignment = new assign($context, $this->module, $this->module->course);
+            return $assignment->count_submissions_need_grading();
+        }
+
+        // Must be a team submission if we've got this far.
+        $sql = "SELECT DISTINCT userid
+                  FROM {grade_grades}
+                 WHERE itemid = :gradeitemid AND finalgrade > :finalgrade";
+        $params = ['gradeitemid' => $gradeitemid, 'finalgrade' => -1];
+
+        $gradedids = $DB->get_fieldset_sql($sql, $params);
+
+        // Determine the number of groups that have graded submitters.
+        $markedgroups = 0;
+        $defaultgroup = 0;
+
+        // Get all groups assigned to the module's grouping.
+        $groups = groups_get_all_groups($this->module->course, 0, $this->module->groupingid);
+
+        foreach ($groups as $group) {
+            $members = groups_get_members($group->id, 'u.id');
+            foreach ($members as $member) {
+                if (in_array($member->id, $gradedids)) {
+                    // If the user is only a member of a single group count that group.
+                    if (groups_get_user_groups($this->module->course, $member->id) === 1) {
+                        $markedgroups++;
+                    } else { // The user is placed into the default group, so count it once.
+                        $defaultgroup = 1;
+                    }
+                    break;
+                }
+            }
+        }
+        return count($submitterids) - $markedgroups - $defaultgroup;
+    }
+
+    /**
+     * Count the assignment submissions for the current marker user.
+     *
+     * @param int $assignid The assignment id.
+     * @return int Number of markers submissions.
+     */
+    private static function count_assign_marker_submissions(int $assignid): int {
+        global $DB, $USER;
+
+        // First, get all submissions the user is allowed to see.
+        $params = ['assignid' => $assignid];
+        $sql = "SELECT id, userid, timemodified AS submissiondatetime
+                        FROM {assign_submission}
+                        WHERE assignment = :assignid
+                        AND userid > 0
+                        AND status = 'submitted'
+                        AND latest = 1";
+        $submissions = $DB->get_records_sql($sql, $params);
+
+        $assign = $DB->get_record('assign', ['id' => $assignid]);
+        $filtered = [];
+
+        foreach ($submissions as $submission) {
+            // Ignore submissions that have been graded.
+            if (assign_get_user_grades($assign, $submission->userid)) {
+                continue;
+            }
+            // Look up the user flag for this student.
+            $allocatedmarker = $DB->get_field('assign_user_flags', 'allocatedmarker', [
+                'assignment' => $assignid,
+                'userid' => $submission->userid,
+            ]);
+
+            // Include submission if:
+            // - No marker assigned, or
+            // - Current user is the assigned marker.
+            if ($allocatedmarker === false || $allocatedmarker == $USER->id) {
+                $filtered[] = $submission;
+            }
+        }
+
+        return count($filtered);
     }
 }
