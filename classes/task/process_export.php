@@ -21,6 +21,7 @@ use local_assess_type\assess_type;
 use moodle_recordset;
 use report_feedback_tracker\local\admin;
 use report_feedback_tracker\local\helper;
+use report_feedback_tracker\local\module_helper_factory;
 use stdClass;
 
 /**
@@ -77,7 +78,7 @@ class process_export extends \core\task\adhoc_task {
         mtrace('Found course modules for course ' . $this->course->id);
 
         foreach ($coursemodules as $coursemodule) {
-            $submissions = admin::get_module_submissions($coursemodule);
+            $submissions = module_helper_factory::create($coursemodule)->get_module_submissions();
             mtrace('Found ' . count($submissions) . ' submissions for course module ' . $coursemodule->id);
             foreach ($submissions as $submission) {
                 $record = $this->process_submission($submission, $coursemodule);

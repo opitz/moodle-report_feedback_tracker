@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace report_feedback_tracker\local;
+use context_course;
 use moodle_url;
 
 /**
@@ -64,5 +65,39 @@ class mod_quiz_helper extends module_helper {
      */
     public function get_overrides_url(): string {
         return new moodle_url("/mod/" . $this->module->modname . "/overrides.php", ["cmid" => $this->module->id]);
+    }
+
+    /**
+     * Get an array of submissions from enrolled students or groups for the given course module.
+     *
+     * @param bool $countgroups return group submissions if set to true
+     * @return array
+     */
+    public function get_module_submissions(bool $countgroups = false): array {
+        global $DB;
+
+        // Array to store enrolled users per course.
+        static $courseenrolledusers = [];
+
+        // Check if enrolled users for this course are already cached.
+        if (!isset($courseenrolledusers[$module->course])) {
+            $enrolledusers = get_enrolled_users(context_course::instance($this->module->course));
+            $courseenrolledusers[$this->module->course] = array_map(fn($user) => $user->id, $enrolledusers);
+        }
+
+        $enrolleduserids = $courseenrolledusers[$this->module->course];
+
+        $params = ['instanceid' => (int) $this->module->instance];
+        $sql = "SELECT id, userid, timefinish AS submissiondatetime
+                        FROM {quiz_attempts}
+                        WHERE quiz = :instanceid 
+                        AND preview = 0";
+
+        $records = $DB->get_records_sql($sql, $params);
+
+        // Return only submissions from students that are (still) enrolled into the course.
+        return array_filter($records, function ($record) use ($enrolleduserids) {
+            return in_array($record->userid, $enrolleduserids);
+        });
     }
 }

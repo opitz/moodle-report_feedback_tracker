@@ -157,7 +157,8 @@ final class feedback_tracker_lti_test extends advanced_testcase {
         $this->assertEquals(1828915200, $reportfeedbacktrackerltiusr->submittedat);
 
         $this->assertEquals('1829001600', module_helper_factory::create($cminfo)->get_duedate());
-        $m = admin::get_module_submissions($cminfo);
+        $m = module_helper_factory::create($cminfo)->get_module_submissions();
+
         $m = reset($m);
         $this->assertEquals('1828915200', $m->submissiondatetime);
         $this->assertEquals($user->id, $m->userid);
@@ -175,7 +176,8 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(1, count($mods));
 
-        $submissions = admin::get_module_submissions($module);
+        $submissions = module_helper_factory::create($module)->get_module_submissions();
+
         $record = $task->process_submission(reset($submissions), $module);
 
         $this->assertEquals("LTI Activity", $record->assessmentname);
