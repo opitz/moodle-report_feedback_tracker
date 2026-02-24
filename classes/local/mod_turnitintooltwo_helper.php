@@ -33,4 +33,13 @@ class mod_turnitintooltwo_helper extends module_helper {
     public function get_markingurl() {
         return $this->module->get_url();
     }
+
+    /**
+     * Get the due date of the module
+     *
+     * @return int
+     */
+    public function get_duedate() {
+        return 0;
+    }
 }
