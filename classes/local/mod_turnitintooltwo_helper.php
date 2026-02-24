@@ -42,6 +42,7 @@ class mod_turnitintooltwo_helper extends module_helper {
      * @return int
      */
     public function get_duedate() {
+        // Due dates are treated separately for each Turnitin part.
         return 0;
     }
 

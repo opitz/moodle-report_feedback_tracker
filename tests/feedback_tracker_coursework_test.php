@@ -71,13 +71,14 @@ final class feedback_tracker_coursework_test extends advanced_testcase {
         // Get cm_info.
         $cm = get_coursemodule_from_instance('coursework', $coursework->id);
         $cminfo = \cm_info::create($cm);
+        $modulehelper = module_helper_factory::create($cminfo);
 
         // Case 1: Deadline present → should return timestamp.
         $expected = 1829001600;
 
         $this->assertEquals(
             $expected,
-            module_helper_factory::create($cminfo)->get_duedate(),
+            $modulehelper->get_duedate(),
             'Expected timestamp when coursework deadline is present'
         );
 
@@ -85,7 +86,7 @@ final class feedback_tracker_coursework_test extends advanced_testcase {
         $DB->delete_records('coursework', ['id' => $coursework->id]);
         $this->assertEquals(
             0,
-            module_helper_factory::create($cminfo)->get_duedate(),
+            $modulehelper->get_duedate(),
             'Expected 0 when coursework record is missing'
         );
     }

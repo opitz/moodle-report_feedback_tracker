@@ -72,8 +72,10 @@ class admin {
 
         $data->modname = $module->modname;
 
+        $modulehelper = module_helper_factory::create($module);
+
         // Dates.
-        $duedate = module_helper_factory::create($module)->get_duedate();
+        $duedate = $modulehelper->get_duedate();
 
         $data->duedate = $duedate ? userdate($duedate, $dateformat) : false;
         // The raw date is needed for sorting.
@@ -82,69 +84,25 @@ class admin {
         $data->markoverdue = false;
 
         // Student data.
-        $overrides = module_helper_factory::create($module)->get_overrides();
+        $overrides = $modulehelper->get_overrides();
         if ($overrides === 1) {
             $data->overrides = get_string('users:extension', 'report_feedback_tracker');
         } else if ($overrides > 1) {
             $data->overrides = get_string('users:extensions', 'report_feedback_tracker', $overrides);
         }
-        $data->overridesurl = module_helper_factory::create($module)->get_overrides_url();
-        $submitterids = array_column(module_helper_factory::create($module)->get_module_submissions(true), 'userid');
+        $data->overridesurl = $modulehelper->get_overrides_url();
+        $submitterids = array_column($modulehelper->get_module_submissions(true), 'userid');
         $data->submissions = count($submitterids);
 
         // Grades and markings.
-        $data->requiredfeedbacks = module_helper_factory::create($module)->count_missing_grades($gradeitem->id);
+        $data->requiredfeedbacks = $modulehelper->count_missing_grades($gradeitem->id);
         $data->feedbackpercentage = $data->submissions ?
             round(($data->submissions - $data->requiredfeedbacks) / $data->submissions * 100, 1) : 0;
 
         $data->url = $module->get_url();
-        $data->markingurl = module_helper_factory::create($module)->get_markingurl();
+        $data->markingurl = $modulehelper->get_markingurl();
 
         return $data;
-    }
-
-    /**
-     * Count the assignment submissions for the current marker user.
-     *
-     * @param int $assignid The assignment id.
-     * @return int Number of markers submissions.
-     */
-    private static function count_assign_marker_submissions(int $assignid): int {
-        global $DB, $USER;
-
-        // First, get all submissions the user is allowed to see.
-        $params = ['assignid' => $assignid];
-        $sql = "SELECT id, userid, timemodified AS submissiondatetime
-                        FROM {assign_submission}
-                        WHERE assignment = :assignid
-                        AND userid > 0
-                        AND status = 'submitted'
-                        AND latest = 1";
-        $submissions = $DB->get_records_sql($sql, $params);
-
-        $assign = $DB->get_record('assign', ['id' => $assignid]);
-        $filtered = [];
-
-        foreach ($submissions as $submission) {
-            // Ignore submissions that have been graded.
-            if (assign_get_user_grades($assign, $submission->userid)) {
-                continue;
-            }
-            // Look up the user flag for this student.
-            $allocatedmarker = $DB->get_field('assign_user_flags', 'allocatedmarker', [
-                'assignment' => $assignid,
-                'userid' => $submission->userid,
-            ]);
-
-            // Include submission if:
-            // - No marker assigned, or
-            // - Current user is the assigned marker.
-            if ($allocatedmarker === false || $allocatedmarker == $USER->id) {
-                $filtered[] = $submission;
-            }
-        }
-
-        return count($filtered);
     }
 
     /**

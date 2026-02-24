@@ -44,9 +44,6 @@ class mod_lti_helper extends module_helper {
     public function get_duedate() {
         global $DB;
 
-        // Ensure customdata is an array.
-        $customdata = (array) $this->module->customdata;
-
         // Check LTI record has enddatetime.
         $enddatetime = $DB->get_field(
             'report_feedback_tracker_lti',
