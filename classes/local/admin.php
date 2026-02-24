@@ -82,7 +82,7 @@ class admin {
         $data->markoverdue = false;
 
         // Student data.
-        $overrides = self::get_overrides($module);
+        $overrides = module_helper_factory::create($module)->get_overrides();
         if ($overrides === 1) {
             $data->overrides = get_string('users:extension', 'report_feedback_tracker');
         } else if ($overrides > 1) {
@@ -101,56 +101,6 @@ class admin {
         $data->markingurl = module_helper_factory::create($module)->get_markingurl();
 
         return $data;
-    }
-
-    /**
-     * Get the number of students that have a submission due date override for a given course module.
-     *
-     * @param cm_info $module
-     * @return int
-     */
-    private static function get_overrides(cm_info $module): int {
-        global $DB;
-
-        switch ($module->modname) {
-            case 'assign':
-                $idfield = 'assignid';
-                break;
-            case 'lesson':
-                $idfield = 'lessonid';
-                break;
-            case 'quiz':
-                $idfield = 'quiz';
-                break;
-            default:
-                return 0; // Return no overrides.
-        }
-
-        $overrides = [];
-        // Get user overrides.
-        $overridetable = $module->modname . "_overrides";
-        $useroverrides = $DB->get_records_sql("
-            SELECT *
-            FROM {" . $overridetable . "}
-            WHERE $idfield = :moduleid AND userid IS NOT NULL", ['moduleid' => $module->instance]);
-
-        foreach ($useroverrides as $useroverride) {
-            $overrides[$useroverride->userid] = $useroverride->userid;
-        }
-
-        // Get group overrides and users in those groups.
-        $groupoverrides = $DB->get_records_sql("
-            SELECT gm.*
-            FROM {" . $overridetable . "} ao
-            JOIN {groups_members} gm ON ao.groupid = gm.groupid
-            WHERE ao.$idfield = :moduleid AND ao.groupid IS NOT NULL", ['moduleid' => $module->instance]);
-
-        foreach ($groupoverrides as $groupoverride) {
-            $overrides[$groupoverride->userid] = $groupoverride->userid;
-        }
-
-        // Count users.
-        return count($overrides);
     }
 
     /**

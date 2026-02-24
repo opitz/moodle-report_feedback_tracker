@@ -42,4 +42,14 @@ class mod_turnitintooltwo_helper extends module_helper {
     public function get_duedate() {
         return 0;
     }
+
+    /**
+     * Get the number of students that have a submission due date override for the course module.
+     *
+     * @return int
+     */
+    public function get_overrides() {
+        // Turnitintooltwo has no overrides.
+        return 0;
+    }
 }

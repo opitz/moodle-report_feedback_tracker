@@ -46,4 +46,14 @@ class mod_workshop_helper extends module_helper {
         // Return custom data where available.
         return (int) ($customdata['submissionend'] ?? 0);
     }
+
+    /**
+     * Get the number of students that have a submission due date override for the course module.
+     *
+     * @return int
+     */
+    public function get_overrides() {
+        // Workshop has no overrides.
+        return 0;
+    }
 }

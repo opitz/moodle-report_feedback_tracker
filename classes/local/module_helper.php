@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace report_feedback_tracker\local;
+use cm_info;
 
 /**
  * The abstract module helper class.
@@ -24,9 +25,6 @@ namespace report_feedback_tracker\local;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author     m.opitz <m.opitz@ucl.ac.uk>
  */
-namespace report_feedback_tracker\local;
-use cm_info;
-
 abstract class module_helper {
     /** @var cm_info  */
     protected cm_info $module;
@@ -53,4 +51,11 @@ abstract class module_helper {
      * @return mixed
      */
     abstract public function get_duedate();
+
+    /**
+     * Get the number of students that have a submission due date override for a course module.
+     *
+     * @return int
+     */
+    abstract public function get_overrides();
 }

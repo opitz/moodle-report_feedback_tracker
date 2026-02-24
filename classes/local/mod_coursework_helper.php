@@ -53,4 +53,14 @@ class mod_coursework_helper extends module_helper {
         );
         return !empty($deadline) ? (int) $deadline : 0;
     }
+
+    /**
+     * Get the number of students that have a submission due date override for the course module.
+     *
+     * @return int
+     */
+    public function get_overrides() {
+        // Coursework has no overrides.
+        return 0;
+    }
 }

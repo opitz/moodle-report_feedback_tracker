@@ -47,4 +47,13 @@ class mod_quiz_helper extends module_helper {
         // Return custom data where available.
         return (int) ($customdata['timeclose'] ?? 0);
     }
+
+    /**
+     * Get the number of students that have a submission due date override for the course module.
+     *
+     * @return int
+     */
+    public function get_overrides() {
+        return helper::get_overrides($this->module);
+    }
 }

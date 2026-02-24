@@ -37,14 +37,22 @@ class mod_lesson_helper extends module_helper {
     /**
      * Get the due date of the module
      *
-     * @param \cm_info $module
      * @return int
      */
-    public function get_duedate(\cm_info $module) {
+    public function get_duedate() {
         // Ensure customdata is an array.
-        $customdata = (array) $module->customdata;
+        $customdata = (array) $this->module->customdata;
 
         // Return custom data where available.
         return (int) ($customdata['deadline'] ?? 0);
+    }
+
+    /**
+     * Get the number of students that have a submission due date override for the course module.
+     *
+     * @return int
+     */
+    public function get_overrides() {
+        return helper::get_overrides($this->module);
     }
 }
