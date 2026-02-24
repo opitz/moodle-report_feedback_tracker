@@ -58,4 +58,11 @@ abstract class module_helper {
      * @return int
      */
     abstract public function get_overrides();
+
+    /**
+     * Provide a URL of the override settings of a given course module where available.
+     *
+     * @return string
+     */
+    abstract public function get_overrides_url(): string;
 }

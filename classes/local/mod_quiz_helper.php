@@ -56,4 +56,13 @@ class mod_quiz_helper extends module_helper {
     public function get_overrides() {
         return helper::get_overrides($this->module);
     }
+
+    /**
+     * Provide a URL of the override settings.
+     *
+     * @return string
+     */
+    public function get_overrides_url(): string {
+        return new moodle_url("/mod/" . $this->module->modname . "/overrides.php", ["cmid" => $this->module->id]);
+    }
 }

@@ -88,7 +88,7 @@ class admin {
         } else if ($overrides > 1) {
             $data->overrides = get_string('users:extensions', 'report_feedback_tracker', $overrides);
         }
-        $data->overridesurl = self::get_overrides_url($module);
+        $data->overridesurl = module_helper_factory::create($module)->get_overrides_url();
         $submitterids = array_column(self::get_module_submissions($module, true), 'userid');
         $data->submissions = count($submitterids);
 
@@ -101,20 +101,6 @@ class admin {
         $data->markingurl = module_helper_factory::create($module)->get_markingurl();
 
         return $data;
-    }
-
-    /**
-     * Provide a URL of the override settings of a given course module where available.
-     *
-     * @param cm_info $module
-     * @return string
-     */
-    private static function get_overrides_url(cm_info $module): string {
-        $supportedmodules = ['assign', 'lesson', 'quiz'];
-        if (in_array($module->modname, $supportedmodules)) {
-            return new moodle_url("/mod/" . $module->modname . "/overrides.php", ["cmid" => $module->id]);
-        }
-        return "#";
     }
 
     /**

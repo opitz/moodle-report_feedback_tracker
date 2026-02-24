@@ -56,4 +56,14 @@ class mod_workshop_helper extends module_helper {
         // Workshop has no overrides.
         return 0;
     }
+
+    /**
+     * Provide a URL of the override settings.
+     *
+     * @return string
+     */
+    public function get_overrides_url(): string {
+        // This module has no override settings.
+        return "#";
+    }
 }
