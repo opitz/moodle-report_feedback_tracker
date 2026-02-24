@@ -93,6 +93,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $cm = $this->getDataGenerator()->create_module('lti', $lti);
         $cminfo = \cm_info::create(get_coursemodule_from_instance('lti', $cm->id));
+        $modulehelper = module_helper_factory::create($cminfo);
 
         assess_type::update_type($course->id, assess_type::ASSESS_TYPE_SUMMATIVE, $cminfo->id);
 
@@ -156,8 +157,8 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(1828915200, $reportfeedbacktrackerltiusr->submittedat);
 
-        $this->assertEquals('1829001600', module_helper_factory::create($cminfo)->get_duedate());
-        $m = module_helper_factory::create($cminfo)->get_module_submissions();
+        $this->assertEquals('1829001600', $modulehelper->get_duedate());
+        $m = $modulehelper->get_module_submissions();
 
         $m = reset($m);
         $this->assertEquals('1828915200', $m->submissiondatetime);
@@ -209,9 +210,8 @@ final class feedback_tracker_lti_test extends advanced_testcase {
             'name'   => 'LTI Due Date Test',
         ]);
 
-        $cminfo = \cm_info::create(
-            get_coursemodule_from_instance('lti', $lti->id)
-        );
+        $cminfo = \cm_info::create(get_coursemodule_from_instance('lti', $lti->id));
+        $modulehelper = module_helper_factory::create($cminfo);
 
         // Case 1: No record exists in report_feedback_tracker_lti.
         $this->assertFalse(
@@ -220,7 +220,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(
             0,
-            module_helper_factory::create($cminfo)->get_duedate(),
+            $modulehelper->get_duedate(),
             'Expected duedate to be 0 when no LTI tracking record exists'
         );
 
@@ -233,7 +233,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(
             0,
-            module_helper_factory::create($cminfo)->get_duedate(),
+            $modulehelper->get_duedate(),
             'Expected duedate to be 0 when enddatetime is missing'
         );
 
@@ -249,7 +249,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(
             $expected,
-            module_helper_factory::create($cminfo)->get_duedate(),
+            $modulehelper->get_duedate(),
             'Expected duedate to match enddatetime when present'
         );
     }

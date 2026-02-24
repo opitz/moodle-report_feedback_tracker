@@ -18,6 +18,7 @@ namespace report_feedback_tracker\local;
 
 use context_course;
 use mod_coursework\services\submission_figures as coursework_submission_figures;
+use moodle_url;
 
 /**
  * The lesson module helper class.

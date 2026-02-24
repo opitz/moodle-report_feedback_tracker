@@ -16,6 +16,8 @@
 
 namespace report_feedback_tracker\local;
 
+use cm_info;
+
 /**
  * The helper factory class.
  *
@@ -28,10 +30,10 @@ class module_helper_factory {
     /**
      * Creator
      *
-     * @param $module
+     * @param cm_info $module
      * @return mixed
      */
-    public static function create($module) {
+    public static function create(cm_info $module) {
         $fullclassname = __NAMESPACE__ . "\\mod_{$module->modname}_helper";
 
         if (!$fullclassname) {

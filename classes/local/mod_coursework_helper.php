@@ -45,9 +45,6 @@ class mod_coursework_helper extends module_helper {
     public function get_duedate() {
         global $DB;
 
-        // Ensure customdata is an array.
-        $customdata = (array) $this->module->customdata;
-
         // Check Coursework record has deadline.
         $deadline = $DB->get_field(
             'coursework',
