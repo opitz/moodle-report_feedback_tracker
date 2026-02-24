@@ -73,4 +73,13 @@ abstract class module_helper {
      * @return array
      */
     abstract public function get_module_submissions(bool $countgroups = false): array;
+
+    /**
+     * Count the missing grades for a given grade item.
+     *
+     * @param int $gradeitemid
+     * @param bool $markeronly optional - if set return only missing grades for the user as a marker.
+     * @return int
+     */
+    abstract public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int;
 }
