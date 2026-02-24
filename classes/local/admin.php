@@ -73,7 +73,8 @@ class admin {
         $data->modname = $module->modname;
 
         // Dates.
-        $duedate = self::get_duedate($module);
+        $duedate = module_helper_factory::create($module)->get_duedate();
+
         $data->duedate = $duedate ? userdate($duedate, $dateformat) : false;
         // The raw date is needed for sorting.
         $data->feedbackduedateraw = $duedate ? helper::get_feedbackduedate($gradeitem, $duedate) : 9999999999;
@@ -100,54 +101,6 @@ class admin {
         $data->markingurl = module_helper_factory::create($module)->get_markingurl();
 
         return $data;
-    }
-
-    /**
-     * Get the due date of a course module.
-     *
-     * @param cm_info $cm
-     * @return int
-     */
-    public static function get_duedate(cm_info $cm): int {
-        global $DB;
-
-        // Ensure customdata is an array.
-        $customdata = (array) $cm->customdata;
-
-        switch ($cm->modname) {
-            case 'assign':
-                $index = 'duedate';
-                break;
-            case 'lesson':
-                $index = 'deadline';
-                break;
-            case 'quiz':
-                $index = 'timeclose';
-                break;
-            case 'workshop':
-                $index = 'submissionend';
-                break;
-            case 'lti':
-                // Check LTI record has enddatetime.
-                $enddatetime = $DB->get_field(
-                    'report_feedback_tracker_lti',
-                    'enddatetime',
-                    ['instanceid' => $cm->instance]
-                );
-                return !empty($enddatetime) ? (int) $enddatetime : 0;
-            case 'coursework':
-                // Check Coursework record has deadline.
-                $deadline = $DB->get_field(
-                    'coursework',
-                    'deadline',
-                    ['id' => $cm->instance]
-                );
-                return !empty($deadline) ? (int) $deadline : 0;
-            default:
-                return 0;
-        }
-        // Return custom data where available.
-        return (int) ($customdata[$index] ?? 0);
     }
 
     /**

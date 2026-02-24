@@ -33,4 +33,24 @@ class mod_coursework_helper extends module_helper {
     public function get_markingurl() {
         return $this->module->get_url();
     }
+
+    /**
+     * Get the due date of the module
+     *
+     * @return int
+     */
+    public function get_duedate() {
+        global $DB;
+
+        // Ensure customdata is an array.
+        $customdata = (array) $this->module->customdata;
+
+        // Check Coursework record has deadline.
+        $deadline = $DB->get_field(
+            'coursework',
+            'deadline',
+            ['id' => $this->module->instance]
+        );
+        return !empty($deadline) ? (int) $deadline : 0;
+    }
 }
