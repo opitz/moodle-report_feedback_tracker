@@ -89,7 +89,7 @@ class admin {
             $data->overrides = get_string('users:extensions', 'report_feedback_tracker', $overrides);
         }
         $data->overridesurl = module_helper_factory::create($module)->get_overrides_url();
-        $submitterids = array_column(self::get_module_submissions($module, true), 'userid');
+        $submitterids = array_column(module_helper_factory::create($module)->get_module_submissions(true), 'userid');
         $data->submissions = count($submitterids);
 
         // Grades and markings.
@@ -101,109 +101,6 @@ class admin {
         $data->markingurl = module_helper_factory::create($module)->get_markingurl();
 
         return $data;
-    }
-
-    /**
-     * Get an array of submissions from enrolled students or groups for the given course module.
-     *
-     * @param cm_info|stdClass $module
-     * @param bool $countgroups return group submissions if set to true
-     * @return array
-     */
-    public static function get_module_submissions(cm_info|stdClass $module, bool $countgroups = false): array {
-        global $DB;
-        // Array to store enrolled users per course.
-        static $courseenrolledusers = [];
-
-        // Check if enrolled users for this course are already cached.
-        if (!isset($courseenrolledusers[$module->course])) {
-            $enrolledusers = get_enrolled_users(context_course::instance($module->course));
-            $courseenrolledusers[$module->course] = array_map(fn($user) => $user->id, $enrolledusers);
-        }
-
-        $enrolleduserids = $courseenrolledusers[$module->course];
-        $teamsubmission = false;
-
-        switch ($module->modname) {
-            case 'assign':
-                $teamsubmission = $DB->get_field('assign', 'teamsubmission', ['id' => $module->instance]);
-                if ($teamsubmission && $countgroups) {
-                    // Get group submissions.
-                    $sql = "SELECT id, groupid, userid, timemodified AS submissiondatetime
-                        FROM {assign_submission}
-                        WHERE assignment = $module->instance
-                        AND userid = 0
-                        AND status = 'submitted'
-                        AND latest = 1";
-                } else {
-                    // Get user submissions.
-                    $sql = "SELECT id, userid, timemodified AS submissiondatetime
-                        FROM {assign_submission}
-                        WHERE assignment = $module->instance
-                        AND userid > 0
-                        AND status = 'submitted'
-                        AND latest = 1";
-                }
-                break;
-            case 'coursework':
-                // If option is set show only submissions from students assigned to the current user as assessor.
-                if (get_config('report_feedback_tracker', 'showusermarkings')) {
-                    return coursework_submission_figures::get_submissions_for_assessor($module->instance);
-                }
-                // Otherwise return all finalised submssions regardless of assessor.
-                $sql = "SELECT id, userid, timesubmitted AS submissiondatetime
-                        FROM {coursework_submissions}
-                        WHERE courseworkid = $module->instance
-                        AND finalisedstatus = 1";
-                break;
-            case 'lesson':
-                $sql = "SELECT id, userid, timeseen AS submissiondatetime
-                        FROM {lesson_attempts}
-                        WHERE lessonid = $module->instance";
-                break;
-            case 'quiz':
-                $sql = "SELECT id, userid, timefinish AS submissiondatetime
-                        FROM {quiz_attempts}
-                        WHERE quiz = $module->instance AND preview = 0";
-                break;
-            case 'turnitintooltwo':
-                $sql = "SELECT id, userid, submission_modified AS submissiondatetime
-                        FROM {turnitintooltwo_submissions}
-                        WHERE turnitintooltwoid = $module->instance";
-                break;
-            case 'lti':
-                $sql = "SELECT id, userid, submittedat AS submissiondatetime
-                        FROM {report_feedback_tracker_lti_usr}
-                        WHERE instanceid = $module->instance";
-                break;
-            case 'workshop':
-                $sql = "SELECT id, authorid AS userid, timemodified AS submissiondatetime
-                        FROM {workshop_submissions}
-                        WHERE workshopid = $module->instance";
-                break;
-            default:
-                return [];
-        }
-
-        $records = $DB->get_records_sql($sql);
-
-        // If it is an assignment group/team submission amend the group IDs.
-        if (($module->modname == 'assign') && $teamsubmission) {
-            if ($countgroups) { // Just return the group records.
-                return $records;
-            }
-
-            foreach ($records as $record) {
-                $groups = groups_get_all_groups($module->course, $record->userid);
-                // If a user is a member of one group only assign the group ID, otherwise assign the default group.
-                $record->groupid = count($groups) === 1 ? reset($groups)->id : 0;
-            }
-        }
-
-        // Return only submissions from students that are (still) enrolled into the course.
-        return array_filter($records, function ($record) use ($enrolleduserids) {
-            return in_array($record->userid, $enrolleduserids);
-        });
     }
 
     /**

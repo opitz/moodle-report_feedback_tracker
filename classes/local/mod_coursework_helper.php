@@ -16,6 +16,9 @@
 
 namespace report_feedback_tracker\local;
 
+use context_course;
+use mod_coursework\services\submission_figures as coursework_submission_figures;
+
 /**
  * The coursework module helper class.
  *
@@ -72,5 +75,45 @@ class mod_coursework_helper extends module_helper {
     public function get_overrides_url(): string {
         // This module has no override settings.
         return "#";
+    }
+
+    /**
+     * Get an array of submissions from enrolled students or groups for the given course module.
+     *
+     * @param bool $countgroups return group submissions if set to true
+     * @return array
+     */
+    public function get_module_submissions(bool $countgroups = false): array {
+        global $DB;
+
+        // Array to store enrolled users per course.
+        static $courseenrolledusers = [];
+
+        // Check if enrolled users for this course are already cached.
+        if (!isset($courseenrolledusers[$module->course])) {
+            $enrolledusers = get_enrolled_users(context_course::instance($this->module->course));
+            $courseenrolledusers[$this->module->course] = array_map(fn($user) => $user->id, $enrolledusers);
+        }
+
+        $enrolleduserids = $courseenrolledusers[$this->module->course];
+
+        // If option is set show only submissions from students assigned to the current user as assessor.
+        if (get_config('report_feedback_tracker', 'showusermarkings')) {
+            return coursework_submission_figures::get_submissions_for_assessor($this->module->instance);
+        }
+
+        // Otherwise return all finalised submssions regardless of assessor.
+        $params = ['instanceid' => (int) $this->module->instance];
+        $sql = "SELECT id, userid, timesubmitted AS submissiondatetime
+                        FROM {coursework_submissions}
+                        WHERE courseworkid = :instanceid
+                        AND finalisedstatus = 1";
+
+        $records = $DB->get_records_sql($sql, $params);
+
+        // Return only submissions from students that are (still) enrolled into the course.
+        return array_filter($records, function ($record) use ($enrolleduserids) {
+            return in_array($record->userid, $enrolleduserids);
+        });
     }
 }
