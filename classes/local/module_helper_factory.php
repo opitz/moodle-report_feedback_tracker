@@ -25,6 +25,12 @@ namespace report_feedback_tracker\local;
  * @author      m.opitz <m.opitz@ucl.ac.uk>
  */
 class module_helper_factory {
+    /**
+     * Creator
+     *
+     * @param $module
+     * @return mixed
+     */
     public static function create($module) {
         $fullclassname = __NAMESPACE__ . "\\mod_{$module->modname}_helper";
 
