@@ -97,7 +97,7 @@ class admin {
             round(($data->submissions - $data->requiredfeedbacks) / $data->submissions * 100, 1) : 0;
 
         $data->url = $module->get_url();
-        $data->markingurl = self::get_markingurl($module);
+        $data->markingurl = module_helper_factory::create($module)->get_markingurl();
 
         return $data;
     }
@@ -433,23 +433,6 @@ class admin {
         }
 
         return count($filtered);
-    }
-
-    /**
-     * Get a URL to marking.
-     *
-     * @param cm_info $module
-     * @return moodle_url
-     */
-    public static function get_markingurl(cm_info $module): moodle_url {
-        switch ($module->modname) {
-            case 'assign':
-                return new moodle_url('/mod/assign/view.php', ['id' => $module->id, 'action' => 'grading']);
-            case 'quiz':
-                return new moodle_url('/mod/quiz/report.php', ['id' => $module->id, 'mode' => 'grading']);
-        }
-
-        return $module->get_url();
     }
 
     /**
