@@ -27,14 +27,14 @@ use cm_info;
  */
 abstract class module_helper {
     /** @var cm_info  */
-    protected cm_info $module;
+    protected cm_info|\stdClass $module;
 
     /**
      * Constructor
      *
-     * @param cm_info $module
+     * @param cm_info|\stdClass $module
      */
-    public function __construct(cm_info $module) {
+    public function __construct(cm_info|\stdClass $module) {
         $this->module = $module;
     }
 
@@ -65,4 +65,12 @@ abstract class module_helper {
      * @return string
      */
     abstract public function get_overrides_url(): string;
+
+    /**
+     * Get an array of submissions from enrolled students or groups for the given course module.
+     *
+     * @param bool $countgroups return group submissions if set to true
+     * @return array
+     */
+    abstract public function get_module_submissions(bool $countgroups = false): array;
 }
