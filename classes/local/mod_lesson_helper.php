@@ -33,4 +33,18 @@ class mod_lesson_helper extends module_helper {
     public function get_markingurl() {
         return $this->module->get_url();
     }
+
+    /**
+     * Get the due date of the module
+     *
+     * @param \cm_info $module
+     * @return int
+     */
+    public function get_duedate(\cm_info $module) {
+        // Ensure customdata is an array.
+        $customdata = (array) $module->customdata;
+
+        // Return custom data where available.
+        return (int) ($customdata['deadline'] ?? 0);
+    }
 }

@@ -200,7 +200,7 @@ class student {
             $data->moduletypeiconurl = $module->get_icon_url()->out(false);
             $data->cmid = $module->id;
 
-            $duedate = self::get_user_duedate($gradeitem, $userid) ?: admin::get_duedate($module);
+            $duedate = self::get_user_duedate($gradeitem, $userid) ?: module_helper_factory::create($module)->get_duedate();
 
             // Add submission and grading for the user.
             self::add_user_data($userid, $data, $gradeitem, $duedate);

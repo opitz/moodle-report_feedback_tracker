@@ -32,6 +32,7 @@ use ltiservice_gradebookservices\local\resources\lineitem;
 use ltiservice_gradebookservices\local\resources\scores;
 use ltiservice_gradebookservices\local\service\gradebookservices;
 use report_feedback_tracker\local\admin;
+use report_feedback_tracker\local\module_helper_factory;
 use report_feedback_tracker\local\student;
 use report_feedback_tracker\task\process_export;
 
@@ -155,7 +156,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(1828915200, $reportfeedbacktrackerltiusr->submittedat);
 
-        $this->assertEquals('1829001600', admin::get_duedate($cminfo));
+        $this->assertEquals('1829001600', module_helper_factory::create($cminfo)->get_duedate());
         $m = admin::get_module_submissions($cminfo);
         $m = reset($m);
         $this->assertEquals('1828915200', $m->submissiondatetime);
@@ -190,7 +191,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
      * returns 0 when enddatetime is missing,
      * and returns the expected timestamp when present.
      *
-     * @covers \report_feedback_tracker\local\admin::get_duedate
+     * @covers \report_feedback_tracker\local\module_helper_factory::create($cminfo)->get_duedate()
      * @return void
      */
     public function test_admin_get_duedate_missing_and_present(): void {
@@ -217,7 +218,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(
             0,
-            admin::get_duedate($cminfo),
+            module_helper_factory::create($cminfo)->get_duedate(),
             'Expected duedate to be 0 when no LTI tracking record exists'
         );
 
@@ -230,7 +231,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(
             0,
-            admin::get_duedate($cminfo),
+            module_helper_factory::create($cminfo)->get_duedate(),
             'Expected duedate to be 0 when enddatetime is missing'
         );
 
@@ -246,7 +247,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(
             $expected,
-            admin::get_duedate($cminfo),
+            module_helper_factory::create($cminfo)->get_duedate(),
             'Expected duedate to match enddatetime when present'
         );
     }
