@@ -145,4 +145,25 @@ class mod_quiz_helper extends module_helper {
 
         return  $overridedate ?: $this->get_duedate();
     }
+
+    /**
+     * Get the submission date for a grade item and student if any.
+     *
+     * @param int $userid
+     * @param int $instance
+     * @param ?int $part turnitintooltwo part number
+     * @return int
+     */
+    public function get_submissiondate(int $userid, int $instance, ?int $part = null): int {
+        global $DB;
+
+        $params = ['userid' => $userid, 'instance' => $instance];
+        $sql = "SELECT MAX(timefinish)
+                        FROM {quiz_attempts}
+                        WHERE userid = :userid
+                        AND quiz = :instance
+                        AND state = 'finished'";
+
+        return $DB->get_field_sql($sql, $params) ?? 0;
+    }
 }

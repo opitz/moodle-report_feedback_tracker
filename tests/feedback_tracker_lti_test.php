@@ -164,12 +164,14 @@ final class feedback_tracker_lti_test extends advanced_testcase {
         $this->assertEquals('1828915200', $m->submissiondatetime);
         $this->assertEquals($user->id, $m->userid);
 
-        $this->assertEquals('1828915200', student::get_submissiondate($user->id, 'lti', $cminfo->instance));
+        $this->assertEquals('1828915200', module_helper_factory::create($cminfo)->get_submissiondate($user->id, $cminfo->instance));
 
         $task = new process_export();
         $task->phpu_set_courseid($course->id);
 
         $module = $task->get_course_modules()->current();
+        $cm = \cm_info::create(get_coursemodule_from_instance($module->modname, $module->instance));
+
         $mods = [];
         foreach ($task->get_course_modules() as $module) {
             $mods[$module->id] = $module;
@@ -177,7 +179,7 @@ final class feedback_tracker_lti_test extends advanced_testcase {
 
         $this->assertEquals(1, count($mods));
 
-        $submissions = module_helper_factory::create($module)->get_module_submissions();
+        $submissions = module_helper_factory::create($cm)->get_module_submissions();
 
         $record = $task->process_submission(reset($submissions), $module);
 

@@ -185,4 +185,24 @@ class mod_coursework_helper extends module_helper {
 
         return  $overridedate ?: $this->get_duedate();
     }
+
+    /**
+     * Get the submission date for a grade item and student if any.
+     *
+     * @param int $userid
+     * @param int $instance
+     * @param ?int $part turnitintooltwo part number
+     * @return int
+     */
+    public function get_submissiondate(int $userid, int $instance, ?int $part = null): int {
+        global $DB;
+
+        $params = ['userid' => $userid, 'instance' => $instance];
+        $sql = "SELECT MAX(timesubmitted)
+                        FROM {coursework_submissions}
+                        WHERE userid = :userid
+                        AND courseworkid = :instance";
+
+        return $DB->get_field_sql($sql, $params) ?? 0;
+    }
 }

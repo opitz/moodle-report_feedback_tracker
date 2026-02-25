@@ -196,11 +196,12 @@ class student {
                 return false;
             }
 
-            $data->url = module_helper_factory::create($module)->get_module_url();
+            $modulehelper = module_helper_factory::create($module);
+            $data->url = $modulehelper->get_module_url();
             $data->moduletypeiconurl = $module->get_icon_url()->out(false);
             $data->cmid = $module->id;
 
-            $duedate = module_helper_factory::create($module)->get_user_duedate($gradeitem, $userid);
+            $duedate = $modulehelper->get_user_duedate($gradeitem, $userid);
 
             // Add submission and grading for the user.
             self::add_user_data($userid, $data, $gradeitem, $duedate);
@@ -272,88 +273,14 @@ class student {
      * @return void
      */
     public static function add_user_data(int $userid, stdClass $data, grade_item $gradeitem, int $duedate, int $part = 0) {
-        $data->submissiondate = self::get_submissiondate($userid, $gradeitem->itemmodule, $gradeitem->iteminstance, $part);
+        $cm = \cm_info::create(get_coursemodule_from_instance($gradeitem->itemmodule, $gradeitem->iteminstance));
+
+        $data->submissiondate = module_helper_factory::create($cm)->get_submissiondate($userid, $gradeitem->iteminstance, $part);
         if (self::is_workshop_assessment($gradeitem)) {
             $data->workshopassessmentstatus = self::get_workshop_assessment_status($userid, $gradeitem->iteminstance);
         } else {
             $data->submissionstatus = self::get_submission_status($duedate, $data->submissiondate);
         }
-    }
-
-    /**
-     * Get the submission date for a grade item and student if any.
-     *
-     * @param int $userid
-     * @param string $moduletype
-     * @param int $instance
-     * @param ?int $part turnitintooltwo part number
-     * @return int
-     */
-    public static function get_submissiondate(int $userid, string $moduletype, int $instance, ?int $part = null): int {
-        global $DB;
-
-        switch ($moduletype) {
-            case 'assign':
-                $params = ['userid' => $userid, 'instance' => $instance];
-                $sql = "SELECT MAX(timemodified)
-                        FROM {assign_submission}
-                        WHERE userid = :userid
-                        AND assignment = :instance
-                        AND status = 'submitted'";
-                break;
-            case 'lti':
-                $params = ['userid' => $userid, 'instance' => $instance];
-                $sql = "SELECT MAX(submittedat)
-                        FROM {report_feedback_tracker_lti_usr}
-                        WHERE userid = :userid
-                        AND instanceid = :instance";
-                break;
-            case 'coursework':
-                $params = ['userid' => $userid, 'instance' => $instance];
-                $sql = "SELECT MAX(timesubmitted)
-                        FROM {coursework_submissions}
-                        WHERE userid = :userid
-                        AND courseworkid = :instance";
-                break;
-            case 'lesson':
-                $params = ['userid' => $userid, 'instance' => $instance];
-                $sql = "SELECT MAX(timeseen)
-                        FROM {lesson_attempts}
-                        WHERE userid = :userid
-                        AND lessonid = :instance";
-                break;
-            case 'quiz':
-                $params = ['userid' => $userid, 'instance' => $instance];
-                $sql = "SELECT MAX(timefinish)
-                        FROM {quiz_attempts}
-                        WHERE userid = :userid
-                        AND quiz = :instance
-                        AND state = 'finished'";
-                break;
-            case 'turnitintooltwo':
-                $sql = "SELECT MAX(submission_modified)
-                          FROM {turnitintooltwo_submissions}
-                         WHERE userid = :userid
-                               AND turnitintooltwoid = :instance";
-                $params = ['userid' => $userid, 'instance' => $instance];
-
-                if ($part) {
-                    $sql .= " AND submission_part = :part";
-                    $params['part'] = $part;
-                }
-
-                break;
-            case 'workshop':
-                $params = ['userid' => $userid, 'instance' => $instance];
-                $sql = "SELECT MAX(timemodified)
-                        FROM {workshop_submissions}
-                        WHERE authorid = :userid
-                        AND workshopid = :instance";
-                break;
-            default:
-                return 0;
-        }
-        return $DB->get_field_sql($sql, $params) ?? 0;
     }
 
     /**

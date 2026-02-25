@@ -274,4 +274,25 @@ class mod_assign_helper extends module_helper {
 
         return  $overridedate ?: $this->get_duedate();
     }
+
+    /**
+     * Get the submission date for a grade item and student if any.
+     *
+     * @param int $userid
+     * @param int $instance
+     * @param ?int $part turnitintooltwo part number
+     * @return int
+     */
+    public function get_submissiondate(int $userid, int $instance, ?int $part = null): int {
+        global $DB;
+
+        $params = ['userid' => $userid, 'instance' => $instance];
+        $sql = "SELECT MAX(timemodified)
+                        FROM {assign_submission}
+                        WHERE userid = :userid
+                        AND assignment = :instance
+                        AND status = 'submitted'";
+
+        return $DB->get_field_sql($sql, $params) ?? 0;
+    }
 }
