@@ -200,7 +200,7 @@ class student {
             $data->moduletypeiconurl = $module->get_icon_url()->out(false);
             $data->cmid = $module->id;
 
-            $duedate = self::get_user_duedate($gradeitem, $userid) ?: module_helper_factory::create($module)->get_duedate();
+            $duedate = module_helper_factory::create($module)->get_user_duedate($gradeitem, $userid);
 
             // Add submission and grading for the user.
             self::add_user_data($userid, $data, $gradeitem, $duedate);
@@ -505,85 +505,5 @@ class student {
                 'role1' => 'student',
             ]
         );
-    }
-
-    /**
-     * Get a due date for a user including optional overrides and extensions.
-     *
-     * @param grade_item $gradeitem
-     * @param int $userid
-     * @return false|int
-     */
-    public static function get_user_duedate(grade_item $gradeitem, int $userid): false|int {
-        global $DB;
-
-        switch ($gradeitem->itemmodule) {
-            case 'assign':
-                // Get individual override where available.
-                $params = ['assignid' => $gradeitem->iteminstance, 'userid' => $userid];
-                $overridedate = $DB->get_field('assign_overrides', 'duedate', $params);
-
-                // If there is no individual override check for a group override date.
-                if (!$overridedate) {
-                    $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
-                    foreach ($usergroups[0] as $usergroupid) {
-                        $params = ['assignid' => $gradeitem->iteminstance, 'groupid' => $usergroupid];
-                        $overrideduedate = $DB->get_field('assign_overrides', 'duedate', $params);
-
-                        if ($overrideduedate > $overridedate) {
-                            $overridedate = $overrideduedate;
-                        }
-                    }
-                }
-
-                // Get individual extension where available.
-                $params = ['assignment' => $gradeitem->iteminstance, 'userid' => $userid];
-                $extensiondate = $DB->get_field('assign_user_flags', 'extensionduedate', $params);
-
-                // Use the date that gives the most time to the student.
-                if ($extensiondate > $overridedate) {
-                    $overridedate = $extensiondate;
-                }
-
-                break;
-            case 'coursework':
-                // Get individual override where available.
-                $params = [
-                    'courseworkid' => $gradeitem->iteminstance,
-                    'allocatableid' => $userid,
-                    'allocatabletype' => 'user',
-                    ];
-                $overridedate = $DB->get_field('coursework_person_deadlines', 'personaldeadline', $params);
-
-                // If there is no individual override check for a group override date.
-                if (!$overridedate) {
-                    $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
-                    foreach ($usergroups[0] as $usergroupid) {
-                        $params = [
-                            'courseworkid' => $gradeitem->iteminstance,
-                            'allocatableid' => $usergroupid,
-                            'allocatabletype' => 'group',
-                        ];
-                        $overrideduedate = $DB->get_field('coursework_extensions', 'extended_deadline', $params);
-
-                        if ($overrideduedate > $overridedate) {
-                            $overridedate = $overrideduedate;
-                        }
-                    }
-                }
-                break;
-            case 'lesson':
-                $params = ['lessonid' => $gradeitem->iteminstance, 'userid' => $userid];
-                $overridedate = $DB->get_field('lesson_overrides', 'deadline', $params);
-                break;
-            case 'quiz':
-                $params = ['quiz' => $gradeitem->iteminstance, 'userid' => $userid];
-                $overridedate = $DB->get_field('quiz_overrides', 'timeclose', $params);
-                break;
-            default:
-                $overridedate = false;
-                break;
-        }
-        return  $overridedate ?: false;
     }
 }

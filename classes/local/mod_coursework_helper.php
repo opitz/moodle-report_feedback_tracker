@@ -17,6 +17,7 @@
 namespace report_feedback_tracker\local;
 
 use context_course;
+use grade_item;
 use mod_coursework\services\submission_figures as coursework_submission_figures;
 
 /**
@@ -145,5 +146,43 @@ class mod_coursework_helper extends module_helper {
 
         // Count and return all student IDs in submission that are not (yet) to be found in gradings.
         return count(array_diff($submitterids, $gradedids));
+    }
+
+    /**
+     * Get a due date for a user including optional overrides and extensions.
+     *
+     * @param grade_item $gradeitem
+     * @param int $userid
+     * @return false|int
+     */
+    public function get_user_duedate(grade_item $gradeitem, int $userid): false|int {
+        global $DB;
+
+        // Get individual override where available.
+        $params = [
+            'courseworkid' => $gradeitem->iteminstance,
+            'allocatableid' => $userid,
+            'allocatabletype' => 'user',
+        ];
+        $overridedate = $DB->get_field('coursework_person_deadlines', 'personaldeadline', $params);
+
+        // If there is no individual override check for a group override date.
+        if (!$overridedate) {
+            $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
+            foreach ($usergroups[0] as $usergroupid) {
+                $params = [
+                    'courseworkid' => $gradeitem->iteminstance,
+                    'allocatableid' => $usergroupid,
+                    'allocatabletype' => 'group',
+                ];
+                $overrideduedate = $DB->get_field('coursework_extensions', 'extended_deadline', $params);
+
+                if ($overrideduedate > $overridedate) {
+                    $overridedate = $overrideduedate;
+                }
+            }
+        }
+
+        return  $overridedate ?: $this->get_duedate();
     }
 }
