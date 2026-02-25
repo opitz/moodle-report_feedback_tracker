@@ -30,6 +30,7 @@ use report_feedback_tracker\local\helper;
 use core_customfield\category_controller;
 use core_customfield\field_controller;
 use core_customfield\data_controller;
+use report_feedback_tracker\local\module_helper_factory;
 use report_feedback_tracker\local\student;
 
 /**
@@ -123,10 +124,17 @@ final class feedback_due_date_test extends advanced_testcase {
         ]);
 
         $student = $this->getDataGenerator()->create_user();
+
+        // Create a course module.
         $quiz = $this->getDataGenerator()->create_module(
             'quiz',
-            ['course' => $course->id, 'timeclose' => strtotime('2025-11-01 17:00')]
+            [
+                'course' => $course->id,
+                'name' => 'Test quiz',
+                'timeclose' => strtotime('2025-11-01 17:00'),
+                ]
         );
+        $cm = \cm_info::create(get_coursemodule_from_instance('quiz', $quiz->id));
 
         // Create a student override.
         $override = (object)[
@@ -138,11 +146,13 @@ final class feedback_due_date_test extends advanced_testcase {
         ];
         $DB->insert_record('quiz_overrides', $override);
 
+        // Create a grade item.
         $gradeitem = new \grade_item();
         $gradeitem->courseid = $course->id;
-        $gradeitem->itemmodule = 'quiz';
+        $gradeitem->itemmodule = $cm;
         $gradeitem->iteminstance = $quiz->id;
-        $studentduedate = student::get_user_duedate(
+
+        $studentduedate = module_helper_factory::create($cm)->get_user_duedate(
             $gradeitem,
             $student->id
         );

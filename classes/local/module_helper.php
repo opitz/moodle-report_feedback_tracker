@@ -16,6 +16,7 @@
 
 namespace report_feedback_tracker\local;
 use cm_info;
+use grade_item;
 
 /**
  * The abstract module helper class.
@@ -82,6 +83,15 @@ abstract class module_helper {
      * @return int
      */
     abstract public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int;
+
+    /**
+     * Get a due date for a user including optional overrides and extensions.
+     *
+     * @param grade_item $gradeitem
+     * @param int $userid
+     * @return false|int
+     */
+    abstract public function get_user_duedate(grade_item $gradeitem, int $userid): false|int;
 
     /**
      * Return a URL to the module item where applicable or to the student feedback tracker page otherwise.

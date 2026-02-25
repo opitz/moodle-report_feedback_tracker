@@ -17,6 +17,7 @@
 namespace report_feedback_tracker\local;
 
 use context_course;
+use grade_item;
 
 /**
  * The LTI module helper class.
@@ -132,5 +133,17 @@ class mod_lti_helper extends module_helper {
 
         // Count and return all student IDs in submission that are not (yet) to be found in gradings.
         return count(array_diff($submitterids, $gradedids));
+    }
+
+    /**
+     * Get a due date for a user including optional overrides and extensions.
+     *
+     * @param grade_item $gradeitem
+     * @param int $userid
+     * @return false|int
+     */
+    public function get_user_duedate(grade_item $gradeitem, int $userid): false|int {
+        // This module does not support user due dates.
+        return $this->get_duedate();
     }
 }

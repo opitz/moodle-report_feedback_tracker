@@ -18,6 +18,7 @@ namespace report_feedback_tracker\local;
 use assign;
 use context_course;
 use context_module;
+use grade_item;
 use mod_coursework\services\submission_figures as coursework_submission_figures;
 use moodle_url;
 
@@ -30,6 +31,50 @@ use moodle_url;
  * @author     m.opitz <m.opitz@ucl.ac.uk>
  */
 class mod_assign_helper extends module_helper {
+    /**
+     * Count the assignment submissions for the current marker user.
+     *
+     * @param int $assignid The assignment id.
+     * @return int Number of markers submissions.
+     */
+    private static function count_assign_marker_submissions(int $assignid): int {
+        global $DB, $USER;
+
+        // First, get all submissions the user is allowed to see.
+        $params = ['assignid' => $assignid];
+        $sql = "SELECT id, userid, timemodified AS submissiondatetime
+                        FROM {assign_submission}
+                        WHERE assignment = :assignid
+                        AND userid > 0
+                        AND status = 'submitted'
+                        AND latest = 1";
+        $submissions = $DB->get_records_sql($sql, $params);
+
+        $assign = $DB->get_record('assign', ['id' => $assignid]);
+        $filtered = [];
+
+        foreach ($submissions as $submission) {
+            // Ignore submissions that have been graded.
+            if (assign_get_user_grades($assign, $submission->userid)) {
+                continue;
+            }
+            // Look up the user flag for this student.
+            $allocatedmarker = $DB->get_field('assign_user_flags', 'allocatedmarker', [
+                'assignment' => $assignid,
+                'userid' => $submission->userid,
+            ]);
+
+            // Include submission if:
+            // - No marker assigned, or
+            // - Current user is the assigned marker.
+            if ($allocatedmarker === false || $allocatedmarker == $USER->id) {
+                $filtered[] = $submission;
+            }
+        }
+
+        return count($filtered);
+    }
+
     /**
      * Return the URL to the assignment marking page
      *
@@ -192,46 +237,41 @@ class mod_assign_helper extends module_helper {
     }
 
     /**
-     * Count the assignment submissions for the current marker user.
+     * Get a due date for a user including optional overrides and extensions.
      *
-     * @param int $assignid The assignment id.
-     * @return int Number of markers submissions.
+     * @param grade_item $gradeitem
+     * @param int $userid
+     * @return false|int
      */
-    private static function count_assign_marker_submissions(int $assignid): int {
-        global $DB, $USER;
+    public function get_user_duedate(grade_item $gradeitem, int $userid): false|int {
+        global $DB;
 
-        // First, get all submissions the user is allowed to see.
-        $params = ['assignid' => $assignid];
-        $sql = "SELECT id, userid, timemodified AS submissiondatetime
-                        FROM {assign_submission}
-                        WHERE assignment = :assignid
-                        AND userid > 0
-                        AND status = 'submitted'
-                        AND latest = 1";
-        $submissions = $DB->get_records_sql($sql, $params);
+        // Get individual override where available.
+        $params = ['assignid' => $gradeitem->iteminstance, 'userid' => $userid];
+        $overridedate = $DB->get_field('assign_overrides', 'duedate', $params);
 
-        $assign = $DB->get_record('assign', ['id' => $assignid]);
-        $filtered = [];
+        // If there is no individual override check for a group override date.
+        if (!$overridedate) {
+            $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
+            foreach ($usergroups[0] as $usergroupid) {
+                $params = ['assignid' => $gradeitem->iteminstance, 'groupid' => $usergroupid];
+                $overrideduedate = $DB->get_field('assign_overrides', 'duedate', $params);
 
-        foreach ($submissions as $submission) {
-            // Ignore submissions that have been graded.
-            if (assign_get_user_grades($assign, $submission->userid)) {
-                continue;
-            }
-            // Look up the user flag for this student.
-            $allocatedmarker = $DB->get_field('assign_user_flags', 'allocatedmarker', [
-                'assignment' => $assignid,
-                'userid' => $submission->userid,
-            ]);
-
-            // Include submission if:
-            // - No marker assigned, or
-            // - Current user is the assigned marker.
-            if ($allocatedmarker === false || $allocatedmarker == $USER->id) {
-                $filtered[] = $submission;
+                if ($overrideduedate > $overridedate) {
+                    $overridedate = $overrideduedate;
+                }
             }
         }
 
-        return count($filtered);
+        // Get individual extension where available.
+        $params = ['assignment' => $gradeitem->iteminstance, 'userid' => $userid];
+        $extensiondate = $DB->get_field('assign_user_flags', 'extensionduedate', $params);
+
+        // Use the date that gives the most time to the student.
+        if ($extensiondate > $overridedate) {
+            $overridedate = $extensiondate;
+        }
+
+        return  $overridedate ?: $this->get_duedate();
     }
 }
