@@ -94,6 +94,16 @@ abstract class module_helper {
     abstract public function get_user_duedate(grade_item $gradeitem, int $userid): false|int;
 
     /**
+     * Get the submission date for a grade item and student if any.
+     *
+     * @param int $userid
+     * @param int $instance
+     * @param ?int $part turnitintooltwo part number
+     * @return int
+     */
+    abstract public function get_submissiondate(int $userid, int $instance, ?int $part = null): int;
+
+    /**
      * Return a URL to the module item where applicable or to the student feedback tracker page otherwise.
      *
      * @return string

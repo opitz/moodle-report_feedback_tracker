@@ -139,4 +139,29 @@ class mod_turnitintooltwo_helper extends module_helper {
         // This module does not support user due dates.
         return $this->get_duedate();
     }
+
+    /**
+     * Get the submission date for a grade item and student if any.
+     *
+     * @param int $userid
+     * @param int $instance
+     * @param ?int $part turnitintooltwo part number
+     * @return int
+     */
+    public function get_submissiondate(int $userid, int $instance, ?int $part = null): int {
+        global $DB;
+
+        $params = ['userid' => $userid, 'instance' => $instance];
+        $sql = "SELECT MAX(submission_modified)
+                          FROM {turnitintooltwo_submissions}
+                         WHERE userid = :userid
+                               AND turnitintooltwoid = :instance";
+
+        if ($part) {
+            $sql .= " AND submission_part = :part";
+            $params['part'] = $part;
+        }
+
+        return $DB->get_field_sql($sql, $params) ?? 0;
+    }
 }

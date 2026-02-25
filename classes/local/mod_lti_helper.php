@@ -146,4 +146,24 @@ class mod_lti_helper extends module_helper {
         // This module does not support user due dates.
         return $this->get_duedate();
     }
+
+    /**
+     * Get the submission date for a grade item and student if any.
+     *
+     * @param int $userid
+     * @param int $instance
+     * @param ?int $part turnitintooltwo part number
+     * @return int
+     */
+    public function get_submissiondate(int $userid, int $instance, ?int $part = null): int {
+        global $DB;
+
+        $params = ['userid' => $userid, 'instance' => $instance];
+        $sql = "SELECT MAX(submittedat)
+                        FROM {report_feedback_tracker_lti_usr}
+                        WHERE userid = :userid
+                        AND instanceid = :instance";
+
+        return $DB->get_field_sql($sql, $params) ?? 0;
+    }
 }
