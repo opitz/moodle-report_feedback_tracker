@@ -82,4 +82,18 @@ abstract class module_helper {
      * @return int
      */
     abstract public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int;
+
+    /**
+     * Return a URL to the module item where applicable or to the student feedback tracker page otherwise.
+     *
+     * @return string
+     */
+    public function get_module_url(): string {
+        global $CFG, $COURSE;
+
+        if (!$this->module) {
+            return "$CFG->wwwroot/report/feedback_tracker/student.php";
+        }
+        return "$CFG->wwwroot/mod/{$this->module->modname}/view.php?id={$this->module->id}";
+    }
 }
