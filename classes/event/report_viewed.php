@@ -26,23 +26,21 @@
 namespace report_feedback_tracker\event;
 
 /**
- * Student view event.
+ * Report view event.
  *
  * @package    report_feedback_tracker
  * @copyright  2025 onwards UCL {@link https://www.ucl.ac.uk/}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author     Matthias Opitz <m.opitz@ucl.ac.uk>
  */
-class student_viewed extends \core\event\base {
+class report_viewed extends \core\event\base {
     /**
      * Initialisation
      *
      * @return void
      */
     protected function init() {
-        global $USER;
-
-        $this->context = \context_user::instance($USER->id);
+        $this->context = \context_system::instance();
         $this->data['crud'] = 'r';
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
     }
@@ -53,7 +51,7 @@ class student_viewed extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('event:student_viewed', 'report_feedback_tracker');
+        return get_string('event:report_viewed', 'report_feedback_tracker');
     }
 
     /**
@@ -62,6 +60,6 @@ class student_viewed extends \core\event\base {
      * @return string|null
      */
     public function get_description() {
-        return "The user with id '$this->userid' viewed the student feedback tracker.";
+        return "The user with id '$this->userid' viewed the feedback tracker report.";
     }
 }

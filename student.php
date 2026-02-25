@@ -36,13 +36,14 @@ $userid = optional_param('userid', null, PARAM_INT);
 $profile = profile_user_record($USER->id, false);
 $data = null;
 
+// Log a report view.
 $programme = $profile->programmename ?? null;
 
 if (property_exists($profile, 'programmename') && $programme = $profile->programmename) {
     $data = ['other' => ['programme' => $programme]];
 }
 
-$event = \report_feedback_tracker\event\student_viewed::create($data);
+$event = \report_feedback_tracker\event\report_viewed::create($data);
 $event->trigger();
 
 if ($courseid) {

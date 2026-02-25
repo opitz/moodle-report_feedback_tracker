@@ -26,16 +26,6 @@ use report_feedback_tracker\local\helper;
 
 defined('MOODLE_INTERNAL') || die;
 
-// Add an entry to the site administration reports.
-if ($hassiteconfig) {
-    $ADMIN->add('reports', new admin_externalpage(
-        'feedback_tracker_visits',
-        get_string('visitslog:title', 'report_feedback_tracker'),
-        new moodle_url('/report/feedback_tracker/visits_log.php'),
-        'report/feedback_tracker:view'
-    ));
-}
-
 if ($ADMIN->fulltree) {
     // Default settings.
     $warningdaysdefault = 14;

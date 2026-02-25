@@ -79,7 +79,7 @@ $string['edit:responsibility'] = 'Edit responsibility';
 $string['error:unable_to_load_holidays'] = 'Unable to load UK Bank holiday data from gov.uk';
 $string['event:export_data_description'] = 'Feedback tracker data has been exported.';
 $string['event:export_data_name'] = 'Feedback tracker data exported';
-$string['event:student_viewed'] = 'Student viewed';
+$string['event:report_viewed'] = 'Report viewed';
 
 $string['feedback'] = 'Feedback status';
 $string['feedback:cohort'] = 'Cohort feedback';
@@ -244,16 +244,5 @@ $string['user'] = 'User';
 $string['user:heading'] = 'Feedback tracker report for {$a}';
 $string['users:extension'] = '1 extension';
 $string['users:extensions'] = '{$a} extensions';
-
-$string['visitslog:download_csv'] = 'Download all records as CSV file';
-$string['visitslog:filename'] = 'Feedback tracker visits log';
-$string['visitslog:heading'] = 'Feedback tracker visits';
-$string['visitslog:no_programme'] = 'No programme';
-$string['visitslog:no_records'] = 'No records found';
-$string['visitslog:programme'] = 'Programme';
-$string['visitslog:show'] = 'Show visits log';
-$string['visitslog:time'] = 'Time';
-$string['visitslog:title'] = 'Feedback tracker visits';
-$string['visitslog:user'] = 'User';
 
 $string['year'] = 'Year';
