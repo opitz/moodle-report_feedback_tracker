@@ -196,7 +196,7 @@ class student {
                 return false;
             }
 
-            $data->url = self::get_module_url($module);
+            $data->url = module_helper_factory::create($module)->get_module_url();
             $data->moduletypeiconurl = $module->get_icon_url()->out(false);
             $data->cmid = $module->id;
 
@@ -469,21 +469,6 @@ class student {
         } else {
             return round($gradingrecord->finalgrade) . '/' . round($gradingrecord->rawgrademax);
         }
-    }
-
-    /**
-     * Return a URL to the module item where applicable or to the gradebook otherwise.
-     *
-     * @param cm_info $module
-     * @return string
-     */
-    private static function get_module_url(cm_info $module): string {
-        global $CFG, $USER;
-
-        if (!$module) {
-            return "$CFG->wwwroot/grade/report/student/index.php?id=$module->course&userid=$USER->id";
-        }
-        return "$CFG->wwwroot/mod/$module->modname/view.php?id=$module->id";
     }
 
     /**
