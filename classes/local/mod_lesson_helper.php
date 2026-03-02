@@ -113,7 +113,7 @@ class mod_lesson_helper extends module_helper {
     public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int {
         global $DB;
 
-        $submitterids = array_column(module_helper_factory::create($this->module)->get_module_submissions(true), 'userid');
+        $submitterids = array_column($this->get_module_submissions(true), 'userid');
 
         // No submissions - no missing grades.
         if (empty($submitterids)) {
