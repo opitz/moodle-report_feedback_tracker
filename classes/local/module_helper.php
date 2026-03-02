@@ -109,7 +109,7 @@ abstract class module_helper {
      * @return string
      */
     public function get_module_url(): string {
-        global $CFG, $COURSE;
+        global $CFG;
 
         if (!$this->module) {
             return "$CFG->wwwroot/report/feedback_tracker/student.php";

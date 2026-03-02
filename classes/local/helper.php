@@ -228,7 +228,7 @@ class helper {
      */
     public static function is_supported_module(string $itemmodule): bool {
         // Maybe chaching this?
-        return get_config('report_feedback_tracker', 'support' . $itemmodule);
+        return (bool)get_config('report_feedback_tracker', 'support' . $itemmodule);
     }
 
     /**

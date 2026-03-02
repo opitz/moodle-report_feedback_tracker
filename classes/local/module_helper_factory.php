@@ -31,12 +31,12 @@ class module_helper_factory {
      * Creator
      *
      * @param cm_info $module
-     * @return mixed
+     * @return module_helper
      */
-    public static function create(cm_info $module) {
+    public static function create(cm_info $module): module_helper {
         $fullclassname = __NAMESPACE__ . "\\mod_{$module->modname}_helper";
 
-        if (!$fullclassname) {
+        if (!class_exists($fullclassname)) {
             throw new \moodle_exception('error:moduleclassnotfound', 'report_feedback_tracker', '', $fullclassname);
         }
 
