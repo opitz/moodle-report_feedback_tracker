@@ -35,7 +35,7 @@ class mod_lesson_helper extends module_helper {
      *
      * @return mixed
      */
-    public function get_markingurl() {
+    public function get_markingurl(): moodle_url {
         return $this->module->get_url();
     }
 
@@ -44,7 +44,7 @@ class mod_lesson_helper extends module_helper {
      *
      * @return int
      */
-    public function get_duedate() {
+    public function get_duedate(): int {
         // Ensure customdata is an array.
         $customdata = (array) $this->module->customdata;
 
@@ -57,7 +57,7 @@ class mod_lesson_helper extends module_helper {
      *
      * @return int
      */
-    public function get_overrides() {
+    public function get_overrides(): int {
         return helper::get_overrides($this->module);
     }
 

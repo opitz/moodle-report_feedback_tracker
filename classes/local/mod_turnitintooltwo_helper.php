@@ -18,6 +18,7 @@ namespace report_feedback_tracker\local;
 
 use context_course;
 use grade_item;
+use moodle_url;
 
 /**
  * The Turnitin module helper class.
@@ -33,7 +34,7 @@ class mod_turnitintooltwo_helper extends module_helper {
      *
      * @return mixed
      */
-    public function get_markingurl() {
+    public function get_markingurl(): moodle_url {
         return $this->module->get_url();
     }
 
@@ -42,7 +43,7 @@ class mod_turnitintooltwo_helper extends module_helper {
      *
      * @return int
      */
-    public function get_duedate() {
+    public function get_duedate(): int {
         // Due dates are treated separately for each Turnitin part.
         return 0;
     }
@@ -52,7 +53,7 @@ class mod_turnitintooltwo_helper extends module_helper {
      *
      * @return int
      */
-    public function get_overrides() {
+    public function get_overrides(): int {
         // Turnitintooltwo has no overrides.
         return 0;
     }

@@ -80,7 +80,7 @@ class mod_assign_helper extends module_helper {
      *
      * @return mixed
      */
-    public function get_markingurl() {
+    public function get_markingurl(): moodle_url {
         return new moodle_url('/mod/assign/view.php', ['id' => $this->module->id, 'action' => 'grading']);
     }
 
@@ -89,7 +89,7 @@ class mod_assign_helper extends module_helper {
      *
      * @return int
      */
-    public function get_duedate() {
+    public function get_duedate(): int {
         // Ensure customdata is an array.
         $customdata = (array) $this->module->customdata;
 
@@ -102,7 +102,7 @@ class mod_assign_helper extends module_helper {
      *
      * @return int
      */
-    public function get_overrides() {
+    public function get_overrides(): int {
         return helper::get_overrides($this->module);
     }
 

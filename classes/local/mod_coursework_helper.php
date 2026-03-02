@@ -18,6 +18,7 @@ namespace report_feedback_tracker\local;
 
 use context_course;
 use grade_item;
+use moodle_url;
 use mod_coursework\services\submission_figures as coursework_submission_figures;
 
 /**
@@ -34,7 +35,7 @@ class mod_coursework_helper extends module_helper {
      *
      * @return mixed
      */
-    public function get_markingurl() {
+    public function get_markingurl(): moodle_url {
         return $this->module->get_url();
     }
 
@@ -43,7 +44,7 @@ class mod_coursework_helper extends module_helper {
      *
      * @return int
      */
-    public function get_duedate() {
+    public function get_duedate(): int {
         global $DB;
 
         // Check Coursework record has deadline.
@@ -60,7 +61,7 @@ class mod_coursework_helper extends module_helper {
      *
      * @return int
      */
-    public function get_overrides() {
+    public function get_overrides(): int {
         // Coursework has no overrides.
         return 0;
     }

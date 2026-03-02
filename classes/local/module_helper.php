@@ -44,21 +44,21 @@ abstract class module_helper {
      *
      * @return mixed
      */
-    abstract public function get_markingurl();
+    abstract public function get_markingurl(): \moodle_url;
 
     /**
      * Return the due date of the module
      *
      * @return mixed
      */
-    abstract public function get_duedate();
+    abstract public function get_duedate(): int;
 
     /**
      * Get the number of students that have a submission due date override for a course module.
      *
      * @return int
      */
-    abstract public function get_overrides();
+    abstract public function get_overrides(): int;
 
     /**
      * Provide a URL of the override settings of a given course module where available.
