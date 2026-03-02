@@ -281,7 +281,7 @@ class helper {
             $weekday = date('N', $feedbackduedatetime);
 
             // Count the day if it's not a weekend day (6 or 7) and not a closure date.
-            if ($weekday < 6 && !in_array(date('Y-m-d', $feedbackduedatetime), $closuredays)) {
+            if ($weekday < 6 && !in_array(date('Y-m-d', $feedbackduedatetime), $closuredays, true)) {
                 $daysadded++;
             }
         }
@@ -383,23 +383,27 @@ class helper {
         string $eend
     ): void {
         // Do the Xmas closure 1st.
-        $date = date('Y-m-d', ($xstart == '' ? 0 : strtotime($xstart)));
-        $enddate = date('Y-m-d', ($xend == '' ? 0 : strtotime($xend)));
-        while ($date <= $enddate) {
-            if (!in_array($date, $closuredays)) {
-                $closuredays[] = $date;
+        if ($xstart !== '' && $xend !== '') {
+            $date = date('Y-m-d', strtotime($xstart));
+            $enddate = date('Y-m-d', strtotime($xend));
+            while ($date <= $enddate) {
+                if (!in_array($date, $closuredays, true)) {
+                    $closuredays[] = $date;
+                }
+                $date = date('Y-m-d', strtotime($date . ' +1 day'));
             }
-            $date = date('Y-m-d', strtotime($date . ' +1 day'));
         }
 
         // Then do the Easter closure.
-        $date = date('Y-m-d', ($estart == '' ? 0 : strtotime($estart)));
-        $enddate = date('Y-m-d', ($eend == '' ? 0 : strtotime($eend)));
-        while ($date <= $enddate) {
-            if (!in_array($date, $closuredays)) {
-                $closuredays[] = $date;
+        if ($estart !== '' && $eend !== '') {
+            $date = date('Y-m-d', strtotime($estart));
+            $enddate = date('Y-m-d', strtotime($eend));
+            while ($date <= $enddate) {
+                if (!in_array($date, $closuredays, true)) {
+                    $closuredays[] = $date;
+                }
+                $date = date('Y-m-d', strtotime($date . ' +1 day'));
             }
-            $date = date('Y-m-d', strtotime($date . ' +1 day'));
         }
     }
 
@@ -409,7 +413,7 @@ class helper {
      * @param int $courseid
      * @return moodle_url
      */
-    public static function get_course_url(int $courseid) {
+    public static function get_course_url(int $courseid): moodle_url {
         return new moodle_url('/course/view.php', ['id' => $courseid]);
     }
 
