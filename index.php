@@ -31,6 +31,14 @@ require_once(__DIR__ . '/../../config.php');
 $courseid = optional_param('id', null, PARAM_INT);
 $userid = optional_param('userid', null, PARAM_INT);
 
+// Require login before role/capability checks.
+if ($courseid) {
+    $course = get_course($courseid);
+    require_login($course);
+} else {
+    require_login();
+}
+
 // If there is no course ID given redirect to the user report.
 if (!$courseid) {
     // A user with a teacher role will see the site report if it is enabled in the settigs.
@@ -44,8 +52,7 @@ if ($userid || (!helper::is_course_editor($courseid, $USER->id))) {
     redirect(new moodle_url('/report/feedback_tracker/student.php', ['id' => $courseid, 'userid' => $userid]));
 }
 
-$course = isset($courseid) ? get_course($courseid) : $COURSE;
-require_login($course);
+$course = $courseid ? get_course($courseid) : $COURSE;
 
 // If this was called from a form take care of the form data.
 if (data_submitted() && confirm_sesskey()) {

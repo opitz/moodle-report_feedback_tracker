@@ -31,6 +31,14 @@ require_once($CFG->dirroot . '/user/profile/lib.php');
 $courseid = optional_param('id', null, PARAM_INT);
 $userid = optional_param('userid', null, PARAM_INT);
 
+// Require login before accessing user profile/event logging.
+if ($courseid) {
+    $course = get_course($courseid);
+    require_login($course);
+} else {
+    require_login();
+}
+
 // Log a visit.
 // Get a programme name where available.
 $profile = profile_user_record($USER->id, false);
@@ -76,8 +84,6 @@ if ($courseid && $userid && has_capability('moodle/grade:edit', $context)) {
         $PAGE->add_header_action($link);
     }
 }
-
-require_login($course);
 
 $PAGE->set_context($context);
 $PAGE->set_url('/report/feedback_tracker/student.php', $pageparams);
