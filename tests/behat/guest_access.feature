@@ -10,6 +10,7 @@ Feature: Guest access to Feedback tracker pages requires login
     When I am on "/report/feedback_tracker/index.php?id=1"
     Then I should see "Log in"
     And I should not see "Exception - Class"
+    And no feedback tracker report viewed event should exist for guest
 
   Scenario: Logged out user visiting student report is redirected to login
     Given I log in as "admin"
@@ -17,3 +18,4 @@ Feature: Guest access to Feedback tracker pages requires login
     When I am on "/report/feedback_tracker/student.php?id=1"
     Then I should see "Log in"
     And I should not see "Exception - Class"
+    And no feedback tracker report viewed event should exist for guest
