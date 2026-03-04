@@ -31,6 +31,13 @@ require_once(__DIR__ . '/../../config.php');
 $courseid = optional_param('id', null, PARAM_INT);
 $userid = optional_param('userid', null, PARAM_INT);
 
+// Guard against invalid course ids before any context/capability checks.
+if ($courseid && !$DB->record_exists('course', ['id' => $courseid])) {
+    // If not logged in this redirects to login; if logged in return a controlled error.
+    require_login();
+    throw new \moodle_exception('invalidcourseid');
+}
+
 // If there is no course ID given redirect to the user report.
 if (!$courseid) {
     // A user with a teacher role will see the site report if it is enabled in the settigs.
