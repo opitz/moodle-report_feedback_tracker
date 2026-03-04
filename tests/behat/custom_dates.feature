@@ -1,9 +1,14 @@
 @report @report_feedback_tracker @rft_customdates
 Feature: As an admin I want to be able to set a custom dates to a grade item
 
-  @javascript
-  Scenario: Adding custom feedback due date
-    Given the following "courses" exist:
+  Background:
+    Given the following "custom field categories" exist:
+      | name | component   | area   | itemid |
+      | CLC  | core_course | course | 0      |
+    And the following "custom fields" exist:
+      | name        | shortname   | category | type |
+      | Course Year | course_year | CLC      | text |
+    And the following "courses" exist:
       | fullname | shortname | format | customfield_course_year |
       | Course 1 | C1        | topics | ##now##%Y##             |
     And the following "users" exist:
@@ -20,10 +25,12 @@ Feature: As an admin I want to be able to set a custom dates to a grade item
       | Formative or summative? | Formative - does not contribute to course mark |
       | Maximum grade           | 100                                            |
     And I add a quiz activity to course "Course 1" section "3" and I fill the form with:
-      | Name                    | Test quiz                                      |
-      | Formative or summative? | Formative - does not contribute to course mark |
-      | Grade to pass           | 8                                              |
+      | Name                    | Test quiz                                         |
+      | Formative or summative? | Summative - counts towards the final module mark  |
+      | Grade to pass           | 8                                                 |
 
+  @javascript
+  Scenario: Adding custom feedback due date
     Given I am on the "Course 1" "course" page logged in as "admin"
     When I navigate to "Reports" in current page administration
     And I click on "Feedback tracker" "link"
@@ -72,3 +79,27 @@ Feature: As an admin I want to be able to set a custom dates to a grade item
 
     And I click on "Save" "button" in the "Edit Test quiz" "dialogue"
     Then I should not see "Set manually"
+
+  @javascript
+  Scenario: Adding custom feedback date
+    Given I am on the "Course 1" "course" page logged in as "admin"
+    When I navigate to "Reports" in current page administration
+    And I click on "Feedback tracker" "link"
+    Then "Report" "field" should exist in the "tertiary-navigation" "region"
+    And I should see "Feedback tracker" in the "tertiary-navigation" "region"
+    And I should see "Test quiz"
+
+    When I click on the "Edit" button in the "Test quiz" module
+    And I click on "Add custom feedback released date" "checkbox"
+    And I set the field "New feedback released date" to "##now - 2 days##"
+    And I click on "Save" "button" in the "Edit Test quiz" "dialogue"
+    And I log out
+
+    # Student should see "Released" badge
+    When I am on the "Course 1" "course" page logged in as "student1"
+    And I follow "Profile" in the user menu
+    And I follow "Feedback tracker"
+    Then I should see "Feedback tracker"
+    And I follow "All"
+    And I should see "Test quiz"
+    And I should see "Released"

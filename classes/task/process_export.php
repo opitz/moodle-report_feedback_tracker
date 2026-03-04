@@ -105,9 +105,10 @@ class process_export extends \core\task\adhoc_task {
 
     /**
      * Process a submission and write it to the relevant file.
+     *
      * @param stdClass $submission
      * @param stdClass $coursemodule
-     * @return void
+     * @return stdClass
      */
     public function process_submission(stdClass $submission, stdClass $coursemodule): stdClass {
         // Build record.
@@ -413,12 +414,16 @@ class process_export extends \core\task\adhoc_task {
      * @param stdClass $record a submission record
      * @return void
      */
-    public static function set_grading_data(stdClass $record): void {
-
+    private static function set_grading_data(stdClass $record): void {
         // Feedback release.
+        $graderecord = self::get_graderecord($record);
+        $record->feedbackduedatetime = $graderecord->feedbackduedate;
+
+        $graderecord->hidden = ($graderecord->hidden === 1 || $graderecord->hidden > time());
+
         // If there is a custom feedback released date it will take precedence over an individual feedback date.
-        if (isset($record->gfdate) && $record->gfdate) {
-            $record->feedbackdatetime = $record->gfdate;
+        if ($graderecord->gfdate || !(is_null($graderecord->finalgrade) && $graderecord->hidden)) {
+            $record->feedbackdatetime = $graderecord->gfdate ?: $graderecord->gradesreleased;
             $record->marked = "marked";
             // If there is no due date or the due date has not yet passed, feedback was released in time.
             if (!$record->feedbackduedatetime || $record->feedbackduedatetime >= $record->feedbackdatetime) {
@@ -429,40 +434,19 @@ class process_export extends \core\task\adhoc_task {
                 $record->releasedintime = 0;
             }
         } else {
-            $graderecord = self::get_graderecord($record->assessmentmod, $record->cminstance, $record->submissionuserid);
+            $record->feedbackdatetime = false;
+            $record->marked = "unmarked";
+            $record->releasedintime = 0;
 
-            // If there is no final grade or grade not (yet) released.
+            // If there is a submission date, no feedback and the feedback due date has passed,
+            // then feedback is overdue.
             if (
-                !$graderecord ||
-                is_null($graderecord->finalgrade) ||
-                $graderecord->hidden === 1 ||
-                $graderecord->hidden > time()
+                $record->submissiondatetime && $record->feedbackduedatetime &&
+                $record->feedbackduedatetime < time()
             ) {
-                $record->feedbackdatetime = false;
-                $record->marked = "unmarked";
-                $record->releasedintime = 0;
-
-                // If there is a submission date, no feedback and the feedback due date has passed,
-                // then feedback is overdue.
-                if (
-                    $record->submissiondatetime && $record->feedbackduedatetime &&
-                    $record->feedbackduedatetime < time()
-                ) {
-                    $record->releasestatus = 'overdue';
-                } else { // No submission or no feedback due date or still within feedback period - in marking.
-                    $record->releasestatus = 'in marking';
-                }
-            } else {
-                $record->feedbackdatetime = $graderecord->gradesreleased;
-                $record->marked = "marked";
-                // If there is no due date or the due date has not yet passed, feedback was released in time.
-                if (!$record->feedbackduedatetime || $record->feedbackduedatetime >= $record->feedbackdatetime) {
-                    $record->releasestatus = 'in time';
-                    $record->releasedintime = 1;
-                } else { // Otherwise the feedback is late.
-                    $record->releasestatus = 'late';
-                    $record->releasedintime = 0;
-                }
+                $record->releasestatus = 'overdue';
+            } else { // No submission or no feedback due date or still within feedback period - in marking.
+                $record->releasestatus = 'in marking';
             }
         }
     }
@@ -470,12 +454,10 @@ class process_export extends \core\task\adhoc_task {
     /**
      * Get grade item and marking.
      *
-     * @param string $itemmodule
-     * @param int $cmid
-     * @param int $userid
-     * @return mixed
+     * @param stdClass $record
+     * @return false|mixed
      */
-    private static function get_graderecord(string $itemmodule, int $cmid, int $userid) {
+    private static function get_graderecord(stdClass $record) {
         global $DB;
 
         $sql = "SELECT
@@ -487,9 +469,9 @@ class process_export extends \core\task\adhoc_task {
                     gi.itemname,
                     gi.itemtype,
                     rft.partid,
-                    rft.feedbackduedate,
+                    COALESCE(rft.feedbackduedate, :defaultfeedbackduedate) AS feedbackduedate,
                     rft.gfdate,
-                    coalesce(rftlti.gradesreleased, gg.timemodified) as gradesreleased
+                    COALESCE(rftlti.gradesreleased, gg.timemodified) as gradesreleased
                 FROM {grade_items} gi
                 JOIN {grade_grades} gg ON gg.itemid = gi.id AND gg.userid = :userid
                 LEFT JOIN {report_feedback_tracker} rft ON rft.gradeitem = gi.id
@@ -498,9 +480,10 @@ class process_export extends \core\task\adhoc_task {
                 ";
 
         $params = [
-            'itemmodule' => $itemmodule,
-            'iteminstance' => $cmid,
-            'userid' => $userid,
+            'itemmodule' => $record->assessmentmod,
+            'iteminstance' => $record->cminstance,
+            'userid' => $record->submissionuserid,
+            'defaultfeedbackduedate' => $record->feedbackduedatetime,
         ];
 
         // At workshop assessments may have more than one final grade: for submission and assessment.

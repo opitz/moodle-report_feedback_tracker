@@ -244,7 +244,7 @@ class student {
         $feedbackdate = $gradingrecord->timemodified ?? 0;
 
         helper::add_additional_data($data);
-        $data->feedbackdate = $feedbackdate;
+        $data->feedbackdate = $data->customfeedbackreleaseddateraw ?? $feedbackdate;
         $data->feedbackstatus = helper::get_feedback_status($gradeitem, $data);
 
         return $data;

@@ -545,6 +545,7 @@ class helper {
             }
 
             if ($record->gfdate) {
+                $item->customfeedbackreleaseddateraw = $record->gfdate;
                 $item->customfeedbackreleaseddate = date('Y-m-d', $record->gfdate);
             }
 
@@ -863,6 +864,9 @@ class helper {
         } else if ($submissiondate && $feedbackduedate && $feedbackduedate < time()) {
             // There is a submission date, no feedback and the feedback due date has passed, then feedback is overdue.
             return ['overdue' => 'overdue'];
+        } else if (!empty($record->customfeedbackreleaseddate)) {
+            // No submission and no feedback due date but a custom feedback released date - show released in time.
+            return ['released' => 'released'];
         } else { // No submission or no feedback due date or still within feedback period - show nothing.
             return [];
         }
