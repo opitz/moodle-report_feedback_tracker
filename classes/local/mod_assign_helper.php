@@ -90,28 +90,16 @@ class mod_assign_helper extends module_helper {
      * @return int
      */
     public function get_duedate() {
-        // Ensure customdata is an array.
-        $customdata = (array) $this->module->customdata;
-
         // Return custom data where available.
-        return (int) ($customdata['duedate'] ?? 0);
-    }
-
-    /**
-     * Get the number of students that have a submission due date override for the course module.
-     *
-     * @return int
-     */
-    public function get_overrides() {
-        return helper::get_overrides($this->module);
+        return (int) ($this->module->customdata['duedate'] ?? 0);
     }
 
     /**
      * Provide a URL of the override settings.
      *
-     * @return string
+     * @return moodle_url
      */
-    public function get_overrides_url(): string {
+    public function get_overrides_url(): moodle_url {
         return new moodle_url("/mod/" . $this->module->modname . "/overrides.php", ["cmid" => $this->module->id]);
     }
 
@@ -246,22 +234,12 @@ class mod_assign_helper extends module_helper {
     public function get_user_duedate(grade_item $gradeitem, int $userid): false|int {
         global $DB;
 
-        // Get individual override where available.
-        $params = ['assignid' => $gradeitem->iteminstance, 'userid' => $userid];
-        $overridedate = $DB->get_field('assign_overrides', 'duedate', $params);
+        // Get an optional override date.
+        [$course, $assigncm] = get_course_and_cm_from_instance($gradeitem->iteminstance, 'assign');
+        $cmcontext = \context_module::instance($assigncm->id);
 
-        // If there is no individual override check for a group override date.
-        if (!$overridedate) {
-            $usergroups = groups_get_user_groups($gradeitem->courseid, $userid);
-            foreach ($usergroups[0] as $usergroupid) {
-                $params = ['assignid' => $gradeitem->iteminstance, 'groupid' => $usergroupid];
-                $overrideduedate = $DB->get_field('assign_overrides', 'duedate', $params);
-
-                if ($overrideduedate > $overridedate) {
-                    $overridedate = $overrideduedate;
-                }
-            }
-        }
+        $assign = new \assign($cmcontext, $assigncm, $course);
+        $overridedate = $assign->override_exists($userid)->duedate;
 
         // Get individual extension where available.
         $params = ['assignment' => $gradeitem->iteminstance, 'userid' => $userid];
@@ -286,13 +264,15 @@ class mod_assign_helper extends module_helper {
     public function get_submissiondate(int $userid, int $instance, ?int $part = null): int {
         global $DB;
 
-        $params = ['userid' => $userid, 'instance' => $instance];
-        $sql = "SELECT MAX(timemodified)
-                        FROM {assign_submission}
-                        WHERE userid = :userid
-                        AND assignment = :instance
-                        AND status = 'submitted'";
+        [$course, $assigncm] = get_course_and_cm_from_instance($instance, 'assign');
+        $cmcontext = \context_module::instance($assigncm->id);
+        $assign = new \assign($cmcontext, $assigncm, $course);
+        $submission = $assign->get_user_submission($userid, false);
 
-        return $DB->get_field_sql($sql, $params) ?? 0;
+        $submissiondate = 0;
+        if ($submission && $submission->status === ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+            $submissiondate = $submission->timemodified;
+        }
+        return $submissiondate;
     }
 }

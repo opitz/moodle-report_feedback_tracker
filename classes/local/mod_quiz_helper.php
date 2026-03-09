@@ -43,28 +43,16 @@ class mod_quiz_helper extends module_helper {
      * @return int
      */
     public function get_duedate() {
-        // Ensure customdata is an array.
-        $customdata = (array) $this->module->customdata;
-
         // Return custom data where available.
-        return (int) ($customdata['timeclose'] ?? 0);
-    }
-
-    /**
-     * Get the number of students that have a submission due date override for the course module.
-     *
-     * @return int
-     */
-    public function get_overrides() {
-        return helper::get_overrides($this->module);
+        return (int) ($this->module->customdata['timeclose'] ?? 0);
     }
 
     /**
      * Provide a URL of the override settings.
      *
-     * @return string
+     * @return \moodle_url
      */
-    public function get_overrides_url(): string {
+    public function get_overrides_url(): \moodle_url {
         return new moodle_url("/mod/" . $this->module->modname . "/overrides.php", ["cmid" => $this->module->id]);
     }
 
@@ -155,15 +143,13 @@ class mod_quiz_helper extends module_helper {
      * @return int
      */
     public function get_submissiondate(int $userid, int $instance, ?int $part = null): int {
-        global $DB;
+        $attempts = quiz_get_user_attempts($instance, $userid, 'finished');
 
-        $params = ['userid' => $userid, 'instance' => $instance];
-        $sql = "SELECT MAX(timefinish)
-                        FROM {quiz_attempts}
-                        WHERE userid = :userid
-                        AND quiz = :instance
-                        AND state = 'finished'";
+        $submissiondate = 0;
+        foreach ($attempts as $attempt) {
+            $submissiondate = max($submissiondate, $attempt->timefinish);
+        }
 
-        return $DB->get_field_sql($sql, $params) ?? 0;
+        return $submissiondate;
     }
 }

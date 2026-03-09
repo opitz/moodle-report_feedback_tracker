@@ -43,31 +43,18 @@ class mod_workshop_helper extends module_helper {
      * @return int
      */
     public function get_duedate() {
-        // Ensure customdata is an array.
-        $customdata = (array) $this->module->customdata;
-
         // Return custom data where available.
-        return (int) ($customdata['submissionend'] ?? 0);
-    }
-
-    /**
-     * Get the number of students that have a submission due date override for the course module.
-     *
-     * @return int
-     */
-    public function get_overrides() {
-        // Workshop has no overrides.
-        return 0;
+        return (int) ($this->module->customdata['submissionend'] ?? 0);
     }
 
     /**
      * Provide a URL of the override settings.
      *
-     * @return string
+     * @return \moodle_url
      */
-    public function get_overrides_url(): string {
+    public function get_overrides_url(): \moodle_url {
         // This module has no override settings.
-        return "#";
+        return new \moodle_url("#");
     }
 
     /**
@@ -152,14 +139,16 @@ class mod_workshop_helper extends module_helper {
      * @return int
      */
     public function get_submissiondate(int $userid, int $instance, ?int $part = null): int {
-        global $DB;
+        global $CFG, $DB;
 
-        $params = ['userid' => $userid, 'instance' => $instance];
-        $sql = "SELECT MAX(timemodified)
-                        FROM {workshop_submissions}
-                        WHERE authorid = :userid
-                        AND workshopid = :instance";
+        require_once($CFG->dirroot . '/mod/workshop/locallib.php');
 
-        return $DB->get_field_sql($sql, $params) ?? 0;
+        [$course, $cm] = get_course_and_cm_from_instance($instance, 'workshop');
+
+        $workshoprecord = $DB->get_record('workshop', ['id' => $instance], '*', MUST_EXIST);
+        $workshop = new \workshop($workshoprecord, $cm, $course);
+        $submission = $workshop->get_submission_by_author($userid);
+
+        return $submission ? (int) $submission->timemodified : 0;
     }
 }

@@ -55,23 +55,13 @@ class mod_lti_helper extends module_helper {
     }
 
     /**
-     * Get the number of students that have a submission due date override for the course module.
-     *
-     * @return int
-     */
-    public function get_overrides() {
-        // LTI has no overrides.
-        return 0;
-    }
-
-    /**
      * Provide a URL of the override settings.
      *
-     * @return string
+     * @return \moodle_url
      */
-    public function get_overrides_url(): string {
+    public function get_overrides_url(): \moodle_url {
         // This module has no override settings.
-        return "#";
+        return new \moodle_url("#");
     }
 
     /**
@@ -158,12 +148,18 @@ class mod_lti_helper extends module_helper {
     public function get_submissiondate(int $userid, int $instance, ?int $part = null): int {
         global $DB;
 
-        $params = ['userid' => $userid, 'instance' => $instance];
-        $sql = "SELECT MAX(submittedat)
-                        FROM {report_feedback_tracker_lti_usr}
-                        WHERE userid = :userid
-                        AND instanceid = :instance";
+        $params = [
+            'userid' => $userid,
+            'instanceid' => $instance,
+        ];
 
-        return $DB->get_field_sql($sql, $params) ?? 0;
+        $submissiondate = $DB->get_field_select(
+            'report_feedback_tracker_lti_usr',
+            'MAX(submittedat)',
+            'userid = :userid AND instanceid = :instanceid',
+            $params
+        );
+
+        return $submissiondate ?? 0;
     }
 }

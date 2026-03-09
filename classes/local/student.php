@@ -172,7 +172,7 @@ class student {
      * @return false|stdClass
      */
     private static function build_gradeitem(course_modinfo $modinfo, grade_item $gradeitem, int $userid): false|stdClass {
-        global $DB, $USER;
+        global $DB;
 
         $dateformat = get_string('strftimedatemonthabbr', 'langconfig');
         $data = new stdClass();
@@ -196,12 +196,12 @@ class student {
                 return false;
             }
 
-            $modulehelper = module_helper_factory::create($module);
-            $data->url = $modulehelper->get_module_url();
+            $cm = $modinfo->get_cm($module->id);
+            $data->url = $cm->get_url();
             $data->moduletypeiconurl = $module->get_icon_url()->out(false);
             $data->cmid = $module->id;
 
-            $duedate = $modulehelper->get_user_duedate($gradeitem, $userid);
+            $duedate = module_helper_factory::create($module)->get_user_duedate($gradeitem, $userid);
 
             // Add submission and grading for the user.
             self::add_user_data($userid, $data, $gradeitem, $duedate);

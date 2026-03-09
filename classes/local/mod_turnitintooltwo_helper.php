@@ -48,23 +48,13 @@ class mod_turnitintooltwo_helper extends module_helper {
     }
 
     /**
-     * Get the number of students that have a submission due date override for the course module.
-     *
-     * @return int
-     */
-    public function get_overrides() {
-        // Turnitintooltwo has no overrides.
-        return 0;
-    }
-
-    /**
      * Provide a URL of the override settings.
      *
-     * @return string
+     * @return \moodle_url
      */
-    public function get_overrides_url(): string {
+    public function get_overrides_url(): \moodle_url {
         // This module has no override settings.
-        return "#";
+        return new \moodle_url("#");
     }
 
     /**
