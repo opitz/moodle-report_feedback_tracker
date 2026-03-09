@@ -67,12 +67,20 @@ class mod_coursework_helper extends module_helper {
     }
 
     /**
+     * Return the number of submissions from enrolled students or groups.
+     *
+     * @return int
+     */
+    public function count_module_submissions(): int {
+        return count($this->get_module_submissions());
+    }
+
+    /**
      * Get an array of submissions from enrolled students or groups for the given course module.
      *
-     * @param bool $countgroups return group submissions if set to true
      * @return array
      */
-    public function get_module_submissions(bool $countgroups = false): array {
+    public function get_module_submissions(): array {
         global $DB;
 
         // Array to store enrolled users per course.

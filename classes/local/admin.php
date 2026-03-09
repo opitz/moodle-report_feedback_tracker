@@ -91,8 +91,7 @@ class admin {
             $data->overrides = get_string('users:extensions', 'report_feedback_tracker', $overrides);
         }
         $data->overridesurl = $modulehelper->get_overrides_url();
-        $submitterids = array_column($modulehelper->get_module_submissions(true), 'userid');
-        $data->submissions = count($submitterids);
+        $data->submissions = $modulehelper->count_module_submissions();
 
         // Grades and markings.
         $data->requiredfeedbacks = $modulehelper->count_missing_grades($gradeitem->id);

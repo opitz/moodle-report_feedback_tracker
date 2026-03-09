@@ -61,12 +61,18 @@ abstract class module_helper {
     abstract public function get_overrides_url(): \moodle_url;
 
     /**
+     * Return the number of submissions from enrolled students or groups for the given course module.
+     *
+     * @return int
+     */
+    abstract public function count_module_submissions(): int;
+
+    /**
      * Get an array of submissions from enrolled students or groups for the given course module.
      *
-     * @param bool $countgroups return group submissions if set to true
      * @return array
      */
-    abstract public function get_module_submissions(bool $countgroups = false): array;
+    abstract public function get_module_submissions(): array;
 
     /**
      * Count the missing grades for a given grade item.

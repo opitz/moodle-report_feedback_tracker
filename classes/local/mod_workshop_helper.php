@@ -58,12 +58,20 @@ class mod_workshop_helper extends module_helper {
     }
 
     /**
+     * Return the number of submissions from enrolled students or groups.
+     *
+     * @return int
+     */
+    public function count_module_submissions(): int {
+        return count($this->get_module_submissions());
+    }
+
+    /**
      * Get an array of submissions from enrolled students or groups for the given course module.
      *
-     * @param bool $countgroups return group submissions if set to true
      * @return array
      */
-    public function get_module_submissions(bool $countgroups = false): array {
+    public function get_module_submissions(): array {
         global $DB;
 
         // Array to store enrolled users per course.
@@ -100,7 +108,7 @@ class mod_workshop_helper extends module_helper {
     public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int {
         global $DB;
 
-        $submitterids = array_column(module_helper_factory::create($this->module)->get_module_submissions(true), 'userid');
+        $submitterids = array_column($this->get_module_submissions(), 'userid');
 
         // No submissions - no missing grades.
         if (empty($submitterids)) {

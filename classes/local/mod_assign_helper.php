@@ -104,12 +104,26 @@ class mod_assign_helper extends module_helper {
     }
 
     /**
+     * Return the number of submissions from enrolled students or groups.
+     *
+     * @return int
+     */
+    public function count_module_submissions(): int {
+
+        [$course, $assigncm] = get_course_and_cm_from_instance($this->module->instance, 'assign');
+        $cmcontext = \context_module::instance($assigncm->id);
+
+        $assign = new \assign($cmcontext, $assigncm, $course);
+
+        return $assign->count_submissions();
+    }
+
+    /**
      * Get an array of submissions from enrolled students or groups for the given course module.
      *
-     * @param bool $countgroups return group submissions if set to true
      * @return array
      */
-    public function get_module_submissions(bool $countgroups = false): array {
+    public function get_module_submissions(): array {
         global $DB;
 
         // Array to store enrolled users per course.
@@ -125,7 +139,7 @@ class mod_assign_helper extends module_helper {
         $teamsubmission = $DB->get_field('assign', 'teamsubmission', ['id' => $this->module->instance]);
 
         $params = ['moduleinstance' => $this->module->instance];
-        if ($teamsubmission && $countgroups) {
+        if ($teamsubmission) {
             // Get group submissions.
             $sql = "SELECT id, groupid, userid, timemodified AS submissiondatetime
                         FROM {assign_submission}
@@ -147,15 +161,8 @@ class mod_assign_helper extends module_helper {
 
         // If it is an assignment group/team submission amend the group IDs.
         if ($teamsubmission) {
-            if ($countgroups) { // Just return the group records.
-                return $records;
-            }
-
-            foreach ($records as $record) {
-                $groups = groups_get_all_groups($this->module->course, $record->userid);
-                // If a user is a member of one group only assign the group ID, otherwise assign the default group.
-                $record->groupid = count($groups) === 1 ? reset($groups)->id : 0;
-            }
+            // Just return the group records.
+            return $records;
         }
 
         // Return only submissions from students that are (still) enrolled into the course.
@@ -174,7 +181,7 @@ class mod_assign_helper extends module_helper {
     public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int {
         global $DB;
 
-        $submitterids = array_column(module_helper_factory::create($this->module)->get_module_submissions(true), 'userid');
+        $submitterids = array_column($this->get_module_submissions(), 'userid');
 
         // No submissions - no missing grades.
         if (empty($submitterids)) {
@@ -270,7 +277,7 @@ class mod_assign_helper extends module_helper {
         $submission = $assign->get_user_submission($userid, false);
 
         $submissiondate = 0;
-        if ($submission && $submission->status === ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+        if ($submission && $submission->status === 'submitted') {
             $submissiondate = $submission->timemodified;
         }
         return $submissiondate;
