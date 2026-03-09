@@ -54,18 +54,11 @@ abstract class module_helper {
     abstract public function get_duedate();
 
     /**
-     * Get the number of students that have a submission due date override for a course module.
-     *
-     * @return int
-     */
-    abstract public function get_overrides();
-
-    /**
      * Provide a URL of the override settings of a given course module where available.
      *
-     * @return string
+     * @return \moodle_url
      */
-    abstract public function get_overrides_url(): string;
+    abstract public function get_overrides_url(): \moodle_url;
 
     /**
      * Get an array of submissions from enrolled students or groups for the given course module.
@@ -115,5 +108,54 @@ abstract class module_helper {
             return "$CFG->wwwroot/report/feedback_tracker/student.php";
         }
         return "$CFG->wwwroot/mod/{$this->module->modname}/view.php?id={$this->module->id}";
+    }
+
+    /**
+     * Get the number of students that have a submission due date override for a given course module.
+     *
+     * @return int
+     */
+    public function get_overrides(): int {
+        global $DB;
+
+        switch ($this->module->modname) {
+            case 'assign':
+                $idfield = 'assignid';
+                break;
+            case 'lesson':
+                $idfield = 'lessonid';
+                break;
+            case 'quiz':
+                $idfield = 'quiz';
+                break;
+            default:
+                return 0; // Return no overrides.
+        }
+
+        $overrides = [];
+        // Get user overrides.
+        $overridetable = $this->module->modname . "_overrides";
+        $useroverrides = $DB->get_records_sql("
+            SELECT *
+            FROM {" . $overridetable . "}
+            WHERE $idfield = :moduleid AND userid IS NOT NULL", ['moduleid' => $this->module->instance]);
+
+        foreach ($useroverrides as $useroverride) {
+            $overrides[$useroverride->userid] = $useroverride->userid;
+        }
+
+        // Get group overrides and users in those groups.
+        $groupoverrides = $DB->get_records_sql("
+            SELECT gm.*
+            FROM {" . $overridetable . "} ao
+            JOIN {groups_members} gm ON ao.groupid = gm.groupid
+            WHERE ao.$idfield = :moduleid AND ao.groupid IS NOT NULL", ['moduleid' => $this->module->instance]);
+
+        foreach ($groupoverrides as $groupoverride) {
+            $overrides[$groupoverride->userid] = $groupoverride->userid;
+        }
+
+        // Count users.
+        return count($overrides);
     }
 }

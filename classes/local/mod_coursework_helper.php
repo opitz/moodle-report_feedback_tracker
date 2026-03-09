@@ -18,6 +18,7 @@ namespace report_feedback_tracker\local;
 
 use context_course;
 use grade_item;
+use mod_coursework\models\coursework;
 use mod_coursework\services\submission_figures as coursework_submission_figures;
 
 /**
@@ -56,23 +57,13 @@ class mod_coursework_helper extends module_helper {
     }
 
     /**
-     * Get the number of students that have a submission due date override for the course module.
-     *
-     * @return int
-     */
-    public function get_overrides() {
-        // Coursework has no overrides.
-        return 0;
-    }
-
-    /**
      * Provide a URL of the override settings.
      *
-     * @return string
+     * @return \moodle_url
      */
-    public function get_overrides_url(): string {
+    public function get_overrides_url(): \moodle_url {
         // This module has no override settings.
-        return "#";
+        return new \moodle_url("#");
     }
 
     /**
@@ -101,17 +92,11 @@ class mod_coursework_helper extends module_helper {
         }
 
         // Otherwise return all finalised submssions regardless of assessor.
-        $params = ['instanceid' => (int) $this->module->instance];
-        $sql = "SELECT id, userid, timesubmitted AS submissiondatetime
-                        FROM {coursework_submissions}
-                        WHERE courseworkid = :instanceid
-                        AND finalisedstatus = 1";
-
-        $records = $DB->get_records_sql($sql, $params);
+        $submissions = coursework::find($this->module->instance)->get_all_submissions();
 
         // Return only submissions from students that are (still) enrolled into the course.
-        return array_filter($records, function ($record) use ($enrolleduserids) {
-            return in_array($record->userid, $enrolleduserids);
+        return array_filter($submissions, function ($submission) use ($enrolleduserids) {
+            return in_array($submission->userid, $enrolleduserids);
         });
     }
 
@@ -125,7 +110,7 @@ class mod_coursework_helper extends module_helper {
     public function count_missing_grades(int $gradeitemid, bool $markeronly = false): int {
         global $DB;
 
-        $submitterids = array_column(module_helper_factory::create($this->module)->get_module_submissions(true), 'userid');
+        $submitterids = array_column(coursework::find($this->module->instance)->get_all_submissions(), 'userid');
 
         // No submissions - no missing grades.
         if (empty($submitterids)) {
