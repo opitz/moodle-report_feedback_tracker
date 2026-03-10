@@ -40,8 +40,11 @@ if (!$courseid) {
     redirect(new moodle_url('/report/feedback_tracker/student.php'));
 }
 // If there is a userid or the logged-in user has no rights redirect to the user report.
-if ($userid || (!helper::is_course_editor($courseid, $USER->id))) {
-    redirect(new moodle_url('/report/feedback_tracker/student.php', ['id' => $courseid, 'userid' => $userid]));
+if ($userid || !helper::is_course_editor($courseid, $USER->id)) {
+    redirect(new moodle_url(
+        '/report/feedback_tracker/student.php',
+        ['id' => $courseid, 'userid' => $userid, 'type' => helper::ASSESS_TYPE_ALL + 1]
+    ));
 }
 
 $course = isset($courseid) ? get_course($courseid) : $COURSE;

@@ -213,9 +213,6 @@ class helper {
      * @return bool
      */
     public static function is_course_editor(int $courseid, int $userid): bool {
-        if (!isset($courseid)) {
-            return false;
-        }
         $coursecontext = context_course::instance($courseid);
         return has_capability('moodle/course:update', $coursecontext, $userid);
     }
