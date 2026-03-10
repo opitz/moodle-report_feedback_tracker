@@ -189,7 +189,10 @@ class admin {
         if (!$locked && ($gradeitem = $DB->get_record('grade_items', ['id' => $itemid]))) {
             // Update course module records.
             if ($gradeitem->itemtype === 'mod') {
-                if ($cm = get_coursemodule_from_instance($gradeitem->itemmodule, $gradeitem->iteminstance)) {
+                $modinfo = get_fast_modinfo($gradeitem->courseid);
+                $instances = $modinfo->instances[$gradeitem->itemmodule][$gradeitem->iteminstance] ?? [];
+                if (!empty($instances)) {
+                    $cm = reset($instances);
                     assess_type::update_type($gradeitem->courseid, $assesstype, $cm->id);
                 }
             } else {
