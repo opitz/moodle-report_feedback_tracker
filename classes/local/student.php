@@ -273,9 +273,13 @@ class student {
      * @return void
      */
     public static function add_user_data(int $userid, stdClass $data, grade_item $gradeitem, int $duedate, int $part = 0) {
-        $cm = \cm_info::create(get_coursemodule_from_instance($gradeitem->itemmodule, $gradeitem->iteminstance));
+        try {
+            $modulehelper = module_helper_factory::create_for_grade_item($gradeitem);
+            $data->submissiondate = $modulehelper->get_submissiondate($userid, $gradeitem->iteminstance, $part);
+        } catch (\Throwable $e) {
+            $data->submissiondate = 0;
+        }
 
-        $data->submissiondate = module_helper_factory::create($cm)->get_submissiondate($userid, $gradeitem->iteminstance, $part);
         if (self::is_workshop_assessment($gradeitem)) {
             $data->workshopassessmentstatus = self::get_workshop_assessment_status($userid, $gradeitem->iteminstance);
         } else {

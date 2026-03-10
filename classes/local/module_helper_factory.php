@@ -17,6 +17,7 @@
 namespace report_feedback_tracker\local;
 
 use cm_info;
+use grade_item;
 
 /**
  * The helper factory class.
@@ -33,13 +34,32 @@ class module_helper_factory {
      * @param cm_info $module
      * @return mixed
      */
-    public static function create(cm_info $module) {
+    public static function create(cm_info $module): module_helper {
         $fullclassname = __NAMESPACE__ . "\\mod_{$module->modname}_helper";
 
-        if (!$fullclassname) {
+        if (!class_exists($fullclassname)) {
             throw new \moodle_exception('error:moduleclassnotfound', 'report_feedback_tracker', '', $fullclassname);
         }
 
         return new $fullclassname($module);
+    }
+
+    /**
+     * Create a helper directly from a grade item using core modinfo lookups.
+     *
+     * @param grade_item $gradeitem
+     * @return module_helper
+     */
+    public static function create_for_grade_item(grade_item $gradeitem): module_helper {
+        $modinfo = get_fast_modinfo($gradeitem->courseid);
+        $instances = $modinfo->instances[$gradeitem->itemmodule][$gradeitem->iteminstance] ?? [];
+
+        if (empty($instances)) {
+            throw new \moodle_exception('invalidcoursemodule');
+        }
+
+        /** @var cm_info $module */
+        $module = reset($instances);
+        return self::create($module);
     }
 }
