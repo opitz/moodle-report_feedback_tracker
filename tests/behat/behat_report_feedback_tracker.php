@@ -23,6 +23,7 @@
  */
 
 use Behat\Mink\Exception\ElementNotFoundException;
+use dml_exception;
 
 /**
  * Steps definitions related to editing mode.
@@ -70,5 +71,40 @@ class behat_report_feedback_tracker extends behat_base {
      */
     public function i_select_from_the_dropdown($option, $dropdown) {
         $this->getSession()->getPage()->selectFieldOption($dropdown, $option);
+    }
+
+    /**
+     * Open an absolute plugin path.
+     *
+     * @When /^I am on "([^"]+)"$/
+     * @param string $path
+     * @return void
+     */
+    public function i_am_on_path(string $path): void {
+        $this->getSession()->visit($this->locate_path($path));
+    }
+
+    /**
+     * Assert that no guest report-viewed event has been logged.
+     *
+     * @Then /^no feedback tracker report viewed event should exist for guest$/
+     * @return void
+     * @throws dml_exception
+     */
+    public function no_guest_report_viewed_event_should_exist(): void {
+        global $DB;
+
+        $count = $DB->count_records_select(
+            'logstore_standard_log',
+            'eventname = :eventname AND userid = :userid',
+            [
+                'eventname' => '\\report_feedback_tracker\\event\\report_viewed',
+                'userid' => 0,
+            ]
+        );
+
+        if ($count > 0) {
+            throw new \Exception('Expected no guest report_viewed events, found: ' . $count);
+        }
     }
 }
