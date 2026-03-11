@@ -51,7 +51,7 @@ class admin {
     ): false|stdClass {
         $module = helper::get_module_from_gradeitem($gradeitem, $modinfo);
 
-        if (!$module) {
+        if (!$module || !$module->uservisible) {
             return false;
         }
 

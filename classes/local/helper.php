@@ -929,6 +929,7 @@ class helper {
                 JOIN {modules} m ON cm.module = m.id
                 JOIN {grade_items} gi ON gi.iteminstance = cm.instance AND gi.itemmodule = m.name
                 WHERE gi.id = :gradeitemid
+                AND cm.deletioninprogress = 0
             ";
 
         // Verify $modinfo->cms item in case the module data is missing.
