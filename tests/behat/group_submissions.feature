@@ -59,3 +59,22 @@ Feature: Course admin sees correct missing grades count for assignment group sub
     Then I should see "Team assignment"
     And I should see "1 require marking"
     And I should not see "2 require marking"
+
+  @javascript
+  Scenario: Both graded groups should show 100 percent grading progress
+    Given the following team submissions exist for assignment "Team assignment":
+      | group   |
+      | Group A |
+      | Group B |
+    And the following "grade grades" exist:
+      | gradeitem        | user     | grade |
+      | Team assignment  | student1 | 75    |
+      | Team assignment  | student2 | 80    |
+
+    When I am on the "Course 1" "course" page logged in as "admin"
+    And I navigate to "Reports" in current page administration
+    And I click on "Feedback tracker" "link"
+    Then I should see "Team assignment"
+    And I should not see "1 require marking"
+    And I should not see "2 require marking"
+    And I should see "100%"
