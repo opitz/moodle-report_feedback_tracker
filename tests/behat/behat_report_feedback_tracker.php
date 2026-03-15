@@ -111,43 +111,4 @@ class behat_report_feedback_tracker extends behat_base {
         }
     }
 
-    /**
-     * Set a grade for an assignment submission user.
-     *
-     * @Given /^I grade assignment "([^"]+)" for user "([^"]+)" with "([^"]+)"$/
-     * @param string $assignmentname
-     * @param string $username
-     * @param string $grade
-     * @return void
-     */
-    public function i_grade_assignment_for_user_with(string $assignmentname, string $username, string $grade): void {
-        global $DB;
-
-        $assignid = $DB->get_field('assign', 'id', ['name' => $assignmentname], MUST_EXIST);
-        $userid = $DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
-        $gradeitemid = $DB->get_field('grade_items', 'id', [
-            'itemmodule' => 'assign',
-            'iteminstance' => $assignid,
-            'itemtype' => 'mod',
-            'itemnumber' => 0,
-        ], MUST_EXIST);
-
-        $record = $DB->get_record('grade_grades', ['itemid' => $gradeitemid, 'userid' => $userid]);
-        if (!$record) {
-            $record = (object) [
-                'itemid' => $gradeitemid,
-                'userid' => $userid,
-            ];
-            $record->rawgrade = (float) $grade;
-            $record->finalgrade = (float) $grade;
-            $record->timecreated = time();
-            $record->timemodified = time();
-            $DB->insert_record('grade_grades', $record);
-        } else {
-            $record->rawgrade = (float) $grade;
-            $record->finalgrade = (float) $grade;
-            $record->timemodified = time();
-            $DB->update_record('grade_grades', $record);
-        }
-    }
 }

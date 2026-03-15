@@ -49,7 +49,9 @@ Feature: Course admin sees correct missing grades count for assignment group sub
       | group   | submittedby |
       | Group A | student1    |
       | Group B | student2    |
-    And I grade assignment "Team assignment" for user "student1" with "75"
+    And the following "grade grades" exist:
+      | gradeitem        | user     | grade |
+      | Team assignment  | student1 | 75    |
 
     When I am on the "Course 1" "course" page logged in as "admin"
     And I navigate to "Reports" in current page administration
