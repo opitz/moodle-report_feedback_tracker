@@ -46,9 +46,9 @@ Feature: Course admin sees correct missing grades count for assignment group sub
   @javascript
   Scenario: One graded group and one ungraded group should show 1 missing grade
     Given the following team submissions exist for assignment "Team assignment":
-      | group   | submittedby |
-      | Group A | student1    |
-      | Group B | student2    |
+      | group   |
+      | Group A |
+      | Group B |
     And the following "grade grades" exist:
       | gradeitem        | user     | grade |
       | Team assignment  | student1 | 75    |

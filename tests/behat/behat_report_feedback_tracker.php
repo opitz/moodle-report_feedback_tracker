@@ -88,7 +88,6 @@ class behat_report_feedback_tracker extends behat_base {
 
         foreach ($table->getHash() as $row) {
             $groupid = $DB->get_field('groups', 'id', ['name' => $row['group']], MUST_EXIST);
-            $userid = $DB->get_field('user', 'id', ['username' => $row['submittedby']], MUST_EXIST);
 
             $record = new \stdClass();
             $record->assignment = $assignid;
@@ -101,13 +100,7 @@ class behat_report_feedback_tracker extends behat_base {
             $record->timemodified = time();
             $record->submissionstatement = 0;
 
-            $submissionid = $DB->insert_record('assign_submission', $record);
-
-            // Track who submitted on behalf of the group.
-            $DB->insert_record('assign_submission_group_members', (object) [
-                'submission' => $submissionid,
-                'userid' => $userid,
-            ]);
+            $DB->insert_record('assign_submission', $record);
         }
     }
 
